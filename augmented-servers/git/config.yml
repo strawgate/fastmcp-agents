@@ -1,0 +1,225 @@
+agents:
+  - name: Git Agent
+    description: >-
+      Assists with performing Git operations as requested by the user.
+    default_instructions: >-
+      When you are asked to perform a task that requires you to interact with
+      local files, you should leverage the tools available to you to perform the
+      task. If you are asked a question, you should leverage the tools available
+      to you to answer the question.
+    blocked_tools:
+      - git_create_branch
+
+mcpServers:
+  "git":
+    command: uvx
+    args:
+      - "git+https://github.com/modelcontextprotocol/servers.git#subdirectory=src/git"
+    tools:
+      "git_status":
+        description: >-
+          The `git_status` tool shows the working tree status, including changes
+          staged for commit, unstaged changes, and untracked files. It provides
+          a summary of the current state of your Git repository, helping you
+          understand what changes are pending. Common Asks: - "What is the
+          current status of my repository?" - "Show me what files have changed."
+          Output: - A text summary of the repository's status, similar to `git
+          status` command line output. Examples: - To check the status of the
+          current repository: git_status(repo_path='./') - To check the status
+          of a specific repository: git_status(repo_path='/path/to/my/repo')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+
+      "git_diff_unstaged":
+        description: >-
+          The `git_diff_unstaged` tool shows changes in the working directory
+          that are not yet staged for commit. This allows for a detailed review
+          of modifications before they are added to the staging area, ensuring
+          accuracy. Common Asks: - "Show me the changes I've made but haven't
+          staged yet." - "What are the unstaged changes?" Output: - A diff
+          output showing line-by-line changes for unstaged files. Examples: - To
+          view unstaged changes in the current repository:
+          git_diff_unstaged(repo_path='./')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+
+      "git_diff_staged":
+        description: >-
+          The `git_diff_staged` tool shows changes that are currently staged for
+          the next commit. This is crucial for verifying exactly what will be
+          included in your next commit, preventing unintended changes. Common
+          Asks: - "Show me the changes that are staged for the next commit." -
+          "What are the staged changes?" Output: - A diff output showing
+          line-by-line changes for staged files. Examples: - To view staged
+          changes in the current repository: git_diff_staged(repo_path='./')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+
+      "git_diff":
+        description: >-
+          The `git_diff` tool shows differences between various Git references,
+          such as branches or commits. It's a versatile command for comparing
+          the state of your repository at different points in history or between
+          different development lines. Common Asks: - "Show differences between
+          two branches/commits." - "Compare my current branch with another
+          branch." Output: - A diff output comparing the specified targets.
+          Examples: - To compare the current branch with "main":
+          git_diff(repo_path='./', target='main') - To compare with a specific
+          commit: git_diff(repo_path='./', target='a1b2c3d4')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          target:
+            description:
+              The target branch or commit to compare with. This can be a branch
+              name (e.g., 'main', 'feature-branch') or a commit hash.
+
+      "git_commit":
+        description: >-
+          The `git_commit` tool records the staged changes to the repository,
+          creating a new commit object in the project's history. A descriptive
+          commit message is essential for understanding the purpose of the
+          changes and maintaining a clear project history. Common Asks: -
+          "Record my staged changes with a message." - "Create a new commit."
+          Output: - Confirmation message including the new commit hash.
+          Examples: - To commit staged changes with a message:
+          git_commit(repo_path='./', message='Fix: Resolve authentication
+          issue')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          message:
+            description: The commit message describing the changes.
+
+      "git_add":
+        description: >-
+          The `git_add` tool adds file contents from the working tree to the
+          staging area (index), preparing them for the next commit. It can be
+          used to stage new files, update modified files, or record the removal
+          of files, allowing for granular control over what gets committed.
+          Common Asks: - "Add files to the staging area." - "Stage specific
+          files for commit." Output: - Confirmation that files were staged
+          successfully. Examples: - To stage a single file:
+          git_add(repo_path='./', files=['src/main.py']) - To stage multiple
+          files: git_add(repo_path='./', files=['src/utils.py',
+          'docs/README.md']) - To stage all changes: git_add(repo_path='./',
+          files=['.'])
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          files:
+            description:
+              A list of file paths to add to the staging area. Use `.` to add
+              all changes.
+
+      "git_reset":
+        description: >-
+          The `git_reset` tool unstages all staged changes, effectively moving
+          them back to the working directory. It resets the index to match the
+          HEAD commit, allowing you to modify or discard changes before
+          committing. Common Asks: - "Unstage all staged changes." - "Reset the
+          repository state." Output: - Confirmation that staged changes have
+          been reset. Examples: - To unstage all changes in the current
+          repository: git_reset(repo_path='./')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+
+      "git_log":
+        description: >-
+          The `git_log` tool displays the commit history of the repository. It
+          lists commits in reverse chronological order, providing details such
+          as commit hash, author, date, and message, which is essential for
+          tracking project evolution. Common Asks: - "Show the commit history."
+          - "View recent commits." Output: - A list of commit entries, each
+          containing hash, author, date, and message. Examples: - To view the
+          last 5 commits: git_log(repo_path='./', max_count=5) - To view the
+          entire commit history: git_log(repo_path='./', max_count=0) (or omit
+          max_count for default 10)
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          max_count:
+            description: "The maximum number of commits to show (default: 10)."
+
+      "git_create_branch":
+        description: >-
+          The `git_create_branch` tool creates a new branch, allowing for
+          parallel lines of development without affecting the main codebase. You
+          can specify a base branch from which the new branch will diverge, or
+          it will default to the current active branch. Common Asks: - "Create a
+          new branch named 'feature/new-feature'." - "Create a branch from a
+          specific base." Output: - Confirmation of branch creation, including
+          the new branch name and its base. Examples: - To create a new branch
+          "feature/login": git_create_branch(repo_path='./',
+          branch_name='feature/login') - To create a branch "hotfix/bug-123"
+          from "main": git_create_branch(repo_path='./',
+          branch_name='hotfix/bug-123', base_branch='main')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          branch_name:
+            description: The name of the new branch to create.
+          base_branch:
+            description:
+              The name of the branch from which to create the new branch. If not
+              provided, the new branch will be created from the current active
+              branch.
+            default: "new default"
+
+      "git_checkout":
+        description: >-
+          The `git_checkout` tool switches between branches, updating the
+          working tree and index to match the state of the target branch. It can
+          also be used to restore specific files to a previous state or detach
+          HEAD to a particular commit for inspection. Common Asks: - "Switch to
+          branch 'develop'." - "Go to a specific branch." Output: - Confirmation
+          of the branch switch. Examples: - To switch to the "develop" branch:
+          git_checkout(repo_path='./', branch_name='develop')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          branch_name:
+            description: The name of the branch to switch to.
+
+      "git_show":
+        description: >-
+          The `git_show` tool displays the contents and details of various Git
+          objects, such as commits, tags, or trees. For commits, it shows the
+          log message and the diff introduced by that commit, providing a
+          comprehensive view of changes. Common Asks: - "Show the contents of a
+          specific commit." - "Display details of a revision." Output: - Details
+          of the specified Git object, including commit information and diffs
+          for commits. Examples: - To show the details of the latest commit:
+          git_show(repo_path='./', revision='HEAD') - To show a specific commit
+          by hash: git_show(repo_path='./',
+          revision='abcdef1234567890abcdef1234567890abcdef12') - To show a
+          specific branch's tip: git_show(repo_path='./',
+          revision='feature-branch')
+        parameter_overrides:
+          repo_path:
+            description: Path to the Git repository.
+          revision:
+            description:
+              The revision (commit hash, branch name, or tag) to show.
+
+      "git_init":
+        description: >-
+          The `git_init` tool initializes a new Git repository in the specified
+          directory. It creates the essential `.git` directory structure, making
+          the directory ready for Git version control. Running it in an existing
+          repository is safe and can be used to re-initialize or pick up new
+          templates. Common Asks: - "Initialize a new Git repository here." -
+          "Create a new Git project." Output: - Confirmation message indicating
+          the successful initialization of the repository. Examples: - To
+          initialize a new repository in the current directory:
+          git_init(repo_path='./') - To initialize a new repository in a new
+          directory "my_new_project": git_init(repo_path='./my_new_project')
+        parameter_overrides:
+          repo_path:
+            description:
+              The path to the directory where the Git repository should be
+              initialized. If the directory does not exist, it will be created.

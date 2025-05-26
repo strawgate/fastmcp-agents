@@ -6,10 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "asyncclick>=8.1.8",
-    "fastmcp>=2.3.5",
+    "fastmcp",
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
-    "instructor>=1.8.3",
     "jsonref>=1.1.0",
     "litellm>=1.71.0",
     "mcp>=1.9.0",
@@ -24,8 +23,10 @@ packages = [
 allow-direct-references=true
 
 [project.scripts]
-fastmcp_agents = "fastmcp_agents.main:run_mcp"
+fastmcp_agents = "fastmcp_agents.cli:run_mcp"
 
+[tool.uv.sources]
+fastmcp = { git = "https://github.com/strawgate/fastmcp.git", branch = "proxy_tool" }
 
 [dependency-groups]
 dev = [

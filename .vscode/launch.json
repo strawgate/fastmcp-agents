@@ -8,11 +8,16 @@
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.main",
+            "module": "fastmcp_agents.cli",
             "cwd": "${workspaceFolder}",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
-            "args": ["--mcp-transport", "sse"]
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20"
+            ]
         },
         // Debug Tests config
         {
@@ -20,9 +25,28 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "purpose": ["debug-test"],
+            "purpose": [
+                "debug-test"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
-          }
+        },
+        {
+            "name": "Augmented Git",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20",
+                "--config-file",
+                "${workspaceFolder}/augmented-servers/git/config.yml"
+            ]
+        },
     ]
 }
