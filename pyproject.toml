@@ -1,0 +1,93 @@
+[project]
+name = "fastmcp_agents"
+version = "0.1.0"
+description = "Fastmcp Agents project"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "asyncclick>=8.1.8",
+    "fastmcp>=2.3.5",
+    "google-cloud-aiplatform>=1.94.0",
+    "google-genai>=1.16.1",
+    "instructor>=1.8.3",
+    "jsonref>=1.1.0",
+    "litellm>=1.71.0",
+    "mcp>=1.9.0",
+    "pyyaml>=6.0.2",
+]
+
+[tool.poetry]
+packages = [
+    { include = "fastmcp_agents", from = "src" }
+]
+[tool.hatch.metadata]
+allow-direct-references=true
+
+[project.scripts]
+fastmcp_agents = "fastmcp_agents.main:run_mcp"
+
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-mock",
+  "ruff"
+]
+lint = [
+  "ruff"
+]
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py310"
+lint.fixable = ["ALL"]
+lint.ignore = [
+    "COM812", 
+    "PLR0917", # Ignore too many positional arguments
+    "PLR0913", # Ignore too many arguments
+]
+lint.extend-select = [
+    "A",
+    "ARG",
+    "B",
+    "C4",
+    "COM",
+    "DTZ",
+    "E",
+    "EM",
+    "F",
+    "FURB",
+    "I",
+    "LOG",
+    "N",
+    "PERF",
+    "PIE",
+    "PLR",
+    "PLW",
+    "PT",
+    "PTH",
+    "Q",
+    "RET",
+    "RSE",
+    "RUF",
+    "S",
+    "SIM",
+    "TC",
+    "TID",
+    "TRY",
+    "UP",
+    "W",
+]
+
+line-length = 140
+
+[tool.ruff.lint.extend-per-file-ignores]
+"**/tests/*.py" = [
+    "S101", # Ignore asserts
+    "DTZ005", # Ignore datetime.UTC
+    "PLR2004", # Ignore magic values
+]
+"**/references/*" = ["ALL"]
