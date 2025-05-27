@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -14,6 +15,8 @@ from fastmcp.utilities.mcp_config import MCPConfig
 
 from fastmcp_agents.agent.loader import (
     Config,
+    ContentTools,
+    ExtraToolsAndOverrides,
     RemoteMCPServerWithOverrides,
     StdioMCPServerWithOverrides,
     load_agents,
@@ -22,6 +25,7 @@ from fastmcp_agents.agent.observability.logging import BASE_LOGGER
 
 logger = BASE_LOGGER.getChild("main")
 
+logger.info(f"Environment: {os.environ}")
 
 MCP_TRANSPORT_HELP = """
 The transport to use for the MCP server.
@@ -42,20 +46,41 @@ def get_config(config_file: str) -> Config:
     return Config.model_validate(yaml.safe_load(config_raw))
 
 
-async def transfer_tools_to_frontend_server(server_name: str, server_config: StdioMCPServerWithOverrides | RemoteMCPServerWithOverrides, frontend_server: FastMCP):
+async def transfer_tools_to_server(
+    server_name: str, server_config: StdioMCPServerWithOverrides | RemoteMCPServerWithOverrides, frontend_server: FastMCP
+):
     logger.info("Transforming tools from %s to frontend server", server_name)
 
-    mcp_client = Client(MCPConfig(mcpServers={server_name: server_config}))
-    tool_overrides = ToolOverrides(tools=server_config.tools)
+    if isinstance(server_config, StdioMCPServerWithOverrides) and isinstance(server_config.env, dict):
+        # if "ALL" in server_config.env:
+        server_config.env = dict(os.environ.items())
+
+        # # limit to specific environment variables
+        # for env_name, env_value in os.environ.items():
+        #     if env_name not in server_config.env:
+        #         server_config.env[env_name] = env_value
+
+    mcp_client = Client(MCPConfig(mcpServers={server_name: server_config}), timeout=30.0)
+    extra_tools_and_overrides = ExtraToolsAndOverrides(tools=server_config.tools)
+
+    extra_tools: ContentTools = extra_tools_and_overrides.get_content_tools()
+    tool_overrides: ToolOverrides = extra_tools_and_overrides.get_tool_overrides()
 
     server = FastMCP.as_proxy(mcp_client)
 
     backend_tools = await server.get_tools()
-
-    logger.info("Backend servers provides the following tools: %s", backend_tools.keys())
-    logger.info("Transforming tools from backend server to frontend server: %s", tool_overrides.tools.keys())
+    logger.debug(f"Backend server: {server}, overrides: {tool_overrides}, tools: {backend_tools}")
 
     await transform_tools_from_server(server, frontend_server, overrides=tool_overrides)
+
+    for tool_name, tool_config in extra_tools.tools.items():
+
+        def content_tool_factory(content: str):
+            def content_tool() -> str:
+                return content
+            return content_tool
+
+        frontend_server.add_tool(fn=content_tool_factory(tool_config.returns), name=tool_name, description=tool_config.description)
 
 
 @click.command()
@@ -71,19 +96,16 @@ async def transfer_tools_to_frontend_server(server_name: str, server_config: Std
     default="config.yaml",
     help="The config file to use. This is the config for the MCP Servers, tool overrides, and agents.",
 )
-# @click.option(
-#     "--tool-overrides-file",
-#     type=click.Path(exists=True),
-#     default="tool_overrides.yaml",
-#     help="The tool overrides file to use. This is the tool overrides that will be used to transform the tools.",
-# )
-# @click.option(
-#     "--agent-config-file",
-#     type=click.Path(exists=True),
-#     required=True,
-#     default="agent_config.yaml",
-#     help="The agent config file to use. This is the agent that will be used to perform the task.",
-# )
+@click.option(
+    "--agent-only",
+    is_flag=True,
+    help="Only run the agents, don't expose the tools to the client.",
+)
+@click.option(
+    "--tool-only",
+    is_flag=True,
+    help="Only run the tools, don't expose the agents to the client.",
+)
 @click.option(
     "--model",
     type=str,
@@ -91,7 +113,7 @@ async def transfer_tools_to_frontend_server(server_name: str, server_config: Std
     help="The model to use for the agent.",
 )
 @click.option(
-    "--logging-level",
+    "--log-level",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     default="INFO",
     help="The logging level to use for the agent.",
@@ -101,32 +123,43 @@ async def cli(
     config_file: str,
     # agent_config_file: str,
     model: str,
-    logging_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    agent_only: bool,
+    tool_only: bool,
 ):
-    configure_logging(level=logging_level, logger=BASE_LOGGER.getChild("FastMCP"))
+    configure_logging(level=log_level, logger=BASE_LOGGER.getChild("FastMCP"))
+    BASE_LOGGER.setLevel(log_level)
+    # litellm._turn_on_debug()
 
     config = get_config(config_file)
 
-    # Create a frontend server to provide tools and our Agents
-    frontend_server = FastMCP(name="frontend")
-
+    tools_server = FastMCP(name="tools")
     # For each MCP Server, create a client and transform the tools onto the frontend server
     for server_name, server_config in config.mcpServers.items():
-        await transfer_tools_to_frontend_server(server_name, server_config, frontend_server)
+        await transfer_tools_to_server(server_name, server_config, tools_server)
 
-    # Get the final tool list for the frontend server
-    tools = list((await frontend_server.get_tools()).values())
-    logger.info("Frontend servers now provides the following tools: %s", (await frontend_server.get_tools()).keys())
+    # Get the final tool list for the tools server
+    tools = list((await tools_server.get_tools()).values())
+    logger.info("Tools server now provides the following tools: %s", (await tools_server.get_tools()).keys())
+
+    if tool_only:
+        await tools_server.run_async(transport=mcp_transport)
+        return
+
+    agents_server = tools_server
+
+    if agent_only:
+        agents_server = FastMCP(name="agents")
 
     # Load our Agents
     agents = load_agents(config.agents, model, tools=tools)
 
     # Register them as tools on the frontend server
     for agent in agents:
-        agent.register_as_tools(frontend_server)
+        agent.register_as_tools(agents_server)
 
-    # Run the frontend server
-    await frontend_server.run_async(transport=mcp_transport)
+    # Run the agents server
+    await agents_server.run_async(transport=mcp_transport)
 
 
 def run_mcp():

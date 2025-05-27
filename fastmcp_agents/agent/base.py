@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any, Literal, TypeVar
 
 from fastmcp import Context, FastMCP
+from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool as FastMCPTool
 from mcp import Tool as MCPTool
 from mcp.types import EmbeddedResource, ImageContent, TextContent
@@ -27,18 +28,19 @@ _DEFAULT_SEPARATOR_TOOL = "_"
 _DEFAULT_SEPARATOR_RESOURCE = "+"
 _DEFAULT_SEPARATOR_PROMPT = "_"
 
+STEP_LIMIT = 10
+
 SUCCESS_RESPONSE_MODEL = TypeVar("SUCCESS_RESPONSE_MODEL", bound=BaseModel)
 ERROR_RESPONSE_MODEL = TypeVar("ERROR_RESPONSE_MODEL", bound=BaseModel)
 
 REQUEST_MODEL = TypeVar("REQUEST_MODEL", bound=BaseModel)
 
-CLIENT = TypeVar("CLIENT")
 
 _MCP_REGISTRATION_TOOL_ATTR = "_mcp_agent_tool_registration"
 
 DEFAULT_SYSTEM_PROMPT = """
 You are `{agent_name}`, an AI Agent that is embedded into a FastMCP Server. You act as an interface between the remote user/agent
-and the tools available on the server. 
+and the tools available on the server.
 
 The person or Agent that invoked you understood that you:
 
@@ -46,8 +48,9 @@ The person or Agent that invoked you understood that you:
 {agent_description}
 ````````
 
-When you are asked to perform a task, you should leverage the tools available to you to perform the task. You may not call more than
-5 tools in a single response.
+When you are asked to perform a task, you should leverage the tools available to you to perform the task. You may perform many tool calls in one
+go but you should always keep in mind that the tool calls may run in any order and will run at the same time. So you should plan for which calls
+you can do in parallel (multiple in a single request) and which calls you should do sequentially (one tool call per call).
 
 ````````markdown
 {default_instructions}
@@ -179,7 +182,7 @@ class BaseFastMCPAgent(ABC):
 
     async def _pre_tool_call(self, ctx: Context, tool_name: str, tool_parameters: dict[str, Any]) -> None:
         # TODO: Telemetry?
-        self._logger.info(f"Agent '{self.name}' calling tool: {tool_name} with parameters: {tool_parameters}")
+        self._logger.info(f"Calling tool: {tool_name} with parameters: {tool_parameters}")
 
     async def _handle_tool_call(
         self, ctx: Context, tool_name: str, tool_parameters: dict[str, Any]
@@ -193,7 +196,10 @@ class BaseFastMCPAgent(ABC):
         if not tool_to_call:
             raise ToolNotFoundError(self.name, tool_name)
 
-        tool_response: list[TextContent | ImageContent | EmbeddedResource] = await tool_to_call.run(arguments=tool_parameters)
+        try:
+            tool_response: list[TextContent | ImageContent | EmbeddedResource] = await tool_to_call.run(arguments=tool_parameters)
+        except Exception as e:
+            tool_response = [TextContent(type="text", text=f"Error calling tool {tool_name}: {e!s}")]
 
         await self._post_tool_call(ctx, tool_name, tool_parameters, tool_response)
 
@@ -213,7 +219,7 @@ class BaseFastMCPAgent(ABC):
         tool_response: Any,
     ) -> None:
         # TODO: Telemetry?
-        self._logger.info(f"Agent '{self.name}' tool '{tool_name}' response: {tool_response}")
+        self._logger.debug({"tool_name": tool_name, "tool_parameters": tool_parameters, "tool_response": tool_response})
 
     async def _run_step_async(
         self,
@@ -231,10 +237,12 @@ class BaseFastMCPAgent(ABC):
 
         self.memory.add(assistant_conversation_entry)
 
-        self._logger.info(f"Agent '{self.name}' requested {len(tool_call_requests)} tool calls")
+        tool_call_request_names = [tool_call_request.name for tool_call_request in tool_call_requests]
+
+        self._logger.info(f"Requested {len(tool_call_requests)} tool calls: {tool_call_request_names}")
 
         if len(tool_call_requests) >= 5:
-            self._logger.warning(f"Agent '{self.name}' requested {len(tool_call_requests)} tool calls, which is more than the maximum of 5")
+            self._logger.warning(f"Requested {len(tool_call_requests)} tool calls, which is more than the maximum of 5")
 
         for tool_call_request in tool_call_requests:
             tool_name = tool_call_request.name
@@ -291,19 +299,18 @@ class BaseFastMCPAgent(ABC):
 
         mcp_tools = [tool.to_mcp_tool() for tool in self.tools] + self._completion_tools(success_response_model, error_response_model)
 
-        self._logger.info(f"Agent '{self.name}' running with messages: {messages}")
-        self._logger.info(f"Agent '{self.name}' available tools: {[tool.name for tool in self.tools]}")
+        self._logger.info(f"Running with messages: {messages} and available tools: {[tool.name for tool in self.tools]}")
 
-        for i in range(10):
-            self._logger.info(f"Agent '{self.name}' running step {i}")
+        for i in range(1, STEP_LIMIT):
+            self._logger.info(f"Running step {i} / {STEP_LIMIT}")
             completion = await self._run_step_async(ctx, messages, mcp_tools)
 
             if isinstance(completion, success_response_model):
-                self._logger.info(f"Agent '{self.name}' completed with response: {completion}")
+                self._logger.info(f"Completed with response: {completion}")
                 return completion
 
             if isinstance(completion, error_response_model):
-                self._logger.info(f"Agent '{self.name}' completed with error: {completion}")
+                self._logger.info(f"Failed with error: {completion}")
                 raise TaskFailureError(self.name, completion)
 
         raise NoResponseError(self.name)

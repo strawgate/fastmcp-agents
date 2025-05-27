@@ -1,5 +1,5 @@
 [project]
-name = "fastmcp_agents"
+name = "fastmcp-agents"
 version = "0.1.0"
 description = "Fastmcp Agents project"
 readme = "README.md"
@@ -12,6 +12,7 @@ dependencies = [
     "jsonref>=1.1.0",
     "litellm>=1.71.0",
     "mcp>=1.9.0",
+    "python-dotenv>=1.1.0",
     "pyyaml>=6.0.2",
 ]
 
@@ -26,7 +27,7 @@ allow-direct-references=true
 fastmcp_agents = "fastmcp_agents.cli:run_mcp"
 
 [tool.uv.sources]
-fastmcp = { git = "https://github.com/strawgate/fastmcp.git", branch = "proxy_tool" }
+fastmcp = { git = "https://github.com/strawgate/fastmcp.git", branch = "proxy_tool_longer_timeout" }
 
 [dependency-groups]
 dev = [

@@ -56,6 +56,8 @@ You can wrap any existing MCP Server and embed an AI Agent into the server, so t
 
 For example, you can take the upstream GitHub MCP Server, improve any tool's description, name, add safeguards, set default parameters on `page_size`, limit response sizes, etc and expose it as a new MCP Server.
 
+In 
+
 ```python
 third_party_mcp_config = {
     "time": {

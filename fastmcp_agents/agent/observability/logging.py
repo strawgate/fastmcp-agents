@@ -10,9 +10,10 @@ handler = RichHandler(
     console=Console(stderr=True),
     rich_tracebacks=True,
 )
-formatter = logging.Formatter("%(message)s")
+formatter = logging.Formatter("%(name)s : %(message)s")
 handler.setFormatter(formatter)
 
 BASE_LOGGER.setLevel(logging.INFO)
 BASE_LOGGER.addHandler(handler)
 BASE_LOGGER.propagate = False
+

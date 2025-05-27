@@ -19,3 +19,4 @@ class TaskFailureError(FastMCPAgentsError):
     def __init__(self, agent_name: str, error: BaseModel):
         self.message = f"Agent '{agent_name}' failed to complete the task: {error}"
         super().__init__(self.message)
+

@@ -22,3 +22,11 @@ class UnsupportedFeatureError(FastMCPAgentsError):
     def __init__(self, feature: str):
         self.message = f"FastMCPAgents does not support the feature: {feature}"
         super().__init__(self.message)
+
+
+class NoResponseError(FastMCPAgentsError):
+    """Raised when a response is not received."""
+
+    def __init__(self, missing_item: str, model: str):
+        self.message = f"{missing_item} was missing in the response from {model}"
+        super().__init__(self.message)

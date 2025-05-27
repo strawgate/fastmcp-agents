@@ -1,0 +1,28 @@
+agents:
+  - name: git_agent
+    description: >-
+      Assists with performing Git operations as requested by the user.
+    default_instructions: >-
+      When you are asked to perform a task that requires you to interact with
+      local files, you should leverage the tools available to you to perform the
+      task. If you are asked a question, you should leverage the tools available
+      to you to answer the question.
+    blocked_tools:
+      - git_add # Issues with Gemini and LiteLLM
+
+mcpServers:
+  "git":
+    command: npx
+    args:
+      - "@cyanheads/git-mcp-server"
+    tools:
+      git_clone:
+        description: >-
+          Clones a Git repository from a given URL into a relative directory path. Supports cloning specific branches and setting clone depth
+        parameter_overrides:
+          targetPath:
+            description: The relative directory path to clone the repository into
+            default: "."
+          depth:
+            description: The depth to clone the repository to. Minimum and default value is 1.
+            default: 1

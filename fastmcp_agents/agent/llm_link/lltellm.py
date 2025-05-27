@@ -6,7 +6,7 @@ from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message
 from litellm.utils import supports_function_calling
 from mcp.types import Tool as MCPTool
 
-from fastmcp_agents.agent.errors.base import UnknownToolCallError, UnsupportedFeatureError
+from fastmcp_agents.agent.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
 from fastmcp_agents.agent.errors.llm_link import ModelDoesNotSupportFunctionCallingError
 from fastmcp_agents.agent.llm_link.base import (
     AsyncLLMLink,
@@ -58,8 +58,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         """
 
         if not (choices := response.choices) or len(choices) == 0:
-            self.logger.debug(f"No choices in response from {self.model}")
-            return []
+            raise NoResponseError(missing_item="choices", model=self.model)
 
         if len(choices) > 1:
             raise UnsupportedFeatureError(feature="completions returning multiple choices")
@@ -70,12 +69,10 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         choice = choices[0]
 
         if not (response_message := choice.message):
-            self.logger.debug(f"No response message in choice from {self.model}")
-            return []
+            raise NoResponseError(missing_item="response message", model=self.model)
 
         if not (tool_calls := response_message.tool_calls):
-            self.logger.debug(f"No tool calls in response message from {self.model}")
-            return []
+            raise NoResponseError(missing_item="tool calls", model=self.model)
 
         self.logger.debug(f"Response contains {len(tool_calls)} tool requests: {tool_calls}")
 
@@ -124,6 +121,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             **self.completion_kwargs,
             tools=openai_tools,
             tool_choice="required",
+            num_retries=3
         )
 
         if isinstance(model_response, CustomStreamWrapper):
@@ -131,8 +129,8 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
 
         response_message, tool_call_requests = await self._extract_tool_calls(model_response)
 
-        self.logger.info(f"Tool call requests: {tool_call_requests}")
-        self.logger.info(f"Response message: {response_message}")
+        self.logger.debug(f"Tool call requests: {tool_call_requests}")
+        self.logger.debug(f"Response message: {response_message}")
 
         return self._response_to_assistant_conversation_entry(response_message), tool_call_requests
 

@@ -1,0 +1,15 @@
+agents:
+  - name: Filesystem Operations Agent
+    description: >-
+      Assists with performing Filesystem operations as requested by the user.
+    default_instructions: >-
+      When you are asked to perform a task that requires you to interact with
+      local files, you should leverage the tools available to you to perform the
+      task. If you are asked a question, you should leverage the tools available
+      to you to answer the question.
+
+mcpServers:
+  filesystem-operations:
+    command: uvx
+    args:
+      - "git+https://github.com/strawgate/py-mcp-collection.git#subdirectory=filesystem-operations-mcp"

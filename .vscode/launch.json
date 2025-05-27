@@ -45,7 +45,77 @@
                 "--model",
                 "vertex_ai/gemini-2.5-flash-preview-05-20",
                 "--config-file",
-                "${workspaceFolder}/augmented-servers/git/config.yml"
+                "${workspaceFolder}/augmented/servers/mcp_git.yml"
+            ]
+        },
+        {
+            "name": "Augmented Git (Cyanheads)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20",
+                "--config-file",
+                "${workspaceFolder}/augmented/servers/cyanheads_git-mcp-server.yml"
+            ]
+        },
+        {
+            "name": "Augmented GitHub",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--log-level",
+                "DEBUG",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20",
+                "--config-file",
+                "${workspaceFolder}/augmented/servers/github_mcp-server.yml"
+            ]
+        },
+        {
+            "name": "Augmented Filesystem",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20",
+                "--config-file",
+                "${workspaceFolder}/augmented/servers/strawgate_filesystem-operations.yml"
+            ]
+        },
+        {
+            "name": "Augmented Triage Issue",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--mcp-transport",
+                "sse",
+                "--model",
+                "vertex_ai/gemini-2.5-flash-preview-05-20",
+                "--config-file",
+                "${workspaceFolder}/augmented/flows/triage-issue.yml"
             ]
         },
     ]
