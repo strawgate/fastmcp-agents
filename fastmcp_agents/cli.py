@@ -41,6 +41,9 @@ def get_config(config_file: str) -> Config:
     if config_file.startswith("https://"):
         config_raw = requests.get(config_file, timeout=10).text
     else:
+        if not Path(config_file).exists():
+            msg = f"Config file {config_file} not found"
+            raise FileNotFoundError(msg)
         config_raw = Path(config_file).read_text(encoding="utf-8")
 
     return Config.model_validate(yaml.safe_load(config_raw))
@@ -92,9 +95,8 @@ async def transfer_tools_to_server(
 )
 @click.option(
     "--config-file",
-    type=click.Path(exists=True),
     default="config.yaml",
-    help="The config file to use. This is the config for the MCP Servers, tool overrides, and agents.",
+    help="The config file to use. Can be a local file or a URL. This is the config for the MCP Servers, tool overrides, and agents.",
 )
 @click.option(
     "--agent-only",
