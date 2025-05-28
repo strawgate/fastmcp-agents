@@ -13,12 +13,12 @@ class BaseResponseModel(BaseModel):
 
 
 class DefaultErrorResponseModel(BaseResponseModel):
-    error: str = Field(..., description="The error message if the agent failed")
+    error: str = Field(..., description="The error message if the agent failed. You must provide a string error message.")
 
 
 class DefaultSuccessResponseModel(BaseResponseModel):
     success: bool = Field(..., description="Whether the agent was successful")
-    result: str = Field(..., description="The result of the agent")
+    result: str = Field(..., description="The result of the agent. You must provide a string result.")
 
 
 DefaultResponseModelTypes: TypeAlias = DefaultErrorResponseModel | DefaultSuccessResponseModel

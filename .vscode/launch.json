@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python Debugger: Module",
             "type": "debugpy",
             "request": "launch",
@@ -40,12 +47,11 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
+                "bundled",
+                "server",
+                "mcp_git",
                 "--mcp-transport",
                 "sse",
-                "--model",
-                "vertex_ai/gemini-2.5-flash-preview-05-20",
-                "--config-file",
-                "${workspaceFolder}/augmented/servers/mcp_git.yml"
             ]
         },
         {
@@ -57,12 +63,11 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
+                "bundled",
+                "server",
+                "cyanheads_git-mcp-server",
                 "--mcp-transport",
                 "sse",
-                "--model",
-                "vertex_ai/gemini-2.5-flash-preview-05-20",
-                "--config-file",
-                "${workspaceFolder}/augmented/servers/cyanheads_git-mcp-server.yml"
             ]
         },
         {
@@ -74,14 +79,11 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
+                "bundled",
+                "server",
+                "github_mcp-server",
                 "--mcp-transport",
                 "sse",
-                "--log-level",
-                "DEBUG",
-                "--model",
-                "vertex_ai/gemini-2.5-flash-preview-05-20",
-                "--config-file",
-                "${workspaceFolder}/augmented/servers/github_mcp-server.yml"
             ]
         },
         {
@@ -93,12 +95,27 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
+                "bundled",
+                "server",
+                "strawgate_filesystem-operations",
                 "--mcp-transport",
                 "sse",
-                "--model",
-                "vertex_ai/gemini-2.5-flash-preview-05-20",
-                "--config-file",
-                "${workspaceFolder}/augmented/servers/strawgate_filesystem-operations.yml"
+            ]
+        },
+        {
+            "name": "Augmented Tree Sitter",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "bundled",
+                "server",
+                "wrale_mcp-server-tree-sitter",
+                "--mcp-transport",
+                "sse",
             ]
         },
         {
@@ -110,12 +127,11 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
+                "bundled",
+                "flow",
+                "triage-issue",
                 "--mcp-transport",
                 "sse",
-                "--model",
-                "vertex_ai/gemini-2.5-flash-preview-05-20",
-                "--config-file",
-                "${workspaceFolder}/augmented/flows/triage-issue.yml"
             ]
         },
     ]

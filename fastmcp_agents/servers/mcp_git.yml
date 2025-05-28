@@ -10,6 +10,7 @@ agents:
     blocked_tools:
       - git_create_branch
 
+
 mcpServers:
   "git":
     command: uvx
@@ -163,12 +164,6 @@ mcpServers:
             description: Path to the Git repository.
           branch_name:
             description: The name of the new branch to create.
-          base_branch:
-            description:
-              The name of the branch from which to create the new branch. If not
-              provided, the new branch will be created from the current active
-              branch.
-            default: "new default"
 
       "git_checkout":
         description: >-
