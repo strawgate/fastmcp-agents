@@ -1,17 +1,20 @@
+import asyncio
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from fastmcp.contrib.tool_transformer.loader import ToolOverride, ToolOverrides
 from fastmcp.tools import Tool as FastMCPTool
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
 from pydantic import BaseModel, Field
+from fastmcp.client import Client
+from contextlib import AsyncExitStack
 
 from fastmcp_agents.agent import FastMCPAgent
 from fastmcp_agents.agent.errors.loader import ToolsNotFoundError
 from fastmcp_agents.agent.llm_link.lltellm import AsyncLitellmLLMLink
 from fastmcp_agents.agent.memory.ephemeral import EphemeralMemory
 from fastmcp_agents.agent.observability.logging import BASE_LOGGER
+from fastmcp_agents.tool_transformer.loader import ToolOverride, ToolOverrides
 
 logger = BASE_LOGGER.getChild("agent.loader")
 
@@ -53,6 +56,10 @@ class ExtraToolsAndOverrides(BaseModel):
 
 
 class StdioMCPServerWithOverrides(StdioMCPServer, ExtraToolsAndOverrides):
+    pass
+
+
+class FastMCPAgentsServerWithOverrides(RemoteMCPServer, ExtraToolsAndOverrides):
     pass
 
 
@@ -124,3 +131,57 @@ def load_agent(agent_config: AgentConfig, default_model: str, tools: list[FastMC
 
 def load_agents(agent_configs: list[AgentConfig], default_model: str, tools: list[FastMCPTool]) -> list[FastMCPAgent]:
     return [load_agent(agent_config, default_model, tools) for agent_config in agent_configs]
+
+
+# Focusing only on the core parts relevant to the issue.
+class MCPServerConnection:
+    def __init__(self, name: str, config: StdioMCPServer | RemoteMCPServer):
+        self._client: Client = None  # type: ignore
+        self.config = config
+        self.name = name
+        self._task: asyncio.Task | None = None
+
+        # Event to signal when the client is fully connected and ready
+        self._ready_event = asyncio.Event()
+        # Event to signal when the connection should stop/terminate
+        self._stop_event = asyncio.Event()
+
+    async def connect(self):
+        if self._task is not None:
+            return
+
+        async def connection_runner():
+            async with AsyncExitStack() as stack:
+                try:
+                    transport = self.config.to_transport()
+                    self._client = await stack.enter_async_context(Client(transport))
+
+                    # Signal that the client is ready
+                    self._ready_event.set()
+
+                    # Wait until disconnect is requested (stop_event is set)
+                    await self._stop_event.wait()
+                finally:
+                    # Clean up client on exit
+                    self._client = None  # type: ignore
+
+        # Start the connection task
+        self._task = asyncio.create_task(connection_runner())
+
+        # Wait for the client to be ready before returning
+        await self._ready_event.wait()
+
+    async def disconnect(self):
+        if self._task is None:
+            return
+
+        # Signal the connection task to stop
+        self._stop_event.set()
+
+        # Wait for the connection task to finish cleanly
+        await self._task
+
+        # Reset variables and events for potential future reconnects
+        self._task = None
+        self._stop_event = asyncio.Event()
+        self._ready_event = asyncio.Event()

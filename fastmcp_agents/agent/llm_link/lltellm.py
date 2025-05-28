@@ -1,3 +1,4 @@
+import copy
 import json
 
 from litellm import CustomStreamWrapper, LiteLLM, acompletion
@@ -5,6 +6,7 @@ from litellm.experimental_mcp_client.tools import transform_mcp_tool_to_openai_t
 from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message, ModelResponse, StreamingChoices
 from litellm.utils import supports_function_calling
 from mcp.types import Tool as MCPTool
+from copy import deepcopy
 
 from fastmcp_agents.agent.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
 from fastmcp_agents.agent.errors.llm_link import ModelDoesNotSupportFunctionCallingError
@@ -100,6 +102,17 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             tool_call_requests.append(tool_call_request)
 
         return response_message, tool_call_requests
+    
+    def _copy_tools(self, tools: list[MCPTool]) -> list[MCPTool]:
+        """Make a deep copy of the tools.
+
+        Args:
+            tools: The tools to copy.
+
+        Returns:
+            A deep copy of the tools.
+        """
+        return [copy.deepcopy(tool) for tool in tools]
 
     async def async_completion(
         self,
@@ -113,7 +126,10 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             tools: The tools to use.
         """
 
-        openai_tools = [transform_mcp_tool_to_openai_tool(tool) for tool in tools]
+        
+        copied_tools = self._copy_tools(tools)
+        #dumped_tools = [tool.model_dump() for tool in copied_tools]
+        openai_tools = [transform_mcp_tool_to_openai_tool(tool) for tool in copied_tools]
 
         model_response = await acompletion(
             messages=messages,

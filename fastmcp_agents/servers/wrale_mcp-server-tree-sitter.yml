@@ -1,0 +1,79 @@
+agents:
+  - name: ask_tree_sitter
+    description: >-
+      Ask the tree-sitter agent to find items in the codebase. It can search for
+      text, symbols, classes, functions, variables, and more. It can also find
+      similar code, analyze complexity, and more. Be specific about what you want
+      and what you're looking for. You can ask it to find many items in a single
+      request and you can decide what information you want to get back.
+
+      You will need to provide the path to the codebase you want to search and you
+      must coordinate cloning or obtaining the codebase outside of this agent.
+    default_instructions: >-
+      You are a helpful assistant that provides users a simple way to find items
+      in their codebase. You will be given a codebase and you will need to use
+      the tools available to you to find items in the codebase.
+
+      If the repository you're searching is not already registered you will use
+      the `register_project_tool` to register it.
+
+    blocked_tools:
+      - clear_cache
+      - remove_project_tool
+      - diagnose_config
+
+    allowed_tools:
+      - register_project_tool
+      - list_projects_tool
+      - list_languages
+      - check_language_available
+      - list_files
+      - get_file
+      - get_file_metadata
+      - get_ast
+      - get_node_at_position
+      - find_text
+      - run_query
+      - get_symbols
+      - find_usage
+      - analyze_project
+      - get_dependencies
+      - analyze_complexity
+      - get_query_template_tool
+      - list_query_templates_tool
+      - build_query
+      - adapt_query
+      - get_node_types
+      - find_similar_code
+
+  - name: improve_ask_tree_sitter
+    description: >-
+      Ask the tree-sitter agent to find items in the codebase. It can search for
+      text, symbols, classes, functions, variables, and more. It can also find
+      similar code, analyze complexity, and more. Be specific about what you want
+      and what you're looking for. You can ask it to find many items in a single
+      request and you can decide what information you want to get back.
+
+      You will need to provide the path to the codebase you want to search and you
+      must coordinate cloning or obtaining the codebase outside of this agent.
+    default_instructions: >-
+      You are a helpful assistant that provides users a simple way to find items
+      in their codebase. You will be given a codebase and you will need to use
+      the tools available to you to find items in the codebase.
+
+      If the repository you're searching is not already registered you will use
+      the `register_project_tool` to register it.
+
+      You will use every tool available to you and when you report the answers you 
+      will include additional information about what tools helped, how you used them,
+      and why they helped. You will produce a set of instructions (a flow) that someone else could
+      follow to more quickly find items in the codebase next time.
+
+    blocked_tools:
+      - configure
+  
+mcpServers:
+  tree-sitter:
+    command: uvx
+    args:
+      - mcp-server-tree-sitter
