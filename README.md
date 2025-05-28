@@ -12,6 +12,15 @@ For all of the following options start with:
 
 ### Providers
 
+#### Google Gemini
+
+1. Set up your Google Gemini credentials. `gcloud init` should be your first option.
+2. export MODEL="gemini/gemini-2.5-flash-preview-05-20"
+
+Alternatives to `gcloud init`:
+1. [Create a gemini api key](https://aistudio.google.com/app/apikey)
+2. export GEMINI_API_KEY=your-gemini-api-key
+
 #### Google Vertex AI
 
 1. Set up your Google Vertex AI credentials. `gcloud init` should be your first option.
@@ -52,7 +61,6 @@ docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-
 2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents bundled server --agent-only wrale_mcp-server-tree-sitter`
 3. Visit http://127.0.0.1:3000
 4. Register your tool with open webui.  Click the account in the upper right and select `settings > tools > (+) add connection`.  Set the base url to http://localhost:8000 and click save.
-5. 
 
 ## Adding FastMCP Agents to your MCP Server
 
