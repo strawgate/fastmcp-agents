@@ -2,6 +2,66 @@ Why teach every Agent how to use every tool? Why put the instructions on how to 
 
 What if you could embed an Expert user of the tools available on the Server, into the Server?
 
+## Installation
+
+For all of the following options start with:
+
+1. [Install UV](https://docs.astral.sh/uv/getting-started/installation/)
+2. Follow the instructions for configuring your preferred provider and model
+3. Follow the instruction for your MCP Client (Web UI, IDE (VSCode, Roo Code), cli)
+
+### Providers
+
+#### Google Gemini
+
+1. Set up your Google Gemini credentials. `gcloud init` should be your first option.
+2. export MODEL="gemini/gemini-2.5-flash-preview-05-20"
+
+Alternatives to `gcloud init`:
+1. [Create a gemini api key](https://aistudio.google.com/app/apikey)
+2. export GEMINI_API_KEY=your-gemini-api-key
+
+#### Google Vertex AI
+
+1. Set up your Google Vertex AI credentials. `gcloud init` should be your first option.
+2. Set your model `export MODEL="vertex_ai/gemini-2.5-flash-preview-05-20"`
+
+Alternatives to `gcloud init`:
+
+1. [Create a service account](https://console.cloud.google.com/iam-admin/serviceaccounts/create) with `Vertex AI User` role
+2. Download the credentials
+3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the path of the JSON key file
+
+### MCP Clients 
+
+In each of these examples we'll use the `wrale_mcp-server-tree-sitter` as our MCP Server.
+Feel free to experiment with other MCP Servers.
+
+#### CLI
+
+1. Run `uvx run fastmcp_agents invoke agent "ask_tree_sitter" "can you lookup github issues?" --config-url "https://raw.githubusercontent.com/strawgate/fastmcp-agents/refs/heads/main/fastmcp_agents/servers/wrale_mcp-server-tree-sitter.yml"`
+
+#### MCP Inspector
+
+1. Run `npx @modelcontextprotocol/inspector uvx fastmcp_agents bundled server --agent-only wrale_mcp-server-tree-sitter`
+2. Visit http://localhost:6274/#tools
+3. Click `Connect` to connect to your MCP Server
+4. Click `List Tools`
+5. Click `ask_tree_sitter`
+6. Interact with the tool via the instructions text area
+
+#### Open Webui
+
+1. Run open-webui.  This is the best way:
+```
+docker pull ghcr.io/open-webui/open-webui:main
+docker rm -f open-webui
+docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui -e WEBUI_AUTH=false --restart always ghcr.io/open-webui/open-webui:main
+```
+2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents bundled server --agent-only wrale_mcp-server-tree-sitter`
+3. Visit http://127.0.0.1:3000
+4. Register your tool with open webui.  Click the account in the upper right and select `settings > tools > (+) add connection`.  Set the base url to http://localhost:8000 and click save.
+
 ## Adding FastMCP Agents to your MCP Server
 
 FastMCP Agents is a framework for building Agents into FastMCP Servers.
@@ -25,92 +85,4 @@ web_agent = FastMCPAgent(
 web_agent.register_as_tools(server)
 ```
 
-With full flexibility for you to dynamically constrain the embedded Agent based on information provided by the caller:
-
-```python
-def ask_about_issue(ctx: Context, issue_number: int) -> str:
-    """Ask about an issue in the repository."""
-    
-    def get_relevant_issue(issue_number: int) -> str:
-        """Get the relevant issue from the repository."""
-        return github.get_issue(issue_number)
-    
-    Tool.from_function(
-        name="get_relevant_issue",
-        description="Get the relevant issue from the repository.",
-        function=get_relevant_issue,
-    )
-
-   return issue_agent.run(
-        issue_number=issue_number,
-        instructions="""
-        You are an expert at triaging GitHub issues.
-        """,
-        tools=[get_relevant_issue],
-    )
-```
-
-## Adding FastMCP Agents to other people's MCP Servers
-
-You can wrap any existing MCP Server and embed an AI Agent into the server, so that it can be used as a tool by other Agents. Combined with https://github.com/jlowin/fastmcp/pull/599 this enables entirely new ways of using MCP. 
-
-For example, you can take the upstream GitHub MCP Server, improve any tool's description, name, add safeguards, set default parameters on `page_size`, limit response sizes, etc and expose it as a new MCP Server.
-
-In 
-
-```python
-third_party_mcp_config = {
-    "time": {
-        "command": "uvx",
-        "args": [
-            "git+https://github.com/modelcontextprotocol/servers.git@2025.4.24#subdirectory=src/time",
-            "--local-timezone=America/New_York",
-        ],
-    }
-}
-
-override_config_yaml = ToolOverrides.from_yaml("""
-tools:
-  search_issues:
-    description: >-
-        An updated multi-line description 
-        for the search_issues tool.
-    parameter_overrides:
-      query:
-        description: The query to search for issues.
-        default: "is:open"
-""")
-
-
-async def async_main():
-    async with Client(third_party_mcp_config) as remote_mcp_client:
-        proxied_mcp_server = FastMCP.as_proxy(remote_mcp_client)
-
-        frontend_server = FastMCP("Frontend Server")
-
-        def limit_response_size(response: str) -> str:
-            """Limit the response size to 1000 characters."""
-            raise ValueError("Response size is too large.")
-
-        await transform_tools_from_server(
-            proxied_mcp_server,
-            frontend_server,
-            overrides=override_config_yaml,
-            post_call_hooks=[limit_response_size],
-        )
-
-        github_agent = FastMCPAgent(
-            name="GitHub Agent",
-            description="Assists with GitHub-related tasks like searching issues, PRs, and more.",
-            default_instructions="""
-            You are an expert at triaging GitHub issues...
-            """,
-            llm_link=AsyncLitellmLLMLink.from_model(
-                model=os.env("FASTMCP_AGENTS_DEFAULT_MODEL"),
-            ),
-        )
-
-        github_agent.register_as_tools(frontend_server)
-
-        await frontend_server.run_async(transport="sse")
-```
+With full flexibility for you to dynamically constrain the embedded Agent based on information provided by the caller.
