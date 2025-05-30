@@ -1,6 +1,3 @@
-
-## What is FastMCP-Agents?
-
 - Are you tired of teaching every Agent how to use every tool? 
 - Why put the instructions on how to run `git_clone` into every Agent you write? 
 - Why do you have to keep telling it that it cant clone with `depth: 0`?

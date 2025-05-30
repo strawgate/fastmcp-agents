@@ -18,21 +18,14 @@ from fastmcp_agents.cli.models import (
 )
 from fastmcp_agents.cli.utils import get_config_from_bundled, get_config_from_file, get_config_from_url, prepare_server
 from fastmcp_agents.errors.cli import NoConfigError
-from fastmcp_agents.observability.logging import BASE_LOGGER
+from fastmcp_agents.observability.logging import get_logger, setup_logging
 
-logger = BASE_LOGGER.getChild("main")
-
-ROOT_LOGGER = logging.getLogger()
-
-ROOT_LOGGER.setLevel(logging.WARNING)
+logger = get_logger("cli")
 
 if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None:
     from fastmcp_agents.observability.otel import setup_otel
 
     setup_otel()
-
-
-MCP_TRANSPORT_HELP = "The transport to use for the MCP server. (stdio, sse, streamable-http)"
 
 
 class PendingToolCall(BaseModel):
@@ -46,11 +39,15 @@ class CliContext(BaseModel):
     mcp_config_with_overrides: MCPConfigWithOverrides = Field(default_factory=MCPConfigWithOverrides)
     content_tools: ContentTools = Field(default_factory=ContentTools)
     pending_tool_calls: list[PendingToolCall] = Field(default_factory=list)
-    # frontend_server: FastMCP | None = None
 
 
 @click.group()
-@click.option("--transport", type=click.Choice(["stdio", "sse", "streamable-http"]), default="stdio", help=MCP_TRANSPORT_HELP)
+@click.option(
+    "--transport",
+    type=click.Choice(["stdio", "sse", "streamable-http"]),
+    default="stdio",
+    help="The transport to use for the MCP server. (stdio, sse, streamable-http)",
+)
 @click.option(
     "--log-level",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
@@ -68,10 +65,12 @@ def cli_base(
     tool_only: bool = False,
 ):
     """The base CLI for the FastMCP Agents. Configure logging, transport, and filtering."""
-    
-    configure_logging(level=log_level, logger=BASE_LOGGER.getChild("FastMCP"))
 
-    BASE_LOGGER.setLevel(log_level)
+    # Setup FastMCP Agents Logging
+    setup_logging(level=log_level)
+
+    # Setup FastMCP Logging
+    configure_logging(level=log_level)
 
     ctx.obj = CliContext(
         server_settings=ServerSettings(
