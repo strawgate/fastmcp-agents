@@ -39,100 +39,149 @@
             "justMyCode": false
         },
         {
-            "name": "Augmented Git",
+            "name": "Bundled/SSE - GitHub",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "server",
-                "mcp_git",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--bundled",
+                "github_github-mcp-server"
             ]
         },
         {
-            "name": "Augmented Git (Cyanheads)",
+            "name": "Bundled/SSE - MCP Git",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "server",
-                "cyanheads_git-mcp-server",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--bundled",
+                "mcp_git"
             ]
         },
         {
-            "name": "Augmented GitHub",
+            "name": "Bundled/SSE - Filesystem Operations",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "server",
-                "github_mcp-server",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--bundled",
+                "filesystem_filesystem-mcp-server"
             ]
         },
         {
-            "name": "Augmented Filesystem",
+            "name": "Bundled/SSE - Cyanheads Git",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "server",
-                "strawgate_filesystem-operations",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--bundled",
+                "cyanheads_git-mcp-server"
             ]
         },
         {
-            "name": "Augmented Tree Sitter",
+            "name": "Bundled/SSE - Tree Sitter Agent",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "server",
-                "wrale_mcp-server-tree-sitter",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--bundled",
+                "wrale_mcp-server-tree-sitter"
             ]
         },
         {
-            "name": "Augmented Triage Issue",
+            "name": "Config/SSE - Tree Sitter Agent",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli",
+            "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
-                "bundled",
-                "flow",
-                "triage-issue",
-                "--mcp-transport",
+                "--transport",
                 "sse",
+                "config",
+                "--file",
+                "${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml"
             ]
         },
+        {
+            "name": "CLI/SSE - Tree Sitter Agent",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--transport",
+                "sse",
+                "cli",
+                "agent",
+                "--name",
+                "ask_tree_sitter",
+                "--description",
+                "Ask the tree-sitter agent to find items in the codebase.",
+                "--instructions",
+                "You are a helpful assistant that provides users a simple way to find items in their codebase.",
+                "wrap",
+                "uvx",
+                "git+https://github.com/wrale/mcp-server-tree-sitter.git"
+            ]
+        },
+        {
+            "name": "CLI - Tree Sitter Tool Call",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "cli",
+                "agent",
+                "--name",
+                "ask_tree_sitter",
+                "--description",
+                "Ask the tree-sitter agent to find items in the codebase.",
+                "--instructions",
+                "You are a helpful assistant that provides users a simple way to find items in their codebase.",
+                "call",
+                "ask_tree_sitter",
+                "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "wrap",
+                "uvx",
+                "git+https://github.com/wrale/mcp-server-tree-sitter.git"
+            ]
+        }
     ]
 }

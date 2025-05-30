@@ -6,13 +6,16 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "asyncclick>=8.1.8",
-    "fastmcp",
+    "fastmcp>=2.5.2",
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
     "jsonref>=1.1.0",
     "litellm>=1.71.0",
     "mcp>=1.9.0",
     "numpydoc>=1.8.0",
+    "opentelemetry-api>=1.33.1",
+    "opentelemetry-exporter-otlp>=1.33.1",
+    "opentelemetry-sdk>=1.33.1",
     "python-dotenv>=1.1.0",
     "pyyaml>=6.0.2",
 ]
@@ -25,10 +28,7 @@ packages = [
 allow-direct-references=true
 
 [project.scripts]
-fastmcp_agents = "fastmcp_agents.cli:run_mcp"
-
-[tool.uv.sources]
-fastmcp = { git = "https://github.com/strawgate/fastmcp.git", branch = "proxy_tool" }
+fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
 
 [dependency-groups]
 dev = [
@@ -94,3 +94,5 @@ line-length = 140
     "PLR2004", # Ignore magic values
 ]
 "**/references/*" = ["ALL"]
+"**/example-*.py" = ["ALL"]
+
