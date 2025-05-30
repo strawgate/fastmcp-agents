@@ -64,11 +64,7 @@ For all of the following options start with:
 3. `export MODEL="gemini/gemini-2.5-flash-preview-05-20"`
 
 Command line api key creation:
-1. Use the gcloud cli.  ```gcloud alpha services api-keys create --display-name 'my-fast-mcp-gemini-key' \
-  --api-target=service=aiplatform.googleapis.com \
-  --api-target=service=cloudaicompanion.googleapis.com \
-  --api-target=service=generativelanguage.googleapis.com \
-  --api-target=service=visionai.googleapis.com```
+1. Use the gcloud cli.  `gcloud alpha services api-keys create --display-name 'my-fast-mcp-gemini-key' --api-target=service=generativelanguage.googleapis.com`
 2. use the Response keyString for `GEMINI_API_KEY` (append `--format json | jq .response.keyString` to the above command if you like)
 
 #### Google Vertex AI
