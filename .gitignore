@@ -175,3 +175,4 @@ cython_debug/
 secrets
 
 prompt_suggestions
+agent-working-dir

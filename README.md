@@ -1,8 +1,56 @@
-Why teach every Agent how to use every tool? Why put the instructions on how to run `git_clone` into every Agent you write? Why do you have to keep telling it that it cant clone with `depth: 0`?
 
-What if you could embed an Expert user of the tools available on the Server, into the Server?
+## What is FastMCP-Agents?
 
-## Installation
+- Are you tired of teaching every Agent how to use every tool? 
+- Why put the instructions on how to run `git_clone` into every Agent you write? 
+- Why do you have to keep telling it that it cant clone with `depth: 0`?
+
+FastMCP-Agents is a framework for building Agents into yours and more importantly, other people's MCP Servers!
+
+## How's it work?!
+
+Just take any third-party MCP Server and add just one extra tool -- an embedded Agent that can use the tools the server provides!
+
+Simply take your existing MCP Server 
+```bash
+"mcp-server-tree-sitter": {
+  "command": "uvx",
+  "args": ["mcp-server-tree-sitter"]
+}
+```
+
+And wrap it with an Agent:
+
+```json
+"github_github-mcp-server": {
+  "command": "uvx",
+  "args": [
+    "fastmcp_agents", "cli",
+    "agent",
+    "--name","ask_tree_sitter",
+    "--description", "Ask the tree-sitter agent to find items in the codebase.",
+    "--instructions", "You are a helpful assistant that provides users a simple way to find items in their codebase.",
+    "wrap", "uvx", "mcp-server-tree-sitter"
+  ]
+}
+```
+
+There's more than just adding an AI Agent in FastMCP-Agents.  You can also modify the tools and parameters of the server to make it easier for the Agent to use.
+
+You can use FastMCP-Agents to wrap any MCP Server via the command line, configure the transformation with a YAML or JSON file, or even write Python code to configure the transformations!
+
+| Option | Agents | Servers | Override Tools | Wrap Tools |
+|--------|--------|---------|----------------|------------|
+| [Python](./docs/wrapping/code.md) | ∞ | ∞ | Yes | Yes | 
+| [YAML or JSON](./docs/wrapping/config.md) | ∞ | ∞ | Yes | No | 
+| [Command-line](./docs/wrapping/cli.md) | ∞ | 1 | No | No |
+
+## Example Servers
+
+Here are some example servers that you can use to get started.  You can find the full list of bundled servers [here](./docs/bundled/servers.md).
+
+
+## Using FastMCP-Agents as a CLI or MCP Server
 
 For all of the following options start with:
 
@@ -37,13 +85,21 @@ Alternatives to `gcloud init`:
 In each of these examples we'll use the `wrale_mcp-server-tree-sitter` as our MCP Server.
 Feel free to experiment with other MCP Servers.
 
-#### CLI
+#### CLI Tool Call Example
 
-1. Run `uvx run fastmcp_agents invoke agent "ask_tree_sitter" "can you lookup github issues?" --config-url "https://raw.githubusercontent.com/strawgate/fastmcp-agents/refs/heads/main/fastmcp_agents/servers/wrale_mcp-server-tree-sitter.yml"`
+```bash
+uvx fastmcp_agents cli \
+agent \
+--name "ask_tree_sitter" \
+--description "Ask the tree-sitter agent to find items in the codebase." \
+--instructions "You are a helpful assistant that provides users a simple way to find items in their codebase." \
+call "ask_tree_sitter" "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}" \
+wrap uvx git+https://github.com/wrale/mcp-server-tree-sitter.git
+```
 
 #### MCP Inspector
 
-1. Run `npx @modelcontextprotocol/inspector uvx fastmcp_agents bundled server --agent-only wrale_mcp-server-tree-sitter`
+1. Run `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter`
 2. Visit http://localhost:6274/#tools
 3. Click `Connect` to connect to your MCP Server
 4. Click `List Tools`
@@ -58,31 +114,6 @@ docker pull ghcr.io/open-webui/open-webui:main
 docker rm -f open-webui
 docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui -e WEBUI_AUTH=false --restart always ghcr.io/open-webui/open-webui:main
 ```
-2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents bundled server --agent-only wrale_mcp-server-tree-sitter`
+2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter`
 3. Visit http://127.0.0.1:3000
 4. Register your tool with open webui.  Click the account in the upper right and select `settings > tools > (+) add connection`.  Set the base url to http://localhost:8000 and click save.
-
-## Adding FastMCP Agents to your MCP Server
-
-FastMCP Agents is a framework for building Agents into FastMCP Servers.
-
-Instead of building an MCP server, exposing dozens or hundreds of generic tools, and then expecting your consumers to figure out how to use them, you can embed an optional AI Agent directly into your MCP Server that can take plain language asks from a user or another AI Agent and implement them leveraging the available tools:
-
-```python
-web_agent = FastMCPAgent(
-    name="Filesystem Agent",
-    description="Assists with locating, categorizing, searching, reading, or writing files on the system.",
-    default_instructions="""
-    When you are asked to perform a task that requires you to interact with local files, 
-    you should leverage the tools available to you to perform the task. If you are asked a
-    question, you should leverage the tools available to you to answer the question.
-    """,
-    llm_link=AsyncLitellmLLMLink.from_model(
-        model="vertex_ai/gemini-2.5-flash-preview-05-20",
-    ),
-)
-
-web_agent.register_as_tools(server)
-```
-
-With full flexibility for you to dynamically constrain the embedded Agent based on information provided by the caller.
