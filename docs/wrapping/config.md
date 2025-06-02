@@ -36,7 +36,15 @@ agents:
 
 To invoke a bundled server, simply provide the provider and server name
 
-  ```bash
-  uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter
+```bash
+uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter
 ```
 
+To invoke a single tool call, you can use the `call` subcommand:
+
+```bash
+uvx fastmcp_agents \
+config --bundled wrale_mcp-server-tree-sitter \
+call ask_tree_sitter '{"instructions": "Analyze the codebase in . and tell me what you found."}' \
+run
+```

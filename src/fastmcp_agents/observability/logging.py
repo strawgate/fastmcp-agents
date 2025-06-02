@@ -7,6 +7,7 @@ from rich.logging import RichHandler
 
 BASE_LOGGER = get_logger("agents")
 
+
 def setup_logging(
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | int = "INFO",
 ):
@@ -32,4 +33,3 @@ def get_logger(name: str) -> logging.Logger:
         a configured logger instance
     """
     return BASE_LOGGER.getChild(name)
-

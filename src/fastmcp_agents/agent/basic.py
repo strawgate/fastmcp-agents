@@ -18,7 +18,7 @@ The person or Agent that invoked you understood received the following as a desc
 {agent_description}
 ````````
 
-You will be asked to perform a task. Your tasks will be phrased in the form of either `tell {agent_name} to {task}` or just `{task}`.
+You will be asked to perform a task. Your tasks will be phrased in the form of either `tell {agent_name} to <task>` or just `<task>`.
 You should leverage the tools available to you to perform the task. You may perform many tool calls in one go but you should always
 keep in mind that the tool calls may run in any order and may run at the same time. So you should plan
 for which calls you can do in parallel (multiple in a single request) and which you should do sequentially (one tool call per request).

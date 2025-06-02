@@ -23,9 +23,6 @@ async def async_main():
     client_tools = await client.list_tools()
     client_tools_by_name = {tool.name: tool for tool in client_tools}
 
-    frontend_server = FastMCP.as_proxy(client)
-    frontend_tools_by_name = await frontend_server.get_tools()
-
     convert_time_tool: Tool = client_tools_by_name["convert_time"]
 
     convert_time_tool.run(arguments={"source_timezone": "America/New_York", "time": "3:00", "target_timezone": "America/Los_Angeles"})
