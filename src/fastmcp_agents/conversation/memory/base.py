@@ -19,33 +19,6 @@ class MemoryProtocol(Protocol):
     def restore(self) -> None: ...
 
 
-class EphemeralMemory(MemoryProtocol):
-    """A memory entry that is lost when the server restarts"""
-
-    conversation_history: Conversation
-
-    def __init__(self):
-        self.conversation_history = Conversation()
-
-    def add(self, message: ConversationEntryTypes):
-        self.conversation_history.add(message)
-
-    def get(self):
-        return self.conversation_history.get()
-
-    def set(self, conversation_history: Conversation):
-        self.conversation_history = conversation_history
-
-    def reset(self) -> None:
-        pass
-
-    def persist(self) -> None:
-        pass
-
-    def restore(self) -> None:
-        pass
-
-
 MemoryClass = TypeVar("MemoryClass", bound=MemoryProtocol)
 
 
@@ -60,7 +33,7 @@ class SharedMemoryFactory(MemoryFactoryProtocol, Generic[MemoryClass]):
 
     _shared_memory_instance: MemoryClass
 
-    def __init__(self, memory_class: type[MemoryClass] = EphemeralMemory):
+    def __init__(self, memory_class: type[MemoryClass] | None = None):
         self._memory_class_instance = memory_class()
 
     def __call__(self) -> MemoryClass:
@@ -72,7 +45,7 @@ class PrivateMemoryFactory(MemoryFactoryProtocol, Generic[MemoryClass]):
 
     _memory_class: type[MemoryClass]
 
-    def __init__(self, memory_class: type[MemoryClass] = EphemeralMemory):
+    def __init__(self, memory_class: type[MemoryClass] | None = None):
         self._memory_class = memory_class
 
     def __call__(self) -> MemoryClass:

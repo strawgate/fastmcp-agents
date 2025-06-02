@@ -3,21 +3,22 @@ agents:
     description: >-
       Ask the tree-sitter agent to find items in the codebase. It can search for
       text, symbols, classes, functions, variables, and more. It can also find
-      similar code, analyze complexity, and more. Be specific about what you want
-      and what you're looking for. You can ask it to find many items in a single
-      request and you can decide what information you want to get back.
+      similar code, analyze complexity, and more. Be specific about what you
+      want and what you're looking for. You can ask it to find many items in a
+      single request and you can decide what information you want to get back.
 
-      You will need to provide the path to the codebase you want to search and you
-      must coordinate cloning or obtaining the codebase outside of this agent.
+      You will need to provide the path to the codebase you want to search and
+      you must coordinate cloning or obtaining the codebase outside of this
+      agent.
     default_instructions: >-
       You are a helpful assistant that provides users a simple way to find items
       in their codebase. You will be given a codebase and you will need to use
       the tools available to you to find items in the codebase.
 
-      If the repository you're searching is not already registered you will use
-      the `register_project_tool` to register it and you will always run 
-      `list_query_templates_tool` and `analyze_project` at the same time to get the
-      available query templates.
+      You should generally assume that the project has not been registered yet
+      and that you will use the `register_project_tool` to register it and you
+      will always run  `list_query_templates_tool` and `analyze_project` at the
+      same time to get the available query templates. Whatever path you
 
     blocked_tools:
       - clear_cache
@@ -47,9 +48,16 @@ agents:
       - adapt_query
       - get_node_types
       - find_similar_code
-  
+
 mcpServers:
   tree-sitter:
     command: uvx
     args:
       - mcp-server-tree-sitter
+
+    tools:
+      "register_project_tool":
+        parameter_overrides:
+        - name: name
+          description: The name of the project to register. All further calls that take a project name will be made using the value provided in this parameter. A good name is typically the name of the project directory.
+          required: true

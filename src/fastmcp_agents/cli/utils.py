@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 import yaml
@@ -21,6 +21,9 @@ from fastmcp_agents.cli.models import (
 )
 from fastmcp_agents.observability.logging import BASE_LOGGER
 from fastmcp_agents.vendored.tool_transformer.loader import proxy_mcp_server_with_overrides
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 logger = BASE_LOGGER.getChild("main")
 
@@ -66,7 +69,7 @@ def get_config_from_file(config_file: str) -> tuple[MCPConfigWithOverrides, Cont
 def get_config_from_bundled(config_bundled: str) -> tuple[MCPConfigWithOverrides, ContentTools, list[AgentConfig]]:
     bundled_dir = Path(__file__).parent.parent / "bundled" / "servers"
 
-    if config_bundled.endswith((".yml")):
+    if config_bundled.endswith(".yml"):
         bundled_server_settings_path: Path = bundled_dir / config_bundled
     else:
         bundled_server_settings_path: Path = bundled_dir / f"{config_bundled}.yml"

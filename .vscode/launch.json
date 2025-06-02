@@ -32,6 +32,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "envFile": "${workspaceFolder}/.env",
             "purpose": [
                 "debug-test"
             ],

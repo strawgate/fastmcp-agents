@@ -29,7 +29,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         """
         self.client = client or LiteLLM()
 
-        if model := model or os.getenv("MODEL"):
+        if model := (model or os.getenv("MODEL")):
             self.model = model
         else:
             raise ModelNotSetError

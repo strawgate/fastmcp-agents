@@ -6,7 +6,6 @@ from mcp.types import EmbeddedResource, ImageContent, TextContent
 
 from fastmcp_agents.conversation.types import (
     CallToolRequest,
-    CallToolResponse,
     Conversation,
     SystemConversationEntry,
     ToolConversationEntry,
@@ -56,7 +55,7 @@ class SingleStepAgent(ABC):
         conversation: Conversation,
         requests: list[CallToolRequest],
         tools: list[FastMCPTool],
-    ) -> tuple[Conversation, list[CallToolResponse]]:
+    ) -> Conversation:
         """Run tool call requests.
 
         Args:
@@ -65,14 +64,12 @@ class SingleStepAgent(ABC):
             tools: The tools to use. If None, the default tools of the agentwill be used.
 
         Returns:
-            A list of CallToolResponse objects.
+            The conversation with the tool call responses added.
         """
 
         tools_by_name = {tool.name: tool for tool in tools}
 
         self._tool_logger.info(f"LLM Requests {len(requests)} tool calls: {[request.name for request in requests]}")
-
-        responses: list[CallToolResponse] = []
 
         for request in requests:
             tool_name = request.name
@@ -94,18 +91,26 @@ class SingleStepAgent(ABC):
             except Exception as e:
                 tool_response = [TextContent(type="text", text=f"Error calling tool {tool_name}: {e!s}")]
 
-            self._tool_logger.info(f"Tool {tool_name} returned {len(tool_response)} items")
+            self._tool_logger.info(f"Tool {tool_name} returned {len(tool_response)} items: {tool_response[0].text[:100]}...")
 
             conversation = conversation.add(ToolConversationEntry(tool_call_id=tool_call_id, name=tool_name, content=tool_response))
 
-        return conversation, responses
+        return conversation
 
     async def _generate_tool_call_requests(
         self,
         conversation: Conversation,
         tools: list[FastMCPTool],
     ) -> tuple[Conversation, list[CallToolRequest]]:
-        """Request tool calls from the LLM."""
+        """Send the conversation to the LLM and ask it what tool calls it wants to make.
+
+        Args:
+            conversation: The conversation to add the tool call requests to.
+            tools: The tools to use. If None, the default tools of the agentwill be used.
+
+        Returns:
+            A list of CallToolRequest objects.
+        """
 
         return await self.llm_link.async_completion(
             conversation=conversation,
