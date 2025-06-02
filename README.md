@@ -19,7 +19,7 @@ Simply take your existing MCP Server
 And wrap it with an Agent:
 
 ```json
-"github_github-mcp-server": {
+"mcp-server-tree-sitter": {
   "command": "uvx",
   "args": [
     "fastmcp_agents", "cli",
@@ -27,7 +27,8 @@ And wrap it with an Agent:
     "--name","ask_tree_sitter",
     "--description", "Ask the tree-sitter agent to find items in the codebase.",
     "--instructions", "You are a helpful assistant that provides users a simple way to find items in their codebase.",
-    "wrap", "uvx", "mcp-server-tree-sitter"
+    "wrap", 
+    "uvx", "mcp-server-tree-sitter"
   ]
 }
 ```

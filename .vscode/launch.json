@@ -51,7 +51,8 @@
                 "sse",
                 "config",
                 "--bundled",
-                "github_github-mcp-server"
+                "github_github-mcp-server",
+                "run"
             ]
         },
         {
@@ -67,7 +68,8 @@
                 "sse",
                 "config",
                 "--bundled",
-                "mcp_git"
+                "mcp_git",
+                "run"
             ]
         },
         {
@@ -83,7 +85,8 @@
                 "sse",
                 "config",
                 "--bundled",
-                "filesystem_filesystem-mcp-server"
+                "filesystem_filesystem-mcp-server",
+                "run"
             ]
         },
         {
@@ -99,7 +102,8 @@
                 "sse",
                 "config",
                 "--bundled",
-                "cyanheads_git-mcp-server"
+                "cyanheads_git-mcp-server",
+                "run"
             ]
         },
         {
@@ -115,7 +119,25 @@
                 "sse",
                 "config",
                 "--bundled",
-                "wrale_mcp-server-tree-sitter"
+                "motherduckdb_mcp-server-motherduck",
+                "run"
+            ]
+        },
+        {
+            "name": "Bundled/SSE - Tree Sitter Agent",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--transport",
+                "sse",
+                "config",
+                "--bundled",
+                "wrale_mcp-server-tree-sitter",
+                "run"
             ]
         },
         {
@@ -131,7 +153,8 @@
                 "sse",
                 "config",
                 "--file",
-                "${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml"
+                "${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml",
+                "run"
             ]
         },
         {
@@ -182,6 +205,21 @@
                 "uvx",
                 "git+https://github.com/wrale/mcp-server-tree-sitter.git"
             ]
-        }
+        },
+        {
+            "name": "Config - Tree Sitter Tool Call",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "config",
+                "--file","${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml",
+                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "run"
+            ]
+        },
     ]
 }
