@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import requests
@@ -63,7 +65,11 @@ def get_config_from_file(config_file: str) -> tuple[MCPConfigWithOverrides, Cont
 
 def get_config_from_bundled(config_bundled: str) -> tuple[MCPConfigWithOverrides, ContentTools, list[AgentConfig]]:
     bundled_dir = Path(__file__).parent.parent / "bundled" / "servers"
-    bundled_server_settings_path: Path = bundled_dir / f"{config_bundled}.yml"
+
+    if config_bundled.endswith((".yml")):
+        bundled_server_settings_path: Path = bundled_dir / config_bundled
+    else:
+        bundled_server_settings_path: Path = bundled_dir / f"{config_bundled}.yml"
 
     if not bundled_server_settings_path.exists():
         msg = f"Bundled server config file {bundled_server_settings_path} not found"
@@ -73,6 +79,18 @@ def get_config_from_bundled(config_bundled: str) -> tuple[MCPConfigWithOverrides
 
     config = FastMCPAgentsConfig.model_validate(yaml.safe_load(config_raw))
     return split_config(config)
+
+
+@asynccontextmanager
+async def proxy_mcp_server_context_manager(
+    mcp_clients: dict[str, Client],
+    mcp_servers: dict[str, FastMCP],
+) -> AsyncIterator[tuple[dict[str, Client], dict[str, FastMCP]]]:
+    try:
+        yield mcp_clients, mcp_servers
+    finally:
+        for mcp_client in mcp_clients.values():
+            await mcp_client.close()
 
 
 async def prepare_mcp_servers(
@@ -107,7 +125,28 @@ async def prepare_mcp_servers(
             f"MCP server {mcp_server_name} offers {len(mcp_server_tools)} tools: {mcp_server_tools_names} ({len(overrides)} overriden)."
         )
 
-    return mcp_clients, mcp_servers
+    async with proxy_mcp_server_context_manager(mcp_clients, mcp_servers) as (managed_mcp_clients, managed_mcp_servers):
+        return managed_mcp_clients, managed_mcp_servers
+
+
+async def add_content_tools(tools_server: FastMCP, content_tools: ContentTools) -> FastMCP:
+    """Add the content tools to the tools server.
+
+    Args:
+        tools_server: The tools server to add the content tools to.
+        content_tools: The content tools to add to the tools server.
+    """
+
+    def content_tool_factory(content: str):
+        def content_tool() -> str:
+            return content
+
+        return content_tool
+
+    for tool_name, tool_config in content_tools.tools.items():
+        tools_server.add_tool(fn=content_tool_factory(tool_config.returns), name=tool_name, description=tool_config.description)
+
+    return tools_server
 
 
 async def prepare_server(
@@ -131,15 +170,7 @@ async def prepare_server(
 
     mcp_clients, mcp_servers = await prepare_mcp_servers(tools_server, mcp_config_with_overrides.mcpServers)
 
-    for tool_name, tool_config in content_tools.tools.items():
-
-        def content_tool_factory(content: str):
-            def content_tool() -> str:
-                return content
-
-            return content_tool
-
-        tools_server.add_tool(fn=content_tool_factory(tool_config.returns), name=tool_name, description=tool_config.description)
+    tools_server = await add_content_tools(tools_server, content_tools)
 
     tools_server_tools = await tools_server.get_tools()
     tools_server_tools_names = [tool.name for tool in tools_server_tools.values()]

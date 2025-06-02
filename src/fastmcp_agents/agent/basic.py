@@ -24,7 +24,7 @@ keep in mind that the tool calls may run in any order and may run at the same ti
 for which calls you can do in parallel (multiple in a single request) and which you should do sequentially (one tool call per request).
 """
 
-DEFAULT_STEP_LIMIT = 10
+DEFAULT_STEP_LIMIT = 20
 DEFAULT_MAX_PARALLEL_TOOL_CALLS = 5
 
 

@@ -17,6 +17,7 @@ from fastmcp_agents.cli.models import (
     StdioMCPServerWithOverrides,
 )
 from fastmcp_agents.cli.utils import get_config_from_bundled, get_config_from_file, get_config_from_url, prepare_server
+from fastmcp_agents.errors.base import ContributionsWelcomeError
 from fastmcp_agents.errors.cli import NoConfigError
 from fastmcp_agents.observability.logging import get_logger, setup_logging
 
@@ -122,7 +123,7 @@ def cli_build_agent(
     )
 
 
-@cli_base.command(name="config")
+@cli_base.group(name="config", chain=True)
 @click.option("--file", type=click.Path(exists=True), help="The config file to use.")
 @click.option("--url", type=str, help="The URL of the config file to use.")
 @click.option("--bundled", type=str, help="The bundled server to use.")
@@ -145,16 +146,40 @@ async def cli_with_config(ctx: click.Context, file: str | None = None, url: str 
     else:
         raise NoConfigError
 
+    cli_context.mcp_config_with_overrides = mcp_servers_with_overrides
+    cli_context.content_tools = content_tools
+    cli_context.agents_config = agents_config
+    cli_context.server_settings = server_settings
+
+
+@cli_with_config.command(name="run")
+@click.pass_context
+async def cli_with_config_run(ctx: click.Context):
+    """Run the server."""
+    cli_context: CliContext = ctx.obj
+
     _, _, server = await prepare_server(
         server_name="wrap",
-        mcp_config_with_overrides=mcp_servers_with_overrides,
-        agents_config=agents_config,
-        content_tools=content_tools,
-        agent_only=server_settings.agent_only,
-        tool_only=server_settings.tool_only,
+        mcp_config_with_overrides=cli_context.mcp_config_with_overrides,
+        agents_config=cli_context.agents_config,
+        content_tools=cli_context.content_tools,
+        agent_only=cli_context.server_settings.agent_only,
+        tool_only=cli_context.server_settings.tool_only,
     )
 
-    await server.run_async(transport=server_settings.transport)
+    if cli_context.pending_tool_calls:
+        client = Client(server)
+        async with client:
+            tools = await server.get_tools()
+            for pending_tool_call in cli_context.pending_tool_calls:
+                tool = tools[pending_tool_call.name]
+                result = await client.call_tool(tool.name, pending_tool_call.arguments)
+
+                logger.info(f"Tool {pending_tool_call.name} result: {result}")
+
+        await client.close()
+    else:
+        await server.run_async(transport=cli_context.server_settings.transport)
 
 
 @cli_interface.command(name="list")
@@ -196,6 +221,13 @@ def call_tool(
     arguments = json.loads(parameters)
 
     cli_context.pending_tool_calls.append(PendingToolCall(name=name, arguments=arguments))
+
+
+@cli_base.command(name="shell")
+@click.pass_context
+async def shell(ctx: click.Context):
+    """Start a shell session with the server."""
+    raise ContributionsWelcomeError(feature="shell")
 
 
 @cli_interface.command(name="wrap", context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
@@ -253,6 +285,10 @@ async def wrap_server_run_mcp(
         await client.close()
     else:
         await server.run_async(transport=cli_context.server_settings.transport)
+
+
+cli_with_config.add_command(call_tool)
+cli_with_config.add_command(list_tools)
 
 
 def run_mcp():
