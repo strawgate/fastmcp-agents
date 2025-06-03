@@ -18,6 +18,9 @@ class AsyncLLMLink(Protocol):
     completion_kwargs: dict[str, Any]
     """The kwargs to pass to the underlying LLM SDK when asking for a completion."""
 
+    token_usage: int = 0
+    """The number of tokens used by the LLM."""
+
     logger: logging.Logger = logger
     """The logger to use for the LLM link."""
 

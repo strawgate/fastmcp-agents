@@ -1,3 +1,5 @@
+import os
+
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
@@ -30,3 +32,7 @@ def setup_otel():
 
     # Attach OTLP handler to root logger
     BASE_LOGGER.addHandler(handler)
+
+
+if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None:
+    setup_otel()

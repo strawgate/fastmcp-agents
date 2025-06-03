@@ -108,7 +108,7 @@
             ]
         },
         {
-            "name": "Bundled/SSE - Tree Sitter Agent",
+            "name": "Bundled/SSE - MotherDuckDB Agent",
             "type": "debugpy",
             "request": "launch",
             "module": "fastmcp_agents.cli.base",
@@ -203,6 +203,8 @@
                 "ask_tree_sitter",
                 "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "wrap",
+                "--env",
+                "MCP_TS_LOG_LEVEL=WARNING",
                 "uvx",
                 "git+https://github.com/wrale/mcp-server-tree-sitter.git"
             ]

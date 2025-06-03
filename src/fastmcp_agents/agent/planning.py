@@ -1,8 +1,9 @@
+import yaml
 from fastmcp import Context
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.basic import FastMCPAgent
+from fastmcp_agents.agent.basic import DEFAULT_SYSTEM_PROMPT, FastMCPAgent
 from fastmcp_agents.agent.multi_step import (
     DEFAULT_MAX_PARALLEL_TOOL_CALLS,
     DEFAULT_STEP_LIMIT,
@@ -12,7 +13,12 @@ from fastmcp_agents.agent.multi_step import (
     DefaultSuccessResponseModel,
 )
 from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol, PrivateMemoryFactory
-from fastmcp_agents.conversation.types import Conversation, TextContent, ToolConversationEntry, UserConversationEntry
+from fastmcp_agents.conversation.types import (
+    Conversation,
+    TextContent,
+    ToolConversationEntry,
+    UserConversationEntry,
+)
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
@@ -22,14 +28,17 @@ logger = BASE_LOGGER.getChild("agent.planning")
 DEFAULT_PLANNING_INTERVAL = 5
 
 FIRST_STEP_PROMPT = """
-You will have one chance to perform any initial context-gathering tool calls. You will then be asked to create a detailed plan to complete the task.
+You can perform a small number of tool calls to gather initial context. After the first batch of calls, you will be asked to
+create a detailed plan on how you will complete the task. The plan is not the task, the plan is just a list of steps you will
+take to complete the task.
 """
 
 INITIAL_PLANNING_PROMPT = """
 You will now take a step back from the request and plan out your next steps. You will thoroughly review what you are
 being asked to do. You will produce a thorough review of the current facts you understand regarding the request.
 
-You will then produce a list of the next steps you will take to complete the request. You should plan out as many steps as you can understanding that plans can change. 
+You will then produce a list of the next steps you will take to complete the request. You should plan out
+as many steps as you can understanding that plans can change.
 
 You understand that you only have {step_limit} steps to complete the request.
 During this planning phase you have access to all the tools
@@ -47,24 +56,23 @@ Your original plan was:
 
 But now that {step_number} steps have passed, you have new information and you will need to update the plan.
 You will now update the plan. You will thoroughly review what you are being asked to do. You will produce a thorough
-review of the current facts you understand regarding the request. During this planning phase you have access
-to all the tools you will have access to during the execution phase but only the tool for reporting task success
-or failure will actually do anything during the planning phase.
+review of the current facts you understand regarding the request. We have made it so you can still see all of the tools
+you will have access to during the execution phase but only the tool for reporting task success or failure will actually
+do anything during the planning phase. All other tools are no-ops while planning.
 
-You will then produce an updated list of the next steps you will take to complete the request.
+You will then produce a plan with an updated list of the next steps you will take to complete the request.
 """
 
 
 class PlanPart(BaseModel):
-    intended_action: str = Field(..., description="The intended action to take to complete the request.")
-    example_tool_calls: list[str] = Field(..., description="Example tool calls that will get me closer to completing the request.")
-    reasoning: str = Field(..., description="The reasoning behind taking this particular action.")
+    missing_information: str = Field(..., description="The information that you need to complete the request.")
+    intended_action: str = Field(..., description="The intended action you plan to take to gather the missing information.")
+    tool_selection: list[str] = Field(..., description="Which tools you will probably use to gather the missing information.")
 
 
 class Plan(BaseModel):
     goal: str = Field(..., description="The goal of the plan.")
     parts: list[PlanPart] = Field(..., description="The parts of a plan that will bring you to a complete solution for the goal..")
-    reasoning: str = Field(..., description="The reasoning behind the plan.")
 
 
 class PlanningFastMCPAgent(FastMCPAgent):
@@ -72,7 +80,7 @@ class PlanningFastMCPAgent(FastMCPAgent):
 
     planning_interval: int
     previous_plans: list[Plan]
-    original_instructions: str | None = None
+    original_instructions: str | Conversation
     initial_planning_prompt: str
     update_planning_prompt: str
 
@@ -81,7 +89,7 @@ class PlanningFastMCPAgent(FastMCPAgent):
         *,
         name: str,
         description: str,
-        system_prompt: str | Conversation | None = None,
+        system_prompt: str | Conversation = DEFAULT_SYSTEM_PROMPT,
         default_tools: list[FastMCPTool] | None = None,
         llm_link: AsyncLLMLink | None = None,
         memory_factory: MemoryFactoryProtocol | None = None,
@@ -132,19 +140,36 @@ class PlanningFastMCPAgent(FastMCPAgent):
         success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
         error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
         raise_on_error_response: bool = True,
-        step_limit: int = 10,
+        step_limit: int | None = None,
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent."""
 
         self.original_instructions = instructions
 
         return await super().run(
-            ctx, instructions, tools, success_response_model, error_response_model, raise_on_error_response, step_limit
+            ctx,
+            instructions,
+            tools,
+            success_response_model,
+            error_response_model,
+            raise_on_error_response,
+            step_limit or self.step_limit,
+        )
+
+    @classmethod
+    def _planning_tool(cls) -> FastMCPTool:
+        def produce_plan(plan: Plan) -> None:
+            pass
+
+        return FastMCPTool.from_function(
+            fn=produce_plan,
+            name="produce_plan",
+            description="Report your detailed plan, multi-step (if needed) to completing the task.",
         )
 
     async def run_interruption_step(
         self,
-        ctx: Context,
+        ctx: Context,  # noqa: ARG002
         step_number: int,
         step_limit: int,
         conversation: Conversation,
@@ -152,7 +177,8 @@ class PlanningFastMCPAgent(FastMCPAgent):
     ) -> Conversation:
         """Interrupt the running agent to plan its next steps."""
 
-        available_tools: list[FastMCPTool] = tools + self._completion_tools(Plan, DefaultErrorResponseModel)
+        original_conversation = conversation
+        available_tools: list[FastMCPTool] = [*tools, self._planning_tool()]
 
         if step_number == 1:
             return Conversation.add(
@@ -160,15 +186,15 @@ class PlanningFastMCPAgent(FastMCPAgent):
                 UserConversationEntry(content=FIRST_STEP_PROMPT),
             )
 
-        if step_number == 2:
-            logger.info("Performing initial planning")
+        if step_number == 2:  # noqa: PLR2004
+            self._logger.info("Performing initial planning")
             conversation = Conversation.add(
                 conversation,
                 UserConversationEntry(content=self.initial_planning_prompt.format(step_limit=step_limit)),
             )
 
         elif step_number % self.planning_interval == 0 and step_limit > self.planning_interval:
-            logger.info("Performing update planning")
+            self._logger.info("Performing update planning")
             conversation = Conversation.add(
                 conversation,
                 UserConversationEntry(
@@ -178,24 +204,32 @@ class PlanningFastMCPAgent(FastMCPAgent):
                 ),
             )
         else:
-            return conversation
+            return original_conversation
 
         conversation, tool_call_requests = await self._generate_tool_call_requests(conversation, available_tools)
 
-        if tool_call_requests[0].name == "report_task_success":
+        if len(tool_call_requests) != 1:
+            self._logger.warning(f"Agent failed to plan, got {len(tool_call_requests)} tool call requests. Skipping planning.")
+            return original_conversation
+
+        if tool_call_requests[0].name == "produce_plan":
             request = tool_call_requests[0]
 
-            plan = Plan.model_validate(request.arguments)
+            plan = Plan.model_validate(obj=request.arguments.get("plan", {}))
 
             self.previous_plans.append(plan)
 
             text_content = TextContent(type="text", text=plan.model_dump_json())
 
-            logger.info(f"Reporting task success with plan: {plan.model_dump_json()}")
+            self._logger.info(f"Reporting task success with plan:\n{yaml.safe_dump(plan.model_dump(), indent=2, sort_keys=False)}")
 
             conversation = Conversation.add(
                 conversation,
                 ToolConversationEntry(tool_call_id=request.id, name=request.name, content=[text_content]),
             )
 
-        return conversation
+            return conversation  # noqa: RET504
+
+        self._logger.warning(f"Agent did not perform planning during {step_number}")
+
+        return original_conversation

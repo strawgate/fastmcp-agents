@@ -130,18 +130,18 @@ class MultiStepAgent(SingleStepAgent):
 
     async def run_interruption_step(
         self,
-        ctx: Context,
+        ctx: Context,  # noqa: ARG002
         step_number: int,
         step_limit: int,
         conversation: Conversation,
-        tools: list[FastMCPTool],
+        tools: list[FastMCPTool],  # noqa: ARG002
     ) -> Conversation:
         """Interrupt the running agent to alter the conversation, perform a task, or otherwise change the conversation.
 
         This method is called before each step of the agent.
         """
 
-        if step_number % 5 == 0 and step_limit > 5:
+        if step_number % 5 == 0 and step_limit > 5:  # noqa: PLR2004
             conversation = Conversation.add(
                 conversation,
                 AssistantConversationEntry(
@@ -156,11 +156,11 @@ class MultiStepAgent(SingleStepAgent):
         ctx: Context,
         conversation: Conversation,
         tools: list[FastMCPTool],
-        step_limit: int = 10,
+        step_limit: int,
         success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
         error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
         raise_on_error_response: bool = True,
-    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL | None]:
+    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent for a given number of steps.
 
         Args:
@@ -169,6 +169,8 @@ class MultiStepAgent(SingleStepAgent):
             tools: The tools to use. If None, the default tools will be used.
             step_limit: The maximum number of steps to perform.
         """
+        current_token_usage = self.llm_link.token_usage
+
         for i in range(1, step_limit):
             self._logger.info(f"Running step {i} / {step_limit}")
 
@@ -176,6 +178,10 @@ class MultiStepAgent(SingleStepAgent):
             conversation = await self.run_interruption_step(ctx, i, step_limit, conversation, tools)
 
             conversation, completion_result = await self.run_step(ctx, conversation, tools, success_response_model, error_response_model)
+
+            self._logger.info(f"Finished step {i} / {step_limit}: {self.llm_link.token_usage - current_token_usage} tokens used")
+            
+            current_token_usage = self.llm_link.token_usage
 
             # LLM is tool calling -- continue to the next step
             if completion_result is None:
@@ -198,7 +204,7 @@ class MultiStepAgent(SingleStepAgent):
         success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
         error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
         raise_on_error_response: bool = True,
-        step_limit: int = 10,
+        step_limit: int | None = None,
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent.
 
@@ -232,7 +238,13 @@ class MultiStepAgent(SingleStepAgent):
         self._log_state(conversation)
 
         conversation, completion_result = await self.run_steps(
-            ctx, conversation, available_tools, step_limit, success_response_model, error_response_model, raise_on_error_response
+            ctx,
+            conversation,
+            available_tools,
+            step_limit or self.step_limit,
+            success_response_model,
+            error_response_model,
+            raise_on_error_response,
         )
 
         return conversation, completion_result
@@ -272,6 +284,7 @@ class MultiStepAgent(SingleStepAgent):
             parameters=success_response_model.model_json_schema(),
             annotations=None,
             serializer=None,
+            exclude_args=None,
         )
 
         report_error = FastMCPTool(
@@ -281,6 +294,7 @@ class MultiStepAgent(SingleStepAgent):
             parameters=error_response_model.model_json_schema(),
             annotations=None,
             serializer=None,
+            exclude_args=None,
         )
 
         return [report_success, report_error]

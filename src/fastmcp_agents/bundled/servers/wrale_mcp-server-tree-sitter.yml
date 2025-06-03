@@ -54,6 +54,8 @@ mcpServers:
     command: uvx
     args:
       - mcp-server-tree-sitter
+    env:
+      MCP_TS_LOG_LEVEL: WARNING
 
     tools:
       "register_project_tool":
