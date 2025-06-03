@@ -1,6 +1,6 @@
 # Guide to Tool Rewriting in FastMCP-Agents
 
-FastMCP-Agents provides powerful capabilities to modify the behavior and appearance of tools exposed by wrapped MCP servers. This process, which we refer to as "tool rewriting," encompasses two primary methods: **Tool Overriding** and **Tool Wrapping**.
+FastMCP-Agents provides powerful capabilities to modify the behavior and appearance of tools exposed by wrapped MCP servers. This process, which we refer to as "tool rewriting," is primarily achieved through the `transform_tool` function, which applies transformations defined by `ToolOverride` objects. This guide explores the two main aspects of tool rewriting: **Tool Overriding** and **Tool Wrapping**.
 
 This guide provides an in-depth look at both methods, explaining when and how to use them effectively to tailor tools for your specific agent or application needs.
 
@@ -13,7 +13,7 @@ When you wrap a third-party MCP server with FastMCP-Agents, you gain the ability
 - **Adding Custom Logic:** Executing code before or after a tool call to handle data transformation, logging, validation, or other custom operations.
 - **Adapting Tools:** Modifying tool behavior to better fit the context of your agent or the overall workflow.
 
-Tool rewriting is achieved through two distinct mechanisms: Tool Overriding and Tool Wrapping.
+Tool rewriting is achieved through two distinct mechanisms: Tool Overriding and Tool Wrapping, both applied using the `transform_tool` function.
 
 ## Tool Overriding
 
@@ -58,27 +58,32 @@ In these examples, the `convert_time` tool's description is updated, and its `so
 
 #### Example: Overriding with Python
 
-When configuring server wrapping programmatically with Python, you can use the `override_tool` function or modify the tool definition objects directly.
+When configuring server wrapping programmatically with Python, you use the `transform_tool` function, providing a `ToolOverride` object or keyword arguments that define the overrides.
 
 ```python
-from fastmcp_agents.vendored.tool_transformer import override_tool
+from fastmcp_agents.vendored.tool_transformer import transform_tool, ToolOverride, StringToolParameter
 
-overridden_tool = override_tool(
-    original_tool_definition,
-    frontend_server, # The server the tool belongs to
-    name="convert_time_nyc", # Optionally rename the tool
-    description="Converts a time from New York to another timezone.",
-    parameter_overrides={
-        "source_timezone": {
-            "description": "The timezone the input time is currently in. This is fixed to New York.",
-            "constant": "America/New_York"
-        },
-        "time": {
-            "description": "The time string to convert (e.g., \"3:00 PM\").",
-            "default": "3:00"
-        }
-    }
-)
+# Assuming 'original_tool_definition' is the definition of the tool
+# and 'frontend_server' is the server object
+
+override = ToolOverride(
+        name="convert_time_nyc", # Optionally rename the tool
+        description="Converts a time from New York to another timezone.",
+        parameter_overrides=[
+            StringToolParameter(
+                name="source_timezone",
+                description="The timezone the input time is currently in. This is fixed to New York.",
+                constant="America/New_York" # Set a constant value
+            ),
+            StringToolParameter(
+                name="time",
+                description="The time string to convert (e.g., \"3:00 PM\").",
+                default="3:00" # Set a default value
+            )
+        ]
+    )
+
+override.apply_to_tool(fastmcp_tool)
 ```
 
 Using Python provides more flexibility, allowing for dynamic overrides based on other logic if needed.

@@ -2,32 +2,32 @@
 
 # Publishing Agents as Tools
 
-work in progress
+This document explains how to programmatically wrap MCP servers and define agents using the FastMCP-Agents Python API. This method offers the most flexibility for complex configurations and dynamic behavior.
+
+You can define and configure agents directly in your Python code and expose them as tools on a FastMCP server. This allows other agents or clients to interact with your custom agents.
 
 ```python
 
-from fastmcp import Client, StdioMCPServer
+# This is not yet a working example.
+from fastmcp import Client, FastMCP, StdioMCPServer
 from fastmcp_agents import FastMCPAgent, transform_tool
 
-wrapping = Client()
-
-# avoiding async setup code but you want this to be async
-
-wrapped = StdioMCPServer(
+tree_sitter_server = StdioMCPServer(
     command="uvx",
     args=["mcp-server-tree-sitter"],
 )
 
-backend = Client(wrapped)
+tree_sitter_client = Client(tree_sitter_server)
 
-def tool(str: test):
-    return "Hello, world!"
+tree_sitter_server_proxy =FastMCP.as_proxy(tree_sitter_client)
+
+tools = await tree_sitter_server_proxy.get_tools()
 
 agent = FastMCPAgent(
     name="My Agent",
     description="My Agent Description",
     instructions="My Agent Instructions",
-    tools=[tool],
+    tools=tools,
 )
 
 frontend = FastMCP("My MCP Server")
@@ -37,8 +37,7 @@ agent.register_as_tools(frontend)
 frontend.run_async()
 ```
 
-# Using Agents as Tools
-# Publishing Agents as Tools
+# Dynamic Tools
 
 ```python
 

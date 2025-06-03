@@ -4,6 +4,10 @@
 
 FastMCP-Agents is a framework for building Agents into yours and more importantly, other people's MCP Servers!
 
+## The Problem FastMCP-Agents Solves
+
+Developing effective AI agents often involves repeatedly teaching them how to interact with various tools and APIs. This can be a tedious and inefficient process, especially when dealing with numerous tools or when the tools have complex interfaces or specific usage constraints. FastMCP-Agents addresses this by providing a framework to wrap existing MCP servers and their tools, creating a simplified and consistent interface that is easier for agents to understand and utilize. This allows agent developers to focus on the agent's core logic rather than the intricacies of individual tool integrations.
+
 ## How's it work?!
 
 Just take any third-party MCP Server and add just one extra tool -- an embedded Agent that can use the tools the server provides!
@@ -98,7 +102,7 @@ wrap uvx git+https://github.com/wrale/mcp-server-tree-sitter.git
 
 #### MCP Inspector
 
-1. Run `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter`
+1. Run `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run`
 2. Visit http://localhost:6274/#tools
 3. Click `Connect` to connect to your MCP Server
 4. Click `List Tools`
@@ -113,6 +117,6 @@ docker pull ghcr.io/open-webui/open-webui:main
 docker rm -f open-webui
 docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui -e WEBUI_AUTH=false --restart always ghcr.io/open-webui/open-webui:main
 ```
-2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter`
+2. Run mcpo and your MCP Server to provide an OpenAPI interface for open webui to use: `uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run`
 3. Visit http://127.0.0.1:3000
 4. Register your tool with open webui.  Click the account in the upper right and select `settings > tools > (+) add connection`.  Set the base url to http://localhost:8000 and click save.

@@ -9,10 +9,25 @@ from fastmcp_agents.errors.base import ContributionsWelcomeError
 
 
 class DiskBackedMemory(MemoryProtocol):
+    """
+    A memory entry that is backed by a disk file.
+
+    NOTE: This feature is currently unimplemented. Contributions are welcome!
+    """
+
     conversation_history: Conversation = Field(default_factory=Conversation)
     path: Path
 
     def __init__(self, path: Path | str):
+        """
+        Initializes the DiskBackedMemory.
+
+        Args:
+            path: The path to the file to store the conversation history.
+
+        Raises:
+            ContributionsWelcomeError: This feature is currently unimplemented.
+        """
         raise ContributionsWelcomeError(feature="DiskBackedMemory")
         self.path = Path(path)
 

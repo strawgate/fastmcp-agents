@@ -241,7 +241,11 @@ def call_tool(
 @cli_base.command(name="shell")
 @click.pass_context
 def shell(ctx: click.Context):  # noqa: ARG001
-    """Start a shell session with the server."""
+    """
+    Start a shell session with the server.
+
+    NOTE: This feature is currently unimplemented. Contributions are welcome!
+    """
     raise ContributionsWelcomeError(feature="shell")
 
 

@@ -6,7 +6,7 @@ Simply use `uvx fastmcp_agents config --file <path-to-config.yml>` to wrap an MC
 
 ## Example Configuration
 
-For a great example of the declarative configuration, see the augmented version of Wrale's [`mcp-server-tree-sitter` MCP Server](./fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml).
+For a comprehensive example of the declarative configuration, please refer to the augmented version of Wrale's [`mcp-server-tree-sitter` MCP Server configuration file](./fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml). This bundled file serves as the primary example and demonstrates various configuration options.
 
 ```yaml
 mcpServers:
