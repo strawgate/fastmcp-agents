@@ -22,6 +22,8 @@ def setup_logging(
     BASE_LOGGER.addHandler(handler)
     BASE_LOGGER.propagate = False
 
+    logging.getLogger("mcp").setLevel("WARNING")
+
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger nested under FastMCP namespace.

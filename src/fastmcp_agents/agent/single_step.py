@@ -3,6 +3,7 @@ from abc import ABC
 
 from fastmcp.tools import Tool as FastMCPTool
 from mcp.types import EmbeddedResource, ImageContent, TextContent
+import yaml
 
 from fastmcp_agents.conversation.types import (
     CallToolRequest,
@@ -10,11 +11,12 @@ from fastmcp_agents.conversation.types import (
     SystemConversationEntry,
     ToolConversationEntry,
 )
+from fastmcp_agents.conversation.utils import join_content
 from fastmcp_agents.errors.agent import ToolNotFoundError
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
 
-logger = BASE_LOGGER.getChild("agent")
+logger = BASE_LOGGER
 
 
 class SingleStepAgent(ABC):
@@ -69,7 +71,8 @@ class SingleStepAgent(ABC):
 
         tools_by_name = {tool.name: tool for tool in tools}
 
-        self._tool_logger.info(f"LLM Requests {len(requests)} tool calls: {[request.name for request in requests]}")
+        log_requests = yaml.safe_dump([{request.name: request.arguments} for request in requests], indent=2)
+        self._tool_logger.info(f"Agent requests {len(requests)} tool calls: \n{log_requests}")
 
         for request in requests:
             tool_name = request.name
@@ -81,7 +84,7 @@ class SingleStepAgent(ABC):
 
             fastmcp_tool = tools_by_name[tool_name]
 
-            self._tool_logger.info(f"Running tool {tool_name} with arguments {tool_args}")
+            # self._tool_logger.info(f"{tool_name} called with arguments {tool_args}")
 
             try:
                 tool_response: list[TextContent | ImageContent | EmbeddedResource] = await fastmcp_tool.run(arguments=tool_args)
@@ -91,7 +94,13 @@ class SingleStepAgent(ABC):
             except Exception as e:
                 tool_response = [TextContent(type="text", text=f"Error calling tool {tool_name}: {e!s}")]
 
-            self._tool_logger.info(f"Tool {tool_name} returned {len(tool_response)} items: {tool_response[0].text[:100]}...")
+            base_log_message = f"{tool_name} returned {len(tool_response)} items. "
+
+            if len(tool_response) > 0:
+                joined_tool_response = join_content(tool_response).replace("\n", " ")
+                base_log_message += f"\n{joined_tool_response[:150]}..."
+
+            self._tool_logger.info(base_log_message)
 
             conversation = conversation.add(ToolConversationEntry(tool_call_id=tool_call_id, name=tool_name, content=tool_response))
 

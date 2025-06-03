@@ -1,51 +1,51 @@
 agents:
-  ask_duckdb:
-    description: "Ask the duckdb agent to work with an in-memory database on your behalf."
-    instructions: "You are a helpful assistant that provides users a simple way to find items in their database."
-    allowed_tools:
-      - "get_query_tips"
-    default_instructions: | 
-      You are a helpful assistant that provides users a simple way to find items in their DuckDB databases.
+- name: ask_duckdb
+  description: "Ask the duckdb agent to work with an in-memory database on your behalf."
+  instructions: "You are a helpful assistant that provides users a simple way to find items in their database."
+  allowed_tools:
+    - "get_query_tips"
+  default_instructions: | 
+    You are a helpful assistant that provides users a simple way to find items in their DuckDB databases.
 
-      By default, you have access to an in-memory database, which may be empty or may not be.
+    By default, you have access to an in-memory database, which may be empty or may not be.
 
-      It will be important for you to list out the current tables, their schemas, and a small sample
-      of the data in each table before attempting to help the user. It will also be important for you to
-      call the `tips_writing_queries` tool to get tips for writing DuckDB queries.
+    It will be important for you to list out the current tables, their schemas, and a small sample
+    of the data in each table before attempting to help the user. It will also be important for you to
+    call the `tips_writing_queries` tool to get tips for writing DuckDB queries.
 
-      If you are asked to load JSON data, you should call the `tips_load_json` tool to get tips for loading JSON data.
+    If you are asked to load JSON data, you should call the `tips_load_json` tool to get tips for loading JSON data.
 
-      You may be given a query to execute or an outcome to deliver. 
+    You may be given a query to execute or an outcome to deliver. 
 
-      You can also install extensions as needed. The following extensions are available:
+    You can also install extensions as needed. The following extensions are available:
 
-      ### Full Text search
+    ### Full Text search
 
-      ```sql
-      INSTALL fts;
-      LOAD fts;
-      ```
+    ```sql
+    INSTALL fts;
+    LOAD fts;
+    ```
 
-      ### JSON
+    ### JSON
 
-      Your job is to:
-      1. Execute Queries:
-        - Parse user's analytical questions
-        - Match questions to available data structures
-        - Generate appropriate SQL queries
-        - Execute queries and display results
-        - Provide clear explanations of findings
-        - Explain query logic when needed
+    Your job is to:
+    1. Execute Queries:
+      - Parse user's analytical questions
+      - Match questions to available data structures
+      - Generate appropriate SQL queries
+      - Execute queries and display results
+      - Provide clear explanations of findings
+      - Explain query logic when needed
 
-      2. Visualization Support:
-        - When a visualization is requested, you should make one.
-        - Create artifacts for data visualization when appropriate
-        - Support common chart types and dashboards
-        - Ensure visualizations enhance understanding of results
+    2. Visualization Support:
+      - When a visualization is requested, you should make one.
+      - Create artifacts for data visualization when appropriate
+      - Support common chart types and dashboards
+      - Ensure visualizations enhance understanding of results
 
 
 tools:
-  tips_load_json:
+  - name: tips_load_json
     description: "Get tips for loading JSON data."
     returns: |
       The DuckDB JSON reader can automatically infer which configuration flags to use by analyzing the JSON file. This will work correctly in most situations, and should be the first option attempted. In rare situations where the JSON reader cannot figure out the correct configuration, it is possible to manually configure the JSON reader to correctly parse the JSON file.
@@ -157,12 +157,17 @@ tools:
       │             json             │
       │             json             │
       ├──────────────────────────────┤
-      │ {\n    "duck": 42\n}         │
-      │ {\n    "goose": [1, 2, 3]\n} │
+      │ {
+          "duck": 42
+      }         │
+      │ {
+          "goose": [1, 2, 3]
+      } │
       └──────────────────────────────┘
       ```
 
-      With `newline_delimited`, [NDJSON](https://github.com/ndjson/ndjson-spec) is read, where each JSON is separated by a newline (`\n`), e.g., for `birds-nd.json`:
+      With `newline_delimited`, [NDJSON](https://github.com/ndjson/ndjson-spec) is read, where each JSON is separated by a newline (`
+      `), e.g., for `birds-nd.json`:
 
       ```json
       {"duck": 42}
@@ -209,8 +214,12 @@ tools:
       │                 json                 │
       │                 json                 │
       ├──────────────────────────────────────┤
-      │ {\n        "duck": 42\n    }         │
-      │ {\n        "goose": [1, 2, 3]\n    } │
+      │ {
+              "duck": 42
+          }         │
+      │ {
+              "goose": [1, 2, 3]
+          } │
       └──────────────────────────────────────┘
       ```
 
@@ -409,9 +418,9 @@ tools:
       | `timestampformat` | Specifies the date format to use when parsing timestamps. See [Date Format]({% link docs/stable/sql/functions/dateformat.md %}) | `VARCHAR` | `iso`|
       | `union_by_name` | Whether the schema's of multiple JSON files should be [unified]({% link docs/stable/data/multiple_files/combining_schemas.md %}). | `BOOL` | `false` |
 
-  tips_writing_queries:
+  - name: tips_writing_queries
     description: "Get tips for writing a query."
-    returns: |
+    returns: >-
       Remember:
       - Use artifacts for visualizations
       - Provide clear explanations
@@ -486,7 +495,17 @@ tools:
       `WITH`: The WITH clause in SQL is used to define common table expressions (CTEs), which are temporary result sets that can be referenced within a SELECT, INSERT, UPDATE, or DELETE statement. CTEs simplify complex queries by breaking them into more manageable parts, and they can be recursive, allowing them to reference themselves. The WITH clause can include multiple CTEs, and DuckDB supports specifying whether a CTE should be materialized explicitly or not., Examples: ['WITH cte AS (SELECT 42 AS x) SELECT * FROM cte;', 'WITH cte1 AS (SELECT 42 AS i), cte2 AS (SELECT i * 100 AS x FROM cte1) SELECT * FROM cte2;', 'WITH t(x) AS (⟨complex_query⟩) SELECT * FROM t AS t1, t AS t2, t AS t3;', 'WITH t(x) AS MATERIALIZED (⟨complex_query⟩) SELECT * FROM t AS t1, t AS t2, t AS t3;', 'WITH RECURSIVE FibonacciNumbers (RecursionDepth, FibonacciNumber, NextNumber) AS (SELECT 0 AS RecursionDepth, 0 AS FibonacciNumber, 1 AS NextNumber UNION ALL SELECT fib.RecursionDepth + 1 AS RecursionDepth, fib.NextNumber AS FibonacciNumber, fib.FibonacciNumber + fib.NextNumber AS NextNumber FROM FibonacciNumbers fib WHERE fib.RecursionDepth + 1 < 10) SELECT fn.RecursionDepth AS FibonacciNumberIndex, fn.FibonacciNumber FROM FibonacciNumbers fn;']
       `LIMIT`: The LIMIT clause restricts the number of rows returned by a query. The OFFSET clause specifies the starting point within the result set from which to begin returning rows. LIMIT is commonly used to return a specified number of rows from a result set, while OFFSET is used to skip a specified number of rows before beginning to return rows., Examples: ['SELECT * FROM addresses LIMIT 5;', 'SELECT * FROM addresses LIMIT 5 OFFSET 5;', 'SELECT city, count(*) AS population FROM addresses GROUP BY city ORDER BY population DESC LIMIT 5;']
       `CASE`: The CASE statement performs a conditional evaluation of expressions and returns a result based on a set of conditions. It functions similarly to a switch or ternary operation in other programming languages. It can handle multiple conditions using WHEN clauses, with an optional ELSE clause for unmatched conditions. If the ELSE clause is omitted and no conditions are met, the CASE statement returns NULL. The CASE statement can be used with individual conditions or with a single variable to switch based on predefined values., Examples: ['SELECT i, CASE WHEN i > 2 THEN 1 ELSE 0 END AS test FROM integers;', 'SELECT i, CASE WHEN i = 1 THEN 10 WHEN i = 2 THEN 20 ELSE 0 END AS test FROM integers;', 'SELECT i, CASE WHEN i = 1 THEN 10 END AS test FROM integers;', 'SELECT i, CASE i WHEN 1 THEN 10 WHEN 2 THEN 20 WHEN 3 THEN 30 END AS test FROM integers;']
-      `CREATE TABLE`: The `CREATE TABLE` statement is used to create a new table in the catalog. It allows for the definition of columns, data types, constraints, and primary keys. Additionally, it supports features like creating temporary tables, using `CREATE TABLE ... AS SELECT` for replicating schemas or importing data from CSV files, incorporating `OR REPLACE` to overwrite existing tables, using `IF NOT EXISTS` to conditionally create tables, and defining check and foreign key constraints., Examples: ['CREATE TABLE t1 (i INTEGER, j INTEGER);', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, j VARCHAR);', 'CREATE TABLE t1 (id INTEGER, j VARCHAR, PRIMARY KEY (id, j));', 'CREATE TABLE t1 (\n    i INTEGER NOT NULL,\n    decimalnr DOUBLE CHECK (decimalnr < 10),\n    date DATE UNIQUE,\n    time TIMESTAMP\n);', 'CREATE TABLE t1 AS SELECT 42 AS i, 84 AS j;', "CREATE TEMP TABLE t1 AS SELECT * FROM read_csv('path/file.csv');", 'CREATE OR REPLACE TABLE t1 (i INTEGER, j INTEGER);', 'CREATE TABLE IF NOT EXISTS t1 (i INTEGER, j INTEGER);', 'CREATE TABLE nums AS SELECT i FROM range(0, 3) t(i);', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, percentage INTEGER CHECK (0 <= percentage AND percentage <= 100));', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, j VARCHAR);\nCREATE TABLE t2 (\n    id INTEGER PRIMARY KEY,\n    t1_id INTEGER,\n    FOREIGN KEY (t1_id) REFERENCES t1 (id)\n);', 'CREATE TABLE t1 (x FLOAT, two_x AS (2 * x));']
+      `CREATE TABLE`: The `CREATE TABLE` statement is used to create a new table in the catalog. It allows for the definition of columns, data types, constraints, and primary keys. Additionally, it supports features like creating temporary tables, using `CREATE TABLE ... AS SELECT` for replicating schemas or importing data from CSV files, incorporating `OR REPLACE` to overwrite existing tables, using `IF NOT EXISTS` to conditionally create tables, and defining check and foreign key constraints., Examples: ['CREATE TABLE t1 (i INTEGER, j INTEGER);', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, j VARCHAR);', 'CREATE TABLE t1 (id INTEGER, j VARCHAR, PRIMARY KEY (id, j));', 'CREATE TABLE t1 (
+          i INTEGER NOT NULL,
+          decimalnr DOUBLE CHECK (decimalnr < 10),
+          date DATE UNIQUE,
+          time TIMESTAMP
+      );', 'CREATE TABLE t1 AS SELECT 42 AS i, 84 AS j;', "CREATE TEMP TABLE t1 AS SELECT * FROM read_csv('path/file.csv');", 'CREATE OR REPLACE TABLE t1 (i INTEGER, j INTEGER);', 'CREATE TABLE IF NOT EXISTS t1 (i INTEGER, j INTEGER);', 'CREATE TABLE nums AS SELECT i FROM range(0, 3) t(i);', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, percentage INTEGER CHECK (0 <= percentage AND percentage <= 100));', 'CREATE TABLE t1 (id INTEGER PRIMARY KEY, j VARCHAR);
+      CREATE TABLE t2 (
+          id INTEGER PRIMARY KEY,
+          t1_id INTEGER,
+          FOREIGN KEY (t1_id) REFERENCES t1 (id)
+      );', 'CREATE TABLE t1 (x FLOAT, two_x AS (2 * x));']
       `SET`: The SET statement modifies a DuckDB configuration option at the specified scope, while the RESET statement changes the option to its default value. The scope can be GLOBAL, SESSION, or LOCAL (not yet implemented)., Examples: ["SET memory_limit = '10GB';", 'SET threads = 1;', 'SET threads TO 1;', 'RESET threads;', "SELECT current_setting('threads');", "SET GLOBAL search_path = 'db1,db2'", "SET SESSION default_collation = 'nocase';"]
       `DROP`: The `DROP` statement in DuckDB is used to remove a catalog entry that was previously added with the `CREATE` command. It can drop various types of objects such as tables, views, functions, indexes, schemas, sequences, macros, and types. It also has options like `IF EXISTS` to prevent errors if the object does not exist and `CASCADE` to also drop all dependent objects., Examples: ['DROP TABLE tbl;', 'DROP VIEW IF EXISTS v1;', 'DROP FUNCTION fn;', 'DROP INDEX idx;', 'DROP SCHEMA sch;', 'DROP SEQUENCE seq;', 'DROP MACRO mcr;', 'DROP MACRO TABLE mt;', 'DROP TYPE typ;', 'DROP SCHEMA myschema CASCADE;']
       `ALTER TABLE`: The `ALTER TABLE` statement is used to modify the schema of an existing table in the catalog. This includes adding, dropping, or modifying columns, renaming tables and columns, and setting or dropping default values and not null constraints. Changes made with `ALTER TABLE` are transactional, meaning they are not visible to other transactions until committed and can be rolled back., Examples: ['ALTER TABLE integers ADD COLUMN k INTEGER;', 'ALTER TABLE integers ADD COLUMN l INTEGER DEFAULT 10;', 'ALTER TABLE integers DROP k;', 'ALTER TABLE integers ALTER i TYPE VARCHAR;', "ALTER TABLE integers ALTER i SET DATA TYPE VARCHAR USING concat(i, '_', j);", 'ALTER TABLE integers ALTER COLUMN i SET DEFAULT 10;', 'ALTER TABLE integers ALTER COLUMN i DROP DEFAULT;', 'ALTER TABLE t ALTER COLUMN x SET NOT NULL;', 'ALTER TABLE t ALTER COLUMN x DROP NOT NULL;', 'ALTER TABLE integers RENAME TO integers_old;', 'ALTER TABLE integers RENAME i TO j;']
@@ -507,39 +526,167 @@ tools:
 
       Common DuckDB Types:
       `VARCHAR`: `VARCHAR` is a versatile data type used to store variable-length character strings, accommodating a wide range of text and string data without enforcing a specific length., Examples: ['CREATE TABLE people (name VARCHAR, age INTEGER);', "INSERT INTO documents (text) VALUES ('This is a VARCHAR example text.');", "SELECT * FROM employees WHERE department = 'Engineering';", 'ALTER TABLE students ADD COLUMN email VARCHAR;', "UPDATE orders SET status = 'Shipped' WHERE order_id = 102;", "COPY products TO 'products.csv' DELIMITER ',' HEADER;"]
-      `INTEGER`: The INTEGER data type, with aliases such as int, signed, int4, int32, integer, and integral, represents whole numbers and is commonly used to store numeric data without fractional components., Examples: ['-- Assigning integer values to columns in a CREATE TABLE statement\nCREATE TABLE my_table (id INTEGER, age INTEGER);', '-- Inserting integer values as literals within an INSERT statement\nINSERT INTO my_table VALUES (1, 25);', '-- Using integer operations in a SELECT statement\nSELECT id + 10 AS new_id FROM my_table;', '-- Casting a float to an integer\nSELECT CAST(3.7 AS INTEGER) AS whole_number;', '-- Defining a column to only accept non-negative integers using a CHECK constraint\nCREATE TABLE my_table (id INTEGER CHECK (id >= 0));', '-- Using the INTEGER type in a primary key definition\nCREATE TABLE users (user_id INTEGER PRIMARY KEY, username VARCHAR);', '-- Updating integer columns\nUPDATE my_table SET age = age + 1 WHERE id = 1;', '-- Comparing integer values in a WHERE clause\nSELECT * FROM my_table WHERE age > 20;']
+      `INTEGER`: The INTEGER data type, with aliases such as int, signed, int4, int32, integer, and integral, represents whole numbers and is commonly used to store numeric data without fractional components., Examples: ['-- Assigning integer values to columns in a CREATE TABLE statement
+      CREATE TABLE my_table (id INTEGER, age INTEGER);', '-- Inserting integer values as literals within an INSERT statement
+      INSERT INTO my_table VALUES (1, 25);', '-- Using integer operations in a SELECT statement
+      SELECT id + 10 AS new_id FROM my_table;', '-- Casting a float to an integer
+      SELECT CAST(3.7 AS INTEGER) AS whole_number;', '-- Defining a column to only accept non-negative integers using a CHECK constraint
+      CREATE TABLE my_table (id INTEGER CHECK (id >= 0));', '-- Using the INTEGER type in a primary key definition
+      CREATE TABLE users (user_id INTEGER PRIMARY KEY, username VARCHAR);', '-- Updating integer columns
+      UPDATE my_table SET age = age + 1 WHERE id = 1;', '-- Comparing integer values in a WHERE clause
+      SELECT * FROM my_table WHERE age > 20;']
       `NULL`: The `NULL` type in SQL represents a missing or unknown value, allowing for fields within a table to be uninitialized or absent in data., Examples: ['SELECT NULL = NULL;', 'SELECT NULL IS NULL;', "INSERT INTO table_name (column1, column2) VALUES (NULL, 'data');", "SELECT coalesce(NULL, 'default_value');", 'UPDATE table_name SET column1 = NULL WHERE condition;', "SELECT CASE WHEN column IS NULL THEN 'Value is NULL' ELSE column END FROM table_name;"]
-      `DATE`: The `DATE` type in SQL is used to store calendar dates without time components, representing a year, month, and day as accurate information for querying and managing date-related data., Examples: ["-- Add 5 days to a specific date\\nSELECT DATE '1992-03-22' + 5; -- Result: 1992-03-27\\n", "-- Subtract one date from another to get the number of days between them\\nSELECT DATE '1992-03-27' - DATE '1992-03-22'; -- Result: 5\\n", '-- Get the current date at the start of the transaction\\nSELECT current_date; -- Example result: 2022-10-08\\n', "-- Add an interval of 2 months to a specific date\\nSELECT date_add(DATE '1992-09-15', INTERVAL 2 MONTH); -- Result: 1992-11-15\\n", "-- Find the difference in months between two dates\\nSELECT date_diff('month', DATE '1992-09-15', DATE '1992-11-14'); -- Result: 2\\n", "-- Extract the year from a specific date\\nSELECT date_part('year', DATE '1992-09-20'); -- Result: 1992\\n", "-- Get the (English) name of the weekday from a specific date\\nSELECT dayname(DATE '1992-09-20'); -- Result: Sunday\\n", "-- Convert a date to a string format\\nSELECT strftime(date '1992-01-01', '%a, %-d %B %Y'); -- Result: Wed, 1 January 1992"]
+      `DATE`: The `DATE` type in SQL is used to store calendar dates without time components, representing a year, month, and day as accurate information for querying and managing date-related data., Examples: ["-- Add 5 days to a specific date\
+      SELECT DATE '1992-03-22' + 5; -- Result: 1992-03-27\
+      ", "-- Subtract one date from another to get the number of days between them\
+      SELECT DATE '1992-03-27' - DATE '1992-03-22'; -- Result: 5\
+      ", '-- Get the current date at the start of the transaction\
+      SELECT current_date; -- Example result: 2022-10-08\
+      ', "-- Add an interval of 2 months to a specific date\
+      SELECT date_add(DATE '1992-09-15', INTERVAL 2 MONTH); -- Result: 1992-11-15\
+      ", "-- Find the difference in months between two dates\
+      SELECT date_diff('month', DATE '1992-09-15', DATE '1992-11-14'); -- Result: 2\
+      ", "-- Extract the year from a specific date\
+      SELECT date_part('year', DATE '1992-09-20'); -- Result: 1992\
+      ", "-- Get the (English) name of the weekday from a specific date\
+      SELECT dayname(DATE '1992-09-20'); -- Result: Sunday\
+      ", "-- Convert a date to a string format\
+      SELECT strftime(date '1992-01-01', '%a, %-d %B %Y'); -- Result: Wed, 1 January 1992"]
       `TIME`: The `TIME` type represents a time of day, independent of a specific date, and is used to store and manipulate values consisting of hours, minutes, seconds, and fractional seconds., Examples: ["SELECT TIME '14:21:13';", "SELECT TIME '08:30:00' + INTERVAL 5 MINUTE;", "SELECT EXTRACT(HOUR FROM TIME '23:45:12');", 'SELECT MAKE_TIME(13, 30, 59.999);', 'SELECT CURRENT_TIME;']
       `TIMESTAMP`: A TIMESTAMP value represents an instant in time, composed of a combination of a date (year, month, day) and a time (hour, minute, second, microsecond), stored with microsecond precision, and it can be manipulated using various functions and operators., Examples: ["SELECT TIMESTAMP '1992-09-20 11:30:00.123456';", "SELECT TIMESTAMP '1992-09-20 11:30:00' + INTERVAL 10 DAYS;", "SELECT TIMESTAMP '2023-07-18 17:45:00' - TIMESTAMP '2023-07-10 15:30:00';", "SELECT age(TIMESTAMP '2023-07-18 17:45:00', TIMESTAMP '2022-07-18 17:45:00');", "SELECT strftime(TIMESTAMP '2023-07-18 17:45:00', '%Y-%m-%d %H:%M:%S');", "SELECT extract('hour' FROM TIMESTAMP '2023-07-18 17:45:00');"]
       `JSON`: The JSON data type allows for the storage and querying of JSON formatted data, supporting functions for extracting, manipulating, and transforming JSON content within the database., Examples: ['CREATE TABLE example (j JSON);', 'INSERT INTO example VALUES (\'{ "family": "anatidae", "species": [ "duck", "goose", "swan", null ] }\');', "SELECT j->'$.family' FROM example;", "SELECT json_extract(j, '$.species[0]') FROM example;", "SELECT json_extract_string(j, '$.family') FROM example;"]
       `STRUCT`: The `STRUCT` data type in SQL is used to create a column that contains an ordered list of columns, referred to as entries, which are accessed using named keys. This type is ideal for nesting multiple columns into a single column, allowing a structured and consistent data schema across all rows., Examples: ["SELECT struct_pack(key1 := 'value1', key2 := 42) AS s;", "SELECT {'key1': 'value1', 'key2': 42} AS s;", "SELECT a.x FROM (SELECT {'x': 1, 'y': 2, 'z': 3} AS a);", "SELECT struct_insert({'a': 1, 'b': 2, 'c': 3}, d := 4) AS s;", 'CREATE TABLE t1 (s STRUCT(v VARCHAR, i INTEGER));', "INSERT INTO t1 VALUES (row('a', 42));", "SELECT a.* FROM (SELECT {'x': 1, 'y': 2, 'z': 3} AS a);", "SELECT struct_extract({'x space': 1, 'y': 2, 'z': 3}, 'x space');"]
       `LIST`: A `LIST` column is a flexible, ordered sequence of data values of the same type, which can vary in length among rows and can include any uniform data type, allowing for complex nested data structures., Examples: ['SELECT [1, 2, 3]; -- Creates a static list of integers', "SELECT ['duck', 'goose', NULL, 'heron']; -- Creates a list of strings containing a NULL value", 'SELECT list_value(1, 2, 3); -- Uses the list_value function to create a list of integers', 'CREATE TABLE list_table (int_list INTEGER[], varchar_list VARCHAR[]); -- Defines a table with integer and varchar lists', "SELECT (['a', 'b', 'c'])[3]; -- Retrieves the third element from a list", 'SELECT list_slice([1, 2, 3, 4, 5], 2, 4); -- Extracts a sublist from the main list']
-      `DECIMAL`: The DECIMAL data type, also known as NUMERIC or DEC, allows for the representation of exact fixed-point decimal numbers, providing precise control over the number of digits and the digits after the decimal point., Examples: ['CREATE TABLE salaries (\\n    employee_id INTEGER,\\n    base_salary DECIMAL(10, 2)\\n);', 'INSERT INTO salaries (employee_id, base_salary) VALUES\\n    (1, 50000.00),\\n    (2, 65000.50);', 'SELECT employee_id, base_salary\\nFROM salaries\\nWHERE base_salary > DECIMAL(60000, 2);', 'UPDATE salaries\\nSET base_salary = base_salary + DECIMAL(5000.00, 2)\\nWHERE employee_id = 1;', 'SELECT CAST(99 AS DECIMAL(10, 2));']
+      `DECIMAL`: The DECIMAL data type, also known as NUMERIC or DEC, allows for the representation of exact fixed-point decimal numbers, providing precise control over the number of digits and the digits after the decimal point., Examples: ['CREATE TABLE salaries (\
+          employee_id INTEGER,\
+          base_salary DECIMAL(10, 2)\
+      );', 'INSERT INTO salaries (employee_id, base_salary) VALUES\
+          (1, 50000.00),\
+          (2, 65000.50);', 'SELECT employee_id, base_salary\
+      FROM salaries\
+      WHERE base_salary > DECIMAL(60000, 2);', 'UPDATE salaries\
+      SET base_salary = base_salary + DECIMAL(5000.00, 2)\
+      WHERE employee_id = 1;', 'SELECT CAST(99 AS DECIMAL(10, 2));']
       `ARRAY`: The ARRAY data type stores fixed-size arrays where each element is of the same type, and it is suitable for representing ordered sequences of elements such as numerical vectors or nested arrays., Examples: ['SELECT array_value(1, 2, 3); -- Creates an array with elements 1, 2, and 3', 'CREATE TABLE example_table (id INTEGER, arr INTEGER[3]); -- Declares an array of three integers', 'SELECT id, arr[1] AS element FROM example_table; -- Retrieves the first element of the array', 'SELECT array_value(array_value(1, 2), array_value(3, 4), array_value(5, 6)); -- Creates a nested array using arrays as elements', 'INSERT INTO example_table VALUES (1, [1, 2, 3]), (2, [4, 5, 6]); -- Inserts rows with array values into a table', 'SELECT array_cosine_similarity(array_value(1.0, 2.0, 3.0), array_value(2.0, 3.0, 4.0)); -- Computes cosine similarity between two arrays of the same size', 'SELECT array_cross_product(array_value(1.0, 2.0, 3.0), array_value(2.0, 3.0, 4.0)); -- Computes the cross product of two 3-element arrays']
-      `FLOAT`: The FLOAT data type, also known by aliases FLOAT4, REAL, or float, represents a single precision floating-point number, facilitating approximate calculations and efficient handling of numerical data with precision typically up to 6 decimal digits and a range of at least 1E-37 to 1E+37., Examples: ['-- Example: Creating a table with a FLOAT column\nCREATE TABLE example_table (id INTEGER, value FLOAT);', '-- Example: Inserting values into a FLOAT column\nINSERT INTO example_table VALUES (1, 3.14), (2, 2.718);', '-- Example: Performing arithmetic operations with FLOAT values\nSELECT id, value * 2.0::FLOAT AS doubled_value FROM example_table;', '-- Example: Casting a numeric value to FLOAT\nSELECT CAST(100 AS FLOAT) AS float_value;', '-- Example: Using FLOAT values in a mathematical function\nSELECT SQRT(value) FROM example_table WHERE value > 0;', '-- Example: Comparing FLOAT values\nSELECT * FROM example_table WHERE value > 3.0::FLOAT;']
+      `FLOAT`: The FLOAT data type, also known by aliases FLOAT4, REAL, or float, represents a single precision floating-point number, facilitating approximate calculations and efficient handling of numerical data with precision typically up to 6 decimal digits and a range of at least 1E-37 to 1E+37., Examples: ['-- Example: Creating a table with a FLOAT column
+      CREATE TABLE example_table (id INTEGER, value FLOAT);', '-- Example: Inserting values into a FLOAT column
+      INSERT INTO example_table VALUES (1, 3.14), (2, 2.718);', '-- Example: Performing arithmetic operations with FLOAT values
+      SELECT id, value * 2.0::FLOAT AS doubled_value FROM example_table;', '-- Example: Casting a numeric value to FLOAT
+      SELECT CAST(100 AS FLOAT) AS float_value;', '-- Example: Using FLOAT values in a mathematical function
+      SELECT SQRT(value) FROM example_table WHERE value > 0;', '-- Example: Comparing FLOAT values
+      SELECT * FROM example_table WHERE value > 3.0::FLOAT;']
       `BIGINT`: The `BIGINT` data type is an 8-byte integer that can store large integer values suitable for handling significant quantities or high precision integer data., Examples: ['CREATE TABLE example_table (id BIGINT PRIMARY KEY, count BIGINT, reference_id BIGINT);', "SELECT * FROM parquet_metadata('file.parquet') WHERE row_group_id = 1;", 'ALTER TABLE orders ADD COLUMN order_count BIGINT DEFAULT 0;', 'UPDATE employee SET salary = salary + 1000 WHERE employee_id = 1001;', 'SELECT store_id, SUM(sales) AS total_sales FROM transactions GROUP BY store_id;', 'CREATE SEQUENCE order_sequence START WITH 1000 INCREMENT BY 1 MINVALUE 100 MAXVALUE 10000 NO CYCLE;']
-      `DOUBLE`: The `DOUBLE` type, also known as `FLOAT8`, is a double-precision floating point number data type commonly used for storing large or precise decimal values in SQL queries., Examples: ['```sql\n-- Using DOUBLE to store and manipulate high-precision values\nCREATE TABLE sales_data (\n    transaction_id INTEGER,\n    sale_amount DOUBLE\n);\n\nINSERT INTO sales_data (transaction_id, sale_amount) VALUES (1, 1999.99);\nSELECT sale_amount * 1.05 AS total_after_tax FROM sales_data WHERE transaction_id = 1;\n```', '```sql\n-- Calculating the square root of a DOUBLE value\nSELECT sqrt(column_value) FROM my_table WHERE column_value > 0;\n```', '```sql\n-- Using DOUBLE in mathematical functions\nSELECT sin(column1), cos(column2) FROM my_numeric_table;\n```', '```sql\n-- Explicit casting of an INTEGER to DOUBLE for precision in arithmetic operations\nSELECT cast(my_integer_column AS DOUBLE) / 2 FROM my_table;\n```', '```sql\n-- Working with DOUBLE in spatial functions\nDOUBLE ST_Area (geometry)  -- Computes the area of a geometry, returning a DOUBLE value as the area\n```', "```sql\n-- Using the DOUBLE type in JSON processing\nSELECT json_extract(my_json_column, '$.key')::DOUBLE FROM my_json_table;\n```"]
+      `DOUBLE`: The `DOUBLE` type, also known as `FLOAT8`, is a double-precision floating point number data type commonly used for storing large or precise decimal values in SQL queries., Examples: ['```sql
+      -- Using DOUBLE to store and manipulate high-precision values
+      CREATE TABLE sales_data (
+          transaction_id INTEGER,
+          sale_amount DOUBLE
+      );
+      
+      INSERT INTO sales_data (transaction_id, sale_amount) VALUES (1, 1999.99);
+      SELECT sale_amount * 1.05 AS total_after_tax FROM sales_data WHERE transaction_id = 1;
+      ```', '```sql
+      -- Calculating the square root of a DOUBLE value
+      SELECT sqrt(column_value) FROM my_table WHERE column_value > 0;
+      ```', '```sql
+      -- Using DOUBLE in mathematical functions
+      SELECT sin(column1), cos(column2) FROM my_numeric_table;
+      ```', '```sql
+      -- Explicit casting of an INTEGER to DOUBLE for precision in arithmetic operations
+      SELECT cast(my_integer_column AS DOUBLE) / 2 FROM my_table;
+      ```', '```sql
+      -- Working with DOUBLE in spatial functions
+      DOUBLE ST_Area (geometry)  -- Computes the area of a geometry, returning a DOUBLE value as the area
+      ```', "```sql
+      -- Using the DOUBLE type in JSON processing
+      SELECT json_extract(my_json_column, '$.key')::DOUBLE FROM my_json_table;
+      ```"]
       `INTERVAL`: The INTERVAL data type represents a period of time that can be measured in months, days, microseconds, or a combination of these units, and is typically used to add or subtract to DATE, TIMESTAMP, TIMESTAMPTZ, or TIME values., Examples: ["SELECT INTERVAL '1 month 1 day'; -- Returns an interval representing 1 month and 1 day", "SELECT DATE '2000-01-01' + INTERVAL 1 YEAR; -- Adds 1 year to the specified date", "SELECT TIMESTAMP '2000-02-06 12:00:00' - TIMESTAMP '2000-01-01 11:00:00'; -- Returns interval of 36 days 1 hour", "SELECT INTERVAL '48:00:00'::INTERVAL; -- Converts a time string to microseconds interval representing 48 hours", "SELECT (DATE '2020-01-01' + INTERVAL 30 DAYS) = (DATE '2020-01-01' + INTERVAL 1 MONTH); -- Compares intervals by their conversion to microseconds"]
       `BOOLEAN`: The `BOOLEAN` type represents a statement of truth, "true" or "false", with the possibility of being "unknown", represented by `NULL` in SQL., Examples: ['> SELECT true, false, NULL::BOOLEAN;', '-- Outputs the three possible values for BOOLEAN: true, false, NULL.', 'CREATE TABLE example (is_active BOOLEAN);', '-- Create a table with a BOOLEAN column.', 'INSERT INTO example VALUES (true), (false), (NULL);', '-- Insert BOOLEAN values, including NULL.', 'SELECT * FROM example WHERE is_active AND is_verified;', '-- Filters rows where both conditions are true.', 'UPDATE example SET is_active = false WHERE condition;', '-- Update rows to set the BOOLEAN field to false.']
-      `UNION`: The UNION data type is a nested type that holds one of multiple distinct values with a "tag" to identify the active type and can contain multiple uniquely tagged members of various types, akin to C++ std::variant or Rust's Enum., Examples: ["```sql\nCREATE TABLE tbl1 (u UNION(num INTEGER, str VARCHAR));\nINSERT INTO tbl1 VALUES (1), ('two'), (union_value(str := 'three'));\n```", "```sql\nSELECT union_extract(u, 'str') AS str\nFROM tbl1;\n```", '```sql\nSELECT u.str\nFROM tbl1;\n```', '```sql\nSELECT union_tag(u) AS t\nFROM tbl1;\n```']
+      `UNION`: The UNION data type is a nested type that holds one of multiple distinct values with a "tag" to identify the active type and can contain multiple uniquely tagged members of various types, akin to C++ std::variant or Rust's Enum., Examples: ["```sql
+      CREATE TABLE tbl1 (u UNION(num INTEGER, str VARCHAR));
+      INSERT INTO tbl1 VALUES (1), ('two'), (union_value(str := 'three'));
+      ```", "```sql
+      SELECT union_extract(u, 'str') AS str
+      FROM tbl1;
+      ```", '```sql
+      SELECT u.str
+      FROM tbl1;
+      ```', '```sql
+      SELECT union_tag(u) AS t
+      FROM tbl1;
+      ```']
       `ENUM`: The Enum data type represents a dictionary encoding structure that enumerates all possible unique string values of a column, allowing for efficient storage and query execution by storing only numerical references to the strings., Examples: ["CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');", 'CREATE TYPE birds AS ENUM (SELECT my_varchar FROM my_inputs);', 'CREATE TABLE person (name TEXT, current_mood mood);', "INSERT INTO person VALUES ('Pedro', 'happy'), ('Pagliacci', 'sad');", 'SELECT enum_range(NULL::mood) AS mood_values;', 'DROP TYPE mood;']
       `TINYINT`: TINYINT is a signed one-byte integer type that can store whole numbers ranging from -128 to 127, often used to save storage space when values are known to fall within this small range., Examples: ["SELECT CAST('123' AS TINYINT);", 'INSERT INTO my_table (x) VALUES (CAST(100 AS TINYINT));', 'UPDATE my_table SET x = CAST(50 AS TINYINT) WHERE id = 1;', 'SELECT * FROM my_table WHERE x = CAST(-50 AS TINYINT);', 'CREATE TABLE example (id TINYINT);']
-      `UUID`: The UUID data type is used to store universally unique identifiers as 128-bit values, formatted as 36-character strings with hexadecimal characters and dashes arranged in the pattern ⟨8 characters⟩-⟨4 characters⟩-⟨4 characters⟩-⟨4 characters⟩-⟨12 characters⟩., Examples: ['-- Create a table with a UUID column\nCREATE TABLE users (id UUID, name VARCHAR);', "-- Insert a new UUID value into the table\nINSERT INTO users (id, name) VALUES (gen_random_uuid(), 'Alice');", "-- Retrieve UUID values from a table\nSELECT id FROM users WHERE name = 'Alice';", '-- Generate and display a random UUID\nSELECT uuid();']
+      `UUID`: The UUID data type is used to store universally unique identifiers as 128-bit values, formatted as 36-character strings with hexadecimal characters and dashes arranged in the pattern ⟨8 characters⟩-⟨4 characters⟩-⟨4 characters⟩-⟨4 characters⟩-⟨12 characters⟩., Examples: ['-- Create a table with a UUID column
+      CREATE TABLE users (id UUID, name VARCHAR);', "-- Insert a new UUID value into the table
+      INSERT INTO users (id, name) VALUES (gen_random_uuid(), 'Alice');", "-- Retrieve UUID values from a table
+      SELECT id FROM users WHERE name = 'Alice';", '-- Generate and display a random UUID
+      SELECT uuid();']
       `TIMESTAMP WITH TIME ZONE`: `TIMESTAMP WITH TIME ZONE` (or `TIMESTAMPTZ`) represents a point in time using a calendar date and time of day along with a time zone offset, allowing for time zone sensitive operations such as conversions and comparisons., Examples: ["SELECT TIMESTAMPTZ '2023-10-17 12:00:00+01';", "SELECT now() AT TIME ZONE 'UTC';", "SELECT TIMESTAMP '2023-10-17 10:00:00-07' AT TIME ZONE 'America/New_York';", "SELECT age(TIMESTAMPTZ '2005-10-17 12:00:00-07');", "SELECT TIMESTAMPTZ '2023-10-17 15:00:00+00' - TIMESTAMPTZ '2023-10-16 15:00:00+00';"]
       `SMALLINT`: The SMALLINT type, with aliases such as short, int2, smallint, and int16, represents a signed two-byte integer that can store whole numbers ranging from -32768 to 32767., Examples: ['CREATE TABLE test_table (id SMALLINT);', 'INSERT INTO test_table (id) VALUES (100);', 'SELECT * FROM test_table WHERE id BETWEEN -100 AND 100;', 'ALTER TABLE test_table ADD COLUMN new_column SMALLINT;', 'UPDATE test_table SET id = id + 1 WHERE id < 32767;']
-      `BLOB`: The BLOB (Binary Large Object) type represents a variable-length binary data object, used for storing arbitrary binary data in the database, such as images or files, without any interpretation of its contents., Examples: ["-- Create a BLOB with a single byte\\nSELECT '\\xAA'::BLOB;\\n-- Result: \\xAA\\n\\n-- Create a BLOB with multiple bytes\\nSELECT '\\xAA\\xAB\\xAC'::BLOB;\\n-- Result: \\xAA\\xAB\\xAC\\n\\n-- Concatenate two BLOB values\\nSELECT '\\xAA'::BLOB || '\\xBB'::BLOB;\\n-- Result: \\xAABB\\n\\n-- Convert a BLOB to a hexadecimal string\\nSELECT hex('\\xAA\\xBB'::BLOB);\\n-- Result: AABB\\n\\n-- Decode a BLOB to a string, ensuring it is valid UTF-8\\nSELECT decode('\\xC3\\xBC'::BLOB);\\n-- Result: ü\\n\\n-- Read a BLOB from a file\\nSELECT read_blob('myfile.bin');\\n-- Result: Contents of 'myfile.bin' as a BLOB"]
+      `BLOB`: The BLOB (Binary Large Object) type represents a variable-length binary data object, used for storing arbitrary binary data in the database, such as images or files, without any interpretation of its contents., Examples: ["-- Create a BLOB with a single byte\
+      SELECT '\\xAA'::BLOB;\
+      -- Result: \\xAA\
+      \
+      -- Create a BLOB with multiple bytes\
+      SELECT '\\xAA\\xAB\\xAC'::BLOB;\
+      -- Result: \\xAA\\xAB\\xAC\
+      \
+      -- Concatenate two BLOB values\
+      SELECT '\\xAA'::BLOB || '\\xBB'::BLOB;\
+      -- Result: \\xAABB\
+      \
+      -- Convert a BLOB to a hexadecimal string\
+      SELECT hex('\\xAA\\xBB'::BLOB);\
+      -- Result: AABB\
+      \
+      -- Decode a BLOB to a string, ensuring it is valid UTF-8\
+      SELECT decode('\\xC3\\xBC'::BLOB);\
+      -- Result: ü\
+      \
+      -- Read a BLOB from a file\
+      SELECT read_blob('myfile.bin');\
+      -- Result: Contents of 'myfile.bin' as a BLOB"]
 
       Common DuckDB Keywords:
       `AS`: The `AS` keyword in SQL is used to create an alias for columns or tables, helping to simplify query logic and improve readability., Examples: ['SELECT first_name AS name FROM employees;', 'SELECT department AS dept FROM company;', 'CREATE VIEW sales_report AS SELECT * FROM sales WHERE year = 2023;', 'SELECT product_name AS name, SUM(sales) AS total_sales FROM store GROUP BY product_name;', 'SELECT c.customer_id, c.name AS customer_name, o.order_id, o.total_amount AS amount FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id;']
       `DISTINCT`: The `DISTINCT` keyword is used in the SQL `SELECT` statement to ensure that only unique values are returned for specified columns, effectively removing duplicate rows from the result set., Examples: ['SELECT DISTINCT city FROM addresses;', 'SELECT DISTINCT ON(country) city, population FROM cities ORDER BY population DESC;']
       `IN`: The `IN` keyword is used in SQL to specify a list of discrete values for a column to match against, typically in a `WHERE` clause, allowing for multiple specific conditions to be evaluated at once., Examples: ["SELECT * FROM employees WHERE department IN ('HR', 'Engineering', 'Marketing');", 'SELECT id, name FROM students WHERE grade IN (10, 11, 12);', "DELETE FROM orders WHERE order_status IN ('Cancelled', 'Returned');", "UPDATE items SET status = 'Unavailable' WHERE item_id IN (1001, 1002, 1003);", "SELECT * FROM logs WHERE severity IN ('ERROR', 'CRITICAL') ORDER BY timestamp DESC;"]
       `OVER`: The `OVER` clause in SQL specifies a window for evaluating window functions, allowing computations over a defined group of rows in a result set., Examples: ['SELECT row_number() OVER () FROM sales;', 'SELECT row_number() OVER (ORDER BY time) FROM sales;', 'SELECT row_number() OVER (PARTITION BY region ORDER BY time) FROM sales;', 'SELECT amount - lag(amount) OVER (ORDER BY time) FROM sales;', 'SELECT amount / sum(amount) OVER (PARTITION BY region) FROM sales;']
-      `ALL`: The `ALL` keyword in SQL specifies that operations should retain all duplicate rows, as seen in commands like `UNION ALL`, `INTERSECT ALL`, and `EXCEPT ALL`, which follow bag semantics instead of eliminating duplicates., Examples: ['UNION ALL\n\n```sql\nSELECT * FROM range(2) t1(x)\nUNION ALL\nSELECT * FROM range(3) t2(x);\n```\nThis example demonstrates using `UNION ALL` to combine rows from two queries without eliminating duplicates.', 'INTERSECT ALL\n\n```sql\nSELECT unnest([5, 5, 6, 6, 6, 6, 7, 8]) AS x\nINTERSECT ALL\nSELECT unnest([5, 6, 6, 7, 7, 9]);\n```\nThis example shows using `INTERSECT ALL` to select rows that are present in both result sets, keeping duplicate values.', 'EXCEPT ALL\n\n```sql\nSELECT unnest([5, 5, 6, 6, 6, 6, 7, 8]) AS x\nEXCEPT ALL\nSELECT unnest([5, 6, 6, 7, 7, 9]);\n```\nThis example illustrates `EXCEPT ALL`, which selects all rows present in the first query but not in the second, without removing duplicates.', 'ORDER BY ALL\n\n```sql\nSELECT *\nFROM addresses\nORDER BY ALL;\n```\nThis SQL command uses `ORDER BY ALL` to sort the result set by all columns sequentially from left to right.']
+      `ALL`: The `ALL` keyword in SQL specifies that operations should retain all duplicate rows, as seen in commands like `UNION ALL`, `INTERSECT ALL`, and `EXCEPT ALL`, which follow bag semantics instead of eliminating duplicates., Examples: ['UNION ALL
+      
+      ```sql
+      SELECT * FROM range(2) t1(x)
+      UNION ALL
+      SELECT * FROM range(3) t2(x);
+      ```
+      This example demonstrates using `UNION ALL` to combine rows from two queries without eliminating duplicates.', 'INTERSECT ALL
+      
+      ```sql
+      SELECT unnest([5, 5, 6, 6, 6, 6, 7, 8]) AS x
+      INTERSECT ALL
+      SELECT unnest([5, 6, 6, 7, 7, 9]);
+      ```
+      This example shows using `INTERSECT ALL` to select rows that are present in both result sets, keeping duplicate values.', 'EXCEPT ALL
+      
+      ```sql
+      SELECT unnest([5, 5, 6, 6, 6, 6, 7, 8]) AS x
+      EXCEPT ALL
+      SELECT unnest([5, 6, 6, 7, 7, 9]);
+      ```
+      This example illustrates `EXCEPT ALL`, which selects all rows present in the first query but not in the second, without removing duplicates.', 'ORDER BY ALL
+      
+      ```sql
+      SELECT *
+      FROM addresses
+      ORDER BY ALL;
+      ```
+      This SQL command uses `ORDER BY ALL` to sort the result set by all columns sequentially from left to right.']
       `LIKE`: The `LIKE` expression is used to determine if a string matches a specified pattern, allowing wildcard characters such as `_` to represent any single character and `%` to match any sequence of characters., Examples: ["SELECT 'abc' LIKE 'abc'; -- true", "SELECT 'abc' LIKE 'a%'; -- true", "SELECT 'abc' LIKE '_b_'; -- true", "SELECT 'abc' LIKE 'c'; -- false", "SELECT 'abc' LIKE 'c%'; -- false", "SELECT 'abc' LIKE '%c'; -- true", "SELECT 'abc' NOT LIKE '%c'; -- false", "SELECT 'abc' ILIKE '%C'; -- true"]
       """
 
-  info_extension_full_text_search:
+  - name: info_extension_full_text_search
     description: "Get information about the full text search extension."
     returns: |
       Full-Text Search is an extension to DuckDB that allows for search through strings.
@@ -709,8 +856,8 @@ mcpServers:
       - mcp-server-motherduck
       - --db-path
       - ":memory:"
-  redirect_to:
-    command: fastmcp
-    args:
-      - run
-      - redirect_to.py
+  # redirect_to:
+  #   command: fastmcp
+  #   args:
+  #     - run
+  #     - ../src/fastmcp_agents/tools/redirect_to.py

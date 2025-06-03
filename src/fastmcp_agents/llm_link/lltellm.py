@@ -151,6 +151,9 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         if isinstance(model_response, CustomStreamWrapper):
             raise UnsupportedFeatureError(feature="streaming completions")
 
+        if model_response.model_extra:
+            self.token_usage += model_response.model_extra.get("usage", {}).get("total_tokens", 0)
+
         tool_calls, tool_call_requests = await self._extract_tool_call_requests(model_response)
 
         return conversation.add(

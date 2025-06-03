@@ -1,23 +1,24 @@
 import asyncio
 import json
 import os
+import sys
 from typing import Any, Literal
 
 import asyncclick as click
-from fastmcp import Client
+from fastmcp import Client, FastMCP
 from fastmcp.utilities.logging import configure_logging
 from pydantic import BaseModel, Field
 
+from fastmcp_agents.agent.basic import FastMCPAgent
+from fastmcp_agents.cli.loader import get_config_for_bundled, get_config_from_file, get_config_from_url
 from fastmcp_agents.cli.models import (
-    AgentConfig,
-    ContentTools,
-    MCPConfigWithOverrides,
+    AgentModel,
+    AugmentedServerModel,
+    OverriddenStdioMCPServer,
     ServerSettings,
-    StdioMCPServerWithOverrides,
 )
-from fastmcp_agents.cli.utils import get_config_from_bundled, get_config_from_file, get_config_from_url, prepare_server
 from fastmcp_agents.errors.base import ContributionsWelcomeError
-from fastmcp_agents.errors.cli import NoConfigError
+from fastmcp_agents.errors.cli import FastMCPAgentsError, NoConfigError
 from fastmcp_agents.observability.logging import get_logger, setup_logging
 
 logger = get_logger("cli")
@@ -33,11 +34,13 @@ class PendingToolCall(BaseModel):
     arguments: dict[str, Any]
 
 
+class ToolCallResult(PendingToolCall):
+    result: Any
+
+
 class CliContext(BaseModel):
     server_settings: ServerSettings
-    agents_config: list[AgentConfig] = Field(default_factory=list)
-    mcp_config_with_overrides: MCPConfigWithOverrides = Field(default_factory=MCPConfigWithOverrides)
-    content_tools: ContentTools = Field(default_factory=ContentTools)
+    augmented_server_model: AugmentedServerModel = Field(default_factory=AugmentedServerModel)
     pending_tool_calls: list[PendingToolCall] = Field(default_factory=list)
 
 
@@ -70,7 +73,7 @@ def cli_base(
     setup_logging(level=log_level)
 
     # Setup FastMCP Logging
-    configure_logging(level=log_level)
+    configure_logging(level=log_level, enable_rich_tracebacks=False)
 
     ctx.obj = CliContext(
         server_settings=ServerSettings(
@@ -83,11 +86,11 @@ def cli_base(
 
 
 @cli_base.group(name="cli", chain=True)
-@click.pass_context
-def cli_interface(
-    ctx: click.Context,
-):
-    """The group for the `CLI` part of the FastMCP Agents CLI."""
+def cli_interface():
+    """The group for the `CLI` part of the FastMCP Agents CLI.
+
+    This allows building agents and wrapping servers entirely from the command line.
+    """
 
 
 @cli_interface.command(name="agent")
@@ -111,8 +114,8 @@ def cli_build_agent(
 
     cli_context: CliContext = ctx.obj
 
-    cli_context.agents_config.append(
-        AgentConfig(
+    cli_context.augmented_server_model.agents.append(
+        AgentModel(
             name=name,
             description=description,
             default_instructions=instructions,
@@ -127,28 +130,58 @@ def cli_build_agent(
 @click.option("--url", type=str, help="The URL of the config file to use.")
 @click.option("--bundled", type=str, help="The bundled server to use.")
 @click.pass_context
-async def cli_with_config(ctx: click.Context, file: str | None = None, url: str | None = None, bundled: str | None = None):
+def cli_with_config(ctx: click.Context, file: str | None = None, url: str | None = None, bundled: str | None = None):
     """Load a config file from the command line."""
 
     cli_context: CliContext = ctx.obj
 
-    server_settings: ServerSettings = cli_context.server_settings
-
-    mcp_servers_with_overrides: MCPConfigWithOverrides = MCPConfigWithOverrides()
-    agents_config: list[AgentConfig] = []
     if url:
-        mcp_servers_with_overrides, content_tools, agents_config = get_config_from_url(url)
+        cli_context.augmented_server_model = get_config_from_url(url)
     elif file:
-        mcp_servers_with_overrides, content_tools, agents_config = get_config_from_file(file)
+        cli_context.augmented_server_model = get_config_from_file(file)
     elif bundled:
-        mcp_servers_with_overrides, content_tools, agents_config = get_config_from_bundled(bundled)
+        cli_context.augmented_server_model = get_config_for_bundled(bundled)
     else:
         raise NoConfigError
 
-    cli_context.mcp_config_with_overrides = mcp_servers_with_overrides
-    cli_context.content_tools = content_tools
-    cli_context.agents_config = agents_config
-    cli_context.server_settings = server_settings
+
+async def handle_pending_tool_calls(
+    mcp_clients: list[Client], server: FastMCP, pending_tool_calls: list[PendingToolCall]
+) -> list[ToolCallResult]:
+    results: list[ToolCallResult] = []
+
+    server_client = Client(transport=server)
+
+    async with server_client:
+        for pending_tool_call in pending_tool_calls:
+            result = await server_client.call_tool(pending_tool_call.name, pending_tool_call.arguments)
+            results.append(
+                ToolCallResult(name=pending_tool_call.name, arguments=pending_tool_call.arguments, result=result),
+            )
+
+    for mcp_client in mcp_clients:
+        await mcp_client.close()
+
+    for result in results:
+        logger.info(f"Tool {result.name} with arguments {result.arguments} returned result: {result.result}")
+
+    return results
+
+
+async def run_server_or_call_tools(
+    agents: list[FastMCPAgent],
+    mcp_clients: list[Client],
+    server: FastMCP,
+    pending_tool_calls: list[PendingToolCall],
+    transport: Literal["stdio", "sse", "streamable-http"],
+):
+    if pending_tool_calls:
+        await handle_pending_tool_calls(mcp_clients, server, pending_tool_calls)
+    else:
+        await server.run_async(transport=transport)
+
+    total_token_usage = sum(agent.llm_link.token_usage for agent in agents)
+    logger.info(f"Total token usage: {total_token_usage}")
 
 
 @cli_with_config.command(name="run")
@@ -157,28 +190,15 @@ async def cli_with_config_run(ctx: click.Context):
     """Run the server."""
     cli_context: CliContext = ctx.obj
 
-    _, _, server = await prepare_server(
-        server_name="wrap",
-        mcp_config_with_overrides=cli_context.mcp_config_with_overrides,
-        agents_config=cli_context.agents_config,
-        content_tools=cli_context.content_tools,
-        agent_only=cli_context.server_settings.agent_only,
-        tool_only=cli_context.server_settings.tool_only,
+    agents, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)
+
+    await run_server_or_call_tools(
+        agents=agents,
+        mcp_clients=mcp_clients,
+        server=server,
+        pending_tool_calls=cli_context.pending_tool_calls,
+        transport=cli_context.server_settings.transport,
     )
-
-    if cli_context.pending_tool_calls:
-        client = Client(server)
-        async with client:
-            tools = await server.get_tools()
-            for pending_tool_call in cli_context.pending_tool_calls:
-                tool = tools[pending_tool_call.name]
-                result = await client.call_tool(tool.name, pending_tool_call.arguments)
-
-                logger.info(f"Tool {pending_tool_call.name} result: {result}")
-
-        await client.close()
-    else:
-        await server.run_async(transport=cli_context.server_settings.transport)
 
 
 @cli_interface.command(name="list")
@@ -189,16 +209,12 @@ async def list_tools(
     """List the tools available on the server."""
     cli_context: CliContext = ctx.obj
 
-    _, _, server = await prepare_server(
-        server_name="wrap",
-        mcp_config_with_overrides=cli_context.mcp_config_with_overrides,
-        agents_config=cli_context.agents_config,
-        content_tools=cli_context.content_tools,
-        agent_only=cli_context.server_settings.agent_only,
-        tool_only=cli_context.server_settings.tool_only,
-    )
+    agents, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)
 
     tools = await server.get_tools()
+
+    for mcp_client in mcp_clients:
+        await mcp_client.close()
 
     logger.info("Listing tools:")
     for tool in tools.values():
@@ -224,66 +240,48 @@ def call_tool(
 
 @cli_base.command(name="shell")
 @click.pass_context
-async def shell(ctx: click.Context):
+def shell(ctx: click.Context):  # noqa: ARG001
     """Start a shell session with the server."""
     raise ContributionsWelcomeError(feature="shell")
 
 
 @cli_interface.command(name="wrap", context_settings={"ignore_unknown_options": True, "allow_extra_args": True})
+@click.option("--env", type=str, multiple=True, help="The environment variables to set for the server.")
 @click.argument("direct-wrap-args", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 async def wrap_server_run_mcp(
     ctx: click.Context,
+    env: list[str],
     direct_wrap_args: list[str],
 ):
-    """Take the last of the cli args and use them to run the mcp serverand run it."""
+    """Take the last of the cli args and use them to run the mcp server and run it."""
     cli_context: CliContext = ctx.obj
-
-    if cli_context.mcp_config_with_overrides is None:
-        raise NoConfigError
-
-    if cli_context.agents_config is None:
-        raise NoConfigError
-
-    if len(direct_wrap_args) == 0:
-        logger.warning("No MCP Servers to wrap.")
 
     command = direct_wrap_args[0]
     args = direct_wrap_args[1:] if len(direct_wrap_args) > 1 else []
-    env = os.environ.copy()
+    environment = os.environ.copy()
 
-    mcp_config = MCPConfigWithOverrides(
-        mcpServers={
-            "main": StdioMCPServerWithOverrides(
-                command=command,
-                args=args,
-                env=env,
-            )
-        }
+    for env_var in env:
+        key, value = env_var.split("=")
+        environment[key] = value
+
+    cli_context.augmented_server_model.mcpServers = {
+        "main": OverriddenStdioMCPServer(
+            command=command,
+            args=args,
+            env=environment,
+        )
+    }
+
+    agents, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)
+
+    await run_server_or_call_tools(
+        agents=agents,
+        mcp_clients=mcp_clients,
+        server=server,
+        pending_tool_calls=cli_context.pending_tool_calls,
+        transport=cli_context.server_settings.transport,
     )
-
-    _, _, server = await prepare_server(
-        server_name="wrap",
-        mcp_config_with_overrides=mcp_config,
-        agents_config=cli_context.agents_config,
-        content_tools=cli_context.content_tools,
-        agent_only=cli_context.server_settings.agent_only,
-        tool_only=cli_context.server_settings.tool_only,
-    )
-
-    if cli_context.pending_tool_calls:
-        client = Client(server)
-        async with client:
-            tools = await server.get_tools()
-            for pending_tool_call in cli_context.pending_tool_calls:
-                tool = tools[pending_tool_call.name]
-                result = await client.call_tool(tool.name, pending_tool_call.arguments)
-
-                logger.info(f"Tool {pending_tool_call.name} result: {result}")
-
-        await client.close()
-    else:
-        await server.run_async(transport=cli_context.server_settings.transport)
 
 
 cli_with_config.add_command(call_tool)
@@ -291,7 +289,17 @@ cli_with_config.add_command(list_tools)
 
 
 def run_mcp():
-    asyncio.run(cli_base())
+    try:
+        asyncio.run(cli_base())
+    except FastMCPAgentsError:
+        logger.exception(msg="An error occurred while running FastMCPAgents")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        logger.info("Keyboard interrupt received, shutting down...")
+        sys.exit(0)
+    except Exception:
+        logger.exception(msg="An unknown error occurred while running FastMCPAgents")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

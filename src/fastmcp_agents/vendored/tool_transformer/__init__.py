@@ -9,7 +9,7 @@ from fastmcp_agents.vendored.tool_transformer.models import (
     ToolParameter,
     ToolParameterTypes,
 )
-from fastmcp_agents.vendored.tool_transformer.tool_transformer import proxy_tool, transform_tool
+from fastmcp_agents.vendored.tool_transformer.tool_transformer import transform_tool
 
 __all__ = [
     "BooleanToolParameter",
@@ -21,6 +21,5 @@ __all__ = [
     "ToolOverride",
     "ToolParameter",
     "ToolParameterTypes",
-    "proxy_tool",
     "transform_tool",
 ]
