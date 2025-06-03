@@ -127,7 +127,7 @@ class PlanningFastMCPAgent(FastMCPAgent):
             system_prompt=system_prompt,
             llm_link=llm_link or AsyncLitellmLLMLink(),
             default_tools=default_tools or [],
-            memory_factory=memory_factory or PrivateMemoryFactory(),
+            memory_factory=memory_factory,
             max_parallel_tool_calls=max_parallel_tool_calls or DEFAULT_MAX_PARALLEL_TOOL_CALLS,
             step_limit=step_limit or DEFAULT_STEP_LIMIT,
         )

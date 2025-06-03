@@ -8,7 +8,7 @@ You can also use `--directory <path-to-directory>` to specify a directory of con
 
 ## Example Configuration
 
-For a comprehensive example of the declarative configuration, please refer to the augmented version of Wrale's [`mcp-server-tree-sitter` MCP Server configuration file](./fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml). This bundled file serves as the primary example and demonstrates various configuration options.
+For a comprehensive example of the declarative configuration, please refer to the augmented version of Wrale's [`mcp-server-tree-sitter` MCP Server configuration file](./fastmcp_agents/bundled/wrale_mcp-server-tree-sitter.yml). This bundled file serves as the primary example and demonstrates various configuration options.
 
 ```yaml
 mcpServers:

@@ -121,7 +121,7 @@ class AgentModel(BaseModel):
 
         logger.debug(f"Agent {agent_model.name} will have access to the following tools: {agent_tools}")
 
-        return PlanningFastMCPAgent(
+        return FastMCPAgent(
             name=agent_model.name,
             description=agent_model.description,
             system_prompt=agent_model.default_instructions,

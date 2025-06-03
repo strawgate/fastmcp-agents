@@ -7,6 +7,7 @@ from fastmcp_agents.conversation.types import (
 )
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
+from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
 
 DEFAULT_SYSTEM_PROMPT = """
 You are `{agent_name}`, an AI Agent that is embedded into a FastMCP Server. You act as an
@@ -71,7 +72,7 @@ class FastMCPAgent(MultiStepAgent):
             system_prompt=formatted_system_prompt,
             llm_link=llm_link or AsyncLitellmLLMLink(),
             default_tools=default_tools or [],
-            memory_factory=memory_factory or PrivateMemoryFactory(),
+            memory_factory=memory_factory or PrivateMemoryFactory(memory_class=EphemeralMemory),
             max_parallel_tool_calls=max_parallel_tool_calls or DEFAULT_MAX_PARALLEL_TOOL_CALLS,
             step_limit=step_limit or DEFAULT_STEP_LIMIT,
         )

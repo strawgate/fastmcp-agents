@@ -34,6 +34,7 @@ fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
 dev = [
   "pytest",
   "pytest-mock",
+  "pytest-asyncio",
   "ruff"
 ]
 lint = [
@@ -89,14 +90,15 @@ line-length = 140
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.ruff.lint.extend-per-file-ignores]
 "**/tests/*.py" = [
     "S101", # Ignore asserts
     "DTZ005", # Ignore datetime.UTC
     "PLR2004", # Ignore magic values
+    "PLR6301", # Ignore could be class or static method
+    "FURB118", # Ignore functions for extracting values from tuple
 ]
 "**/references/*" = ["ALL"]
 "**/example-*.py" = ["ALL"]
-

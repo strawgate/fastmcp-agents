@@ -49,7 +49,7 @@ You can use FastMCP-Agents to wrap any MCP Server via the command line, configur
 
 ## Example Servers
 
-Here are some example servers that you can use to get started.  You can find the full list of bundled servers [here](./docs/bundled/servers.md).
+Here are some example servers that you can use to get started.  You can find the full list of bundled servers [here](./docs/bundled.md).
 
 
 ## Using FastMCP-Agents as a CLI or MCP Server

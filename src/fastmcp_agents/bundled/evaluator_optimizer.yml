@@ -1,0 +1,13 @@
+
+
+mcpServers:
+  "evaluator_optimizer":
+    command: uv
+    args:
+      - "run"
+      - fastmcp_agents
+      - "cli"
+      - "wrap"
+      - "uv"
+      - "run"
+      - "{bundled}/evaluator_optimizer.py"

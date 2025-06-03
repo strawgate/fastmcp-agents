@@ -163,9 +163,7 @@ async def handle_pending_tool_calls(
     async with server_client:
         for pending_tool_call in pending_tool_calls:
             result = await server_client.call_tool(pending_tool_call.name, pending_tool_call.arguments)
-            results.append(
-                ToolCallResult(name=pending_tool_call.name, arguments=pending_tool_call.arguments, result=result),
-            )
+            results.append(ToolCallResult(name=pending_tool_call.name, arguments=pending_tool_call.arguments, result=result))
 
     for mcp_client in mcp_clients:
         await mcp_client.close()
