@@ -126,11 +126,19 @@ def cli_build_agent(
 
 
 @cli_base.group(name="config", chain=True)
-@click.option("--file", type=click.Path(exists=True), help="The config file to use.")
+@click.option("--file", type=str, help="The config file to use.")
 @click.option("--url", type=str, help="The URL of the config file to use.")
+@click.option(
+    "--directory",
+    envvar="FASTMCP_AGENTS_CONFIG_DIR",
+    type=click.Path(exists=True),
+    help="A directory of config files, from which --file is relative to",
+)
 @click.option("--bundled", type=str, help="The bundled server to use.")
 @click.pass_context
-def cli_with_config(ctx: click.Context, file: str | None = None, url: str | None = None, bundled: str | None = None):
+def cli_with_config(
+    ctx: click.Context, file: str | None = None, url: str | None = None, bundled: str | None = None, directory: str | None = None
+):
     """Load a config file from the command line."""
 
     cli_context: CliContext = ctx.obj
@@ -138,7 +146,7 @@ def cli_with_config(ctx: click.Context, file: str | None = None, url: str | None
     if url:
         cli_context.augmented_server_model = get_config_from_url(url)
     elif file:
-        cli_context.augmented_server_model = get_config_from_file(file)
+        cli_context.augmented_server_model = get_config_from_file(directory=directory, file=file)
     elif bundled:
         cli_context.augmented_server_model = get_config_for_bundled(bundled)
     else:

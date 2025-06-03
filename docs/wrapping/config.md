@@ -4,6 +4,8 @@ The YAML or JSON configuration is the second most powerful way to wrap an MCP Se
 
 Simply use `uvx fastmcp_agents config --file <path-to-config.yml>` to wrap an MCP Server. In addition to the `--file` option, you can also use `--bundled <server-name>` to wrap a bundled MCP Server, or `--url <url-to-config.yml>` to grab the configuration from a URL.
 
+You can also use `--directory <path-to-directory>` to specify a directory of config files, from which `--file` is relative to. This is especially useful when directory is set as an environment variable: `FASTMCP_AGENTS_CONFIG_DIR` which then will propogate to any child servers, preventing changes in working directory from affecting the configuration loading.
+
 ## Example Configuration
 
 For a comprehensive example of the declarative configuration, please refer to the augmented version of Wrale's [`mcp-server-tree-sitter` MCP Server configuration file](./fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml). This bundled file serves as the primary example and demonstrates various configuration options.

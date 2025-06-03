@@ -22,12 +22,16 @@ def get_config_from_url(config_url: str) -> AugmentedServerModel:
     return get_config_from_string(config_raw)
 
 
-def get_config_from_file(config_file: str) -> AugmentedServerModel:
+def get_config_from_file(file: str, directory: str | None = None) -> AugmentedServerModel:
     """Serialize a config from a file."""
-    if not Path(config_file).exists():
-        msg = f"Config file {config_file} not found"
+
+    file_path: Path = (Path(directory) / file) if directory else Path(file)
+
+    if not file_path.exists():
+        msg = f"Config file {file_path} not found"
         raise FileNotFoundError(msg)
-    config_raw = Path(config_file).read_text(encoding="utf-8")
+    config_raw = file_path.read_text(encoding="utf-8")
+
     return get_config_from_string(config_raw)
 
 
