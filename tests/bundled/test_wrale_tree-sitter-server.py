@@ -40,8 +40,8 @@ class TestTreeSitterAgent:
     async def test_project_registration(self, project_in_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
         instructions = """
         1. Register the project in the test_project directory
-        2. Analyze the project
-        3. List the available query templates
+        2. List the available query templates
+        3. Analyze the project
         """
 
         result = await call_curator(name=agent.name, instructions=instructions)
