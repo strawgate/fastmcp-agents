@@ -61,6 +61,7 @@ In these examples, the `convert_time` tool's description is updated, and its `so
 When configuring server wrapping programmatically with Python, you use the `transform_tool` function, providing a `ToolOverride` object or keyword arguments that define the overrides.
 
 ```python
+from fastmcp import FastMCP
 from fastmcp_agents.vendored.tool_transformer import transform_tool, ToolOverride, StringToolParameter
 
 # Assuming 'original_tool_definition' is the definition of the tool
@@ -83,10 +84,13 @@ override = ToolOverride(
         ]
     )
 
-override.apply_to_tool(fastmcp_tool)
+transformed_tool = override.apply_to_tool(original_tool_definition)
+
+# Add the transformed_tool to your FastMCP server instance
+# frontend_server.add_tool(transformed_tool)
 ```
 
-Using Python provides more flexibility, allowing for dynamic overrides based on other logic if needed.
+Using Python provides more flexibility, allowing for dynamic overrides based on other logic if needed. The transformed tool can then be added to a FastMCP server.
 
 ## Tool Wrapping
 
@@ -150,7 +154,7 @@ async def post_call_hook(tool_call_result):
 
 wrapped_tool = transform_tool(
     original_tool_definition,
-    frontend_server, # The server the tool belongs to
+    # frontend_server, # The server the tool belongs to - Removed as transform_tool doesn't take a server
     name="get_weather_enhanced", # Give the wrapped tool a new name
     description="Gets the weather with enhanced pre/post processing.",
     pre_call_hook=pre_call_hook,
@@ -184,18 +188,18 @@ async def post_call_hook_combined(tool_call_result):
 
 combined_tool = transform_tool(
     original_tool_definition,
-    frontend_server,
+    # frontend_server, # The server the tool belongs to - Removed as transform_tool doesn't take a server
     name="enhanced_and_overridden_tool",
     description="This tool has both metadata overrides and execution hooks.",
-    parameter_overrides={
-        "some_parameter": {
+    parameter_overrides=[
+        {
+            "name": "some_parameter",
             "description": "An overridden parameter description."
         }
-    },
+    ],
     pre_call_hook=pre_call_hook_combined,
     post_call_hook=post_call_hook_combined
 )
 
 # Add the combined_tool to your wrapped server's tool list
 # wrapped_server.add_tool(combined_tool)
-```

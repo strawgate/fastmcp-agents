@@ -56,7 +56,7 @@ async def redirect_to_file(ctx: Context, tool_name: str, arguments: dict, path: 
     tools = await ctx.fastmcp.get_tools()
     tool = tools[tool_name]
 
-    tool_call_result = tool.run(arguments)
+    tool_call_result = await tool.run(arguments)
 
     with Path(path).open("w", encoding="utf-8") as f:
         f.write(json.dumps(tool_call_result, indent=2))
