@@ -19,6 +19,7 @@ from fastmcp_agents.conversation.types import (
 from fastmcp_agents.errors.agent import ToolNotFoundError
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
+from fastmcp_agents.conversation.utils import join_content
 
 logger = BASE_LOGGER
 
@@ -80,7 +81,8 @@ class SingleStepAgent(ABC):
         except Exception as e:
             tool_response = [TextContent(type="text", text=f"Error calling tool {tool_call_request.name}: {e!s}")]
 
-        self._tool_logger.info(f"{tool_call_request.name} returned {len(tool_response)} items: {str(tool_response)[:200]}...")
+        full_response = join_content(tool_response)
+        self._tool_logger.info(f"{tool_call_request.name} returned {len(full_response)} bytes: {str(full_response)[:200]}...")
 
         return CallToolResponse(
             id=tool_call_request.id,

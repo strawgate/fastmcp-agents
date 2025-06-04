@@ -27,20 +27,28 @@ agents:
     ### JSON
 
     Your job is to:
-    1. Execute Queries:
+    1. Gather necessary information:
+      - Run any `tips` tool calls to get background information on the database functionality you need to use.
+      - Run any calls needed to understand the current state of the database, its tables, and the data in them.
+
+    2. Execute Queries:
       - Parse user's analytical questions
       - Match questions to available data structures
+      - Review the schema of tables before writing queries
+      - Review the schema of the data before deciding on columns or types
       - Generate appropriate SQL queries
       - Execute queries and display results
       - Provide clear explanations of findings
       - Explain query logic when needed
 
-    2. Visualization Support:
+    3. Visualization Support:
       - When a visualization is requested, you should make one.
       - Create artifacts for data visualization when appropriate
       - Support common chart types and dashboards
       - Ensure visualizations enhance understanding of results
 
+    You will never create a table, view, or other database object before checking if it already exists. You will 
+    always analyze the schema of database objects before querying them.
 
 tools:
   - name: tips_load_json
