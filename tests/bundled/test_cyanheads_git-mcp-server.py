@@ -47,9 +47,14 @@ class TestGitAgent:
         assert "success" in text_result.lower()
         assert "servers" in text_result.lower()
 
-        assert len(agent_tool_calls) == 2
-        assert agent_tool_calls[0].name == "git_clone"
-        assert agent_tool_calls[0].arguments == {
+        assert len(agent_tool_calls) < 4
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        # Agent may also call set_working_dir to set the working directory
+        assert "git_clone" in tool_call_names
+        assert "report_success" in tool_call_names
+
+        clone_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_clone")
+        assert clone_tool_call.arguments == {
             "repositoryUrl": "https://github.com/modelcontextprotocol/servers",
             "targetPath": "servers",
             "depth": 1,
@@ -90,16 +95,34 @@ class TestGitAgent:
         assert "feature/issue-1234" in text_result.lower()
 
         # Verify tool calls
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
         assert len(agent_tool_calls) >= 3
-        assert agent_tool_calls[0].name == "git_clone"
-        assert agent_tool_calls[0].arguments == {
+        assert "git_clone" in tool_call_names
+        assert "git_branch" in tool_call_names
+        assert "git_checkout" in tool_call_names
+
+        clone_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_clone")
+        assert clone_tool_call.arguments == {
             "repositoryUrl": "https://github.com/modelcontextprotocol/servers",
             "targetPath": "servers",
         }
-        assert agent_tool_calls[1].name == "git_branch"
-        assert "feature/issue-1234" in agent_tool_calls[1].arguments.get("branchName", "")
-        assert agent_tool_calls[2].name == "git_checkout"
-        assert "feature/issue-1234" in agent_tool_calls[2].arguments.get("branchOrPath", "")
+        branch_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_branch")
+        assert branch_tool_call.arguments in [
+            {
+                "branchName": "feature/issue-1234",
+                "baseBranch": "main",
+            },
+            {
+                "branchName": "feature/issue-1234",
+                "mode": "create",
+                "startPoint": "main",
+            },
+        ]
+
+        checkout_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_checkout")
+        assert checkout_tool_call.arguments == {
+            "branchOrPath": "feature/issue-1234",
+        }
 
         return agent, instructions, text_result
 
@@ -136,12 +159,33 @@ class TestGitAgent:
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 3
-        assert agent_tool_calls[0].name == "git_clone"
-        assert agent_tool_calls[1].name == "git_remote"
-        assert "upstream" in agent_tool_calls[1].arguments.get("name", "")
-        assert agent_tool_calls[2].name == "git_remote"
-        assert agent_tool_calls[2].arguments.get("mode", "") == "show"
-        assert agent_tool_calls[3].name == "git_remote"
-        assert agent_tool_calls[3].arguments.get("mode", "") == "list"
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+
+        assert "git_clone" in tool_call_names
+        assert "git_remote" in tool_call_names
+
+        remote_add_tool_call = next(
+            tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "add"
+        )
+        assert remote_add_tool_call.arguments == {
+            "name": "upstream",
+            "url": "https://github.com/modelcontextprotocol/servers.git",
+            "mode": "add",
+        }
+
+        show_tool_call = next(
+            tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "show"
+        )
+        assert show_tool_call.arguments == {
+            "name": "upstream",
+            "mode": "show",
+        }
+
+        list_tool_call = next(
+            tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "list"
+        )
+        assert list_tool_call.arguments == {
+            "mode": "list",
+        }
 
         return agent, instructions, text_result

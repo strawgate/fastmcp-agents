@@ -2,8 +2,6 @@ agents:
 - name: ask_duckdb
   description: "Ask the duckdb agent to work with an in-memory database on your behalf."
   instructions: "You are a helpful assistant that provides users a simple way to find items in their database."
-  allowed_tools:
-    - "get_query_tips"
   default_instructions: | 
     You are a helpful assistant that provides users a simple way to find items in their DuckDB databases.
 
