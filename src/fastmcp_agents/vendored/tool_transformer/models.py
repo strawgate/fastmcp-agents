@@ -101,7 +101,7 @@ class ToolParameter(BaseModel, Generic[T]):
         parameter_schema = working_schema["properties"][self.name]
 
         if parameter_schema.get("description") is not None and self.append_description is not None:
-            parameter_schema["description"] += self.append_description
+            parameter_schema["description"] += "\n" + self.append_description
 
         if self.description is not None:
             parameter_schema["description"] = self.description
@@ -363,7 +363,7 @@ def _transform_tool(
     transformed_description: str | None = tool.description
 
     if transformed_description and override.append_description is not None:
-        transformed_description += override.append_description
+        transformed_description += "\n" + override.append_description
 
     if override.description is not None:
         transformed_description = override.description
