@@ -5,7 +5,9 @@
       "args": [
         "run",
         "./src/fastmcp_agents/main.py"
-      ]
+      ],
+      "disabled": true,
+      "alwaysAllow": []
     }
   }
 }

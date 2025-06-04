@@ -29,8 +29,8 @@ mcpServers:
           current repository: git_status(repo_path='./') - To check the status
           of a specific repository: git_status(repo_path='/path/to/my/repo')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
+        - name: repo_path
+          description: Path to the Git repository.
 
       "git_diff_unstaged":
         description: >-
@@ -43,8 +43,8 @@ mcpServers:
           view unstaged changes in the current repository:
           git_diff_unstaged(repo_path='./')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
+        - name: repo_path
+          description: Path to the Git repository.
 
       "git_diff_staged":
         description: >-
@@ -56,8 +56,8 @@ mcpServers:
           line-by-line changes for staged files. Examples: - To view staged
           changes in the current repository: git_diff_staged(repo_path='./')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
+        - name: repo_path
+          description: Path to the Git repository.
 
       "git_diff":
         description: >-
@@ -71,12 +71,12 @@ mcpServers:
           git_diff(repo_path='./', target='main') - To compare with a specific
           commit: git_diff(repo_path='./', target='a1b2c3d4')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          target:
-            description:
-              The target branch or commit to compare with. This can be a branch
-              name (e.g., 'main', 'feature-branch') or a commit hash.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: target
+          description:
+            The target branch or commit to compare with. This can be a branch
+            name (e.g., 'main', 'feature-branch') or a commit hash.
 
       "git_commit":
         description: >-
@@ -90,10 +90,10 @@ mcpServers:
           git_commit(repo_path='./', message='Fix: Resolve authentication
           issue')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          message:
-            description: The commit message describing the changes.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: message
+          description: The commit message describing the changes.
 
       "git_add":
         description: >-
@@ -109,12 +109,12 @@ mcpServers:
           'docs/README.md']) - To stage all changes: git_add(repo_path='./',
           files=['.'])
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          files:
-            description:
-              A list of file paths to add to the staging area. Use `.` to add
-              all changes.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: files
+          description:
+            A list of file paths to add to the staging area. Use `.` to add
+            all changes.
 
       "git_reset":
         description: >-
@@ -126,8 +126,8 @@ mcpServers:
           been reset. Examples: - To unstage all changes in the current
           repository: git_reset(repo_path='./')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
+        - name: repo_path
+          description: Path to the Git repository.
 
       "git_log":
         description: >-
@@ -141,10 +141,10 @@ mcpServers:
           entire commit history: git_log(repo_path='./', max_count=0) (or omit
           max_count for default 10)
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          max_count:
-            description: "The maximum number of commits to show (default: 10)."
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: max_count
+          description: "The maximum number of commits to show (default: 10)."
 
       "git_create_branch":
         description: >-
@@ -160,10 +160,10 @@ mcpServers:
           from "main": git_create_branch(repo_path='./',
           branch_name='hotfix/bug-123', base_branch='main')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          branch_name:
-            description: The name of the new branch to create.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: branch_name
+          description: The name of the new branch to create.
 
       "git_checkout":
         description: >-
@@ -175,10 +175,10 @@ mcpServers:
           of the branch switch. Examples: - To switch to the "develop" branch:
           git_checkout(repo_path='./', branch_name='develop')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          branch_name:
-            description: The name of the branch to switch to.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: branch_name
+          description: The name of the branch to switch to.
 
       "git_show":
         description: >-
@@ -195,11 +195,11 @@ mcpServers:
           specific branch's tip: git_show(repo_path='./',
           revision='feature-branch')
         parameter_overrides:
-          repo_path:
-            description: Path to the Git repository.
-          revision:
-            description:
-              The revision (commit hash, branch name, or tag) to show.
+        - name: repo_path
+          description: Path to the Git repository.
+        - name: revision
+          description:
+            The revision (commit hash, branch name, or tag) to show.
 
       "git_init":
         description: >-
@@ -214,7 +214,7 @@ mcpServers:
           git_init(repo_path='./') - To initialize a new repository in a new
           directory "my_new_project": git_init(repo_path='./my_new_project')
         parameter_overrides:
-          repo_path:
+          - name: repo_path
             description:
               The path to the directory where the Git repository should be
               initialized. If the directory does not exist, it will be created.

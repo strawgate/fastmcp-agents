@@ -6,10 +6,12 @@ from typing import Any, Literal
 
 import asyncclick as click
 from fastmcp import Client, FastMCP
+from fastmcp.exceptions import ToolError
 from fastmcp.utilities.logging import configure_logging
+from mcp.types import EmbeddedResource, ImageContent, TextContent
 from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.basic import FastMCPAgent
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.cli.loader import get_config_for_bundled, get_config_from_file, get_config_from_url
 from fastmcp_agents.cli.models import (
     AgentModel,
@@ -35,7 +37,9 @@ class PendingToolCall(BaseModel):
 
 
 class ToolCallResult(PendingToolCall):
-    result: Any
+    name: str
+    arguments: dict[str, Any]
+    result: list[TextContent | ImageContent | EmbeddedResource]
 
 
 class CliContext(BaseModel):
@@ -162,16 +166,18 @@ async def handle_pending_tool_calls(
 
     async with server_client:
         for pending_tool_call in pending_tool_calls:
-            result = await server_client.call_tool(pending_tool_call.name, pending_tool_call.arguments)
-            results.append(
-                ToolCallResult(name=pending_tool_call.name, arguments=pending_tool_call.arguments, result=result),
-            )
+            try:
+                result = await server_client.call_tool(pending_tool_call.name, pending_tool_call.arguments)
+                tool_call_result = ToolCallResult(name=pending_tool_call.name, arguments=pending_tool_call.arguments, result=result)
+                results.append(tool_call_result)
+            except ToolError:  # noqa: PERF203
+                logger.error(f"Tool {pending_tool_call.name} with arguments {pending_tool_call.arguments} returned an error.")  # noqa: TRY400
 
     for mcp_client in mcp_clients:
         await mcp_client.close()
 
     for result in results:
-        logger.info(f"Tool {result.name} with arguments {result.arguments} returned result: {result.result}")
+        logger.info(f"Tool {result.name} with arguments {result.arguments} returned result:\n{result.result}")
 
     return results
 
@@ -217,7 +223,7 @@ async def list_tools(
     """List the tools available on the server."""
     cli_context: CliContext = ctx.obj
 
-    agents, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)
+    _, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)
 
     tools = await server.get_tools()
 

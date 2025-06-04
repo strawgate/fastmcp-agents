@@ -32,27 +32,28 @@ mcpServers:
     args:
       - run
       - fastmcp_agents
-      - bundled
-      - server
-      - cyanheads_git-mcp-server
       - --agent-only
+      - config
+      - --bundled
+      - cyanheads_git-mcp-server
+      - run
 
   github:
     command: uv
     args:
       - run
       - fastmcp_agents
-      - bundled
-      - server
-      - github_github-mcp-server
       - --agent-only
+      - config
+      - --bundled
+      - github_github-mcp-server
 
   tree-sitter:
     command: uv
     args:
       - run
       - fastmcp_agents
-      - bundled
-      - server
-      - wrale_mcp-server-tree-sitter
       - --agent-only
+      - config
+      - --bundled
+      - wrale_mcp-server-tree-sitter

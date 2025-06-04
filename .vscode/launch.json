@@ -36,6 +36,9 @@
             "purpose": [
                 "debug-test"
             ],
+            "args": [
+                "-s" // Disable Captures
+            ],
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -154,7 +157,7 @@
                 "sse",
                 "config",
                 "--file",
-                "${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml",
+                "${workspaceFolder}/src/fastmcp_agents/bundled/wrale_mcp-server-tree-sitter.yml",
                 "run"
             ]
         },
@@ -219,10 +222,49 @@
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
                 "config",
-                "--file","${workspaceFolder}/src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter.yml",
+                "--directory",
+                "${workspaceFolder}/src/fastmcp_agents/bundled",
+                "--file","wrale_mcp-server-tree-sitter.yml",
                 "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "run"
             ]
+        },
+        {
+            "name": "Python - Evaluator Optimizer",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "config",
+                "--directory",
+                "${workspaceFolder}/src/fastmcp_agents/bundled",
+                "--bundled","evaluator_optimizer",
+                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "run"
+            ]
+        },
+        {
+            "name": "Bundled - Evaluator Optimizer",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--transport",
+                "sse",
+                "config",
+                "--bundled",
+                "evaluator_optimizer",
+                "run"
+            ],
+            "env": {
+                
+            }
         },
     ]
 }

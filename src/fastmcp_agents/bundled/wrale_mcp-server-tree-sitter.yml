@@ -18,7 +18,7 @@ agents:
       You should generally assume that the project has not been registered yet
       and that you will use the `register_project_tool` to register it and you
       will always run  `list_query_templates_tool` and `analyze_project` at the
-      same time to get the available query templates. Whatever path you
+      same time to get the available query templates.
 
     blocked_tools:
       - clear_cache

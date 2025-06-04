@@ -49,12 +49,17 @@ You can use FastMCP-Agents to wrap any MCP Server via the command line, configur
 
 ## Example Servers
 
-Here are some example servers that you can use to get started.  You can find the full list of bundled servers [here](./docs/bundled/servers.md).
+Here are some example servers that you can use to get started.  You can find the full list of bundled servers [here](./docs/bundled.md).
+You can find the full list of bundled servers [here](./docs/bundled/servers.md).
 
+## Documentation
+
+For comprehensive documentation on FastMCP-Agents, including guides on agent types, tool rewriting, CLI usage, and more, please refer to the [FastMCP-Agents Documentation Index](./docs/index.md).
 
 ## Using FastMCP-Agents as a CLI or MCP Server
 
 For all of the following options start with:
+
 
 1. [Install UV](https://docs.astral.sh/uv/getting-started/installation/)
 2. Follow the instructions for configuring your preferred provider and model

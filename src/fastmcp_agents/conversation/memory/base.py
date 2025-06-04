@@ -8,7 +8,7 @@ class MemoryProtocol(Protocol):
 
     def add(self, message: ConversationEntryTypes) -> None: ...
 
-    def get(self) -> list[ConversationEntryTypes]: ...
+    def get(self) -> Conversation: ...
 
     def set(self, conversation_history: Conversation) -> None: ...
 
@@ -33,7 +33,7 @@ class SharedMemoryFactory(MemoryFactoryProtocol, Generic[MemoryClass]):
 
     _shared_memory_instance: MemoryClass
 
-    def __init__(self, memory_class: type[MemoryClass] | None = None):
+    def __init__(self, memory_class: type[MemoryClass]):
         self._memory_class_instance = memory_class()
 
     def __call__(self) -> MemoryClass:
@@ -45,7 +45,7 @@ class PrivateMemoryFactory(MemoryFactoryProtocol, Generic[MemoryClass]):
 
     _memory_class: type[MemoryClass]
 
-    def __init__(self, memory_class: type[MemoryClass] | None = None):
+    def __init__(self, memory_class: type[MemoryClass]):
         self._memory_class = memory_class
 
     def __call__(self) -> MemoryClass:

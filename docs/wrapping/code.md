@@ -1,6 +1,6 @@
 
 
-# Publishing Agents as Tools
+# Programmatic Wrapping and Agent Definition
 
 This document explains how to programmatically wrap MCP servers and define agents using the FastMCP-Agents Python API. This method offers the most flexibility for complex configurations and dynamic behavior.
 
@@ -36,6 +36,8 @@ agent.register_as_tools(frontend)
 
 frontend.run_async()
 ```
+
+**Note:** This is a conceptual example demonstrating the structure. A complete runnable example would require proper asynchronous setup and server management.
 
 # Dynamic Tools
 
@@ -87,4 +89,6 @@ frontend.add_tool(tool_but_secretly_agent)
 
 frontend.run_async()
 ```
+
+**Note:** This example demonstrates creating tools dynamically and potentially wrapping an agent within a tool. A full understanding requires more context on the specific use case and the `DesiredResponseModel`.
 

@@ -6,8 +6,7 @@ from fastmcp.tools import Tool as FastMCPTool
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
 from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.basic import FastMCPAgent
-from fastmcp_agents.agent.planning import PlanningFastMCPAgent
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
 from fastmcp_agents.errors.cli import MCPServerError
 from fastmcp_agents.observability.logging import BASE_LOGGER
@@ -121,7 +120,7 @@ class AgentModel(BaseModel):
 
         logger.debug(f"Agent {agent_model.name} will have access to the following tools: {agent_tools}")
 
-        return PlanningFastMCPAgent(
+        return FastMCPAgent(
             name=agent_model.name,
             description=agent_model.description,
             system_prompt=agent_model.default_instructions,

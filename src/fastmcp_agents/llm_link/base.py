@@ -1,12 +1,20 @@
 import logging
 from typing import Any, Protocol
 
-from mcp.types import Tool as MCPTool
+from fastmcp.tools import Tool as FastMCPTool
+from pydantic import BaseModel, Field
 
-from fastmcp_agents.conversation.types import CallToolRequest, Conversation
+from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation
 from fastmcp_agents.observability.logging import BASE_LOGGER
 
 logger = BASE_LOGGER.getChild("llm_link")
+
+
+class CompletionMetadata(BaseModel):
+    """Metadata about the completion."""
+
+    token_usage: int | None = Field(default=None, description="The number of tokens used by the LLM.")
+    """The number of tokens used by the LLM."""
 
 
 class AsyncLLMLink(Protocol):
@@ -27,12 +35,15 @@ class AsyncLLMLink(Protocol):
     async def async_completion(
         self,
         conversation: Conversation,
-        tools: list[MCPTool],
-    ) -> tuple[Conversation, list[CallToolRequest]]: ...
+        fastmcp_tools: list[FastMCPTool],
+    ) -> AssistantConversationEntry: ...
 
     """Call the LLM with the given messages and tools.
 
     Args:
-        messages: The messages to send to the LLM.
-        tools: The tools to use.
+        conversation: The conversation to send to the LLM.
+        fastmcp_tools: The tools to use.
+
+    Returns:
+        The assistant conversation entry.
     """

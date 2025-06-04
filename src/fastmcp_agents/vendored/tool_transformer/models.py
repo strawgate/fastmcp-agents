@@ -4,9 +4,9 @@ from typing import Annotated, Any, Generic, Literal, Protocol, TypeVar, runtime_
 
 from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool as FastMCPTool
-from jsonschema import validate
+from jsonschema import ValidationError, validate
 from mcp.types import EmbeddedResource, ImageContent, TextContent
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from fastmcp_agents.vendored.tool_transformer.errors import (
     ToolParameterAlreadyExistsError,
@@ -22,6 +22,7 @@ class ToolParameter(BaseModel, Generic[T]):
 
     name: str = Field(description="The name of the parameter.")
     description: str | None = Field(default=None, description="The description of the parameter.")
+    append_description: str | None = Field(default=None, description="A description to append to the parameter's description.")
     required: bool = Field(default=False, description="Whether the parameter is required.")
     constant: T | None = Field(default=None, description="A constant value for the parameter.")
     default: T | None = Field(default=None, description="A default value for the parameter.")
@@ -98,6 +99,9 @@ class ToolParameter(BaseModel, Generic[T]):
             raise ToolParameterNotFoundError(self.name)
 
         parameter_schema = working_schema["properties"][self.name]
+
+        if parameter_schema.get("description") is not None and self.append_description is not None:
+            parameter_schema["description"] += "\n" + self.append_description
 
         if self.description is not None:
             parameter_schema["description"] = self.description
@@ -229,6 +233,7 @@ class ToolOverride(BaseModel):
 
     name: str | None = Field(default=None, description="The name of the tool to override.")
     description: str | None = Field(default=None, description="The description of the tool to override.")
+    append_description: str | None = Field(default=None, description="A description to append to the tool's description.")
     parameter_overrides: list[ToolParameterTypes] = Field(
         default_factory=list,
         description="A list of parameter overrides to apply to the tool.",
@@ -355,7 +360,13 @@ def _transform_tool(
     )
 
     transformed_name: str = override.name or tool.name
-    transformed_description: str | None = override.description or tool.description
+    transformed_description: str | None = tool.description
+
+    if transformed_description and override.append_description is not None:
+        transformed_description += "\n" + override.append_description
+
+    if override.description is not None:
+        transformed_description = override.description
 
     return FastMCPTool(
         fn=transformed_fn_callable,

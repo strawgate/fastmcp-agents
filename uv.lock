@@ -457,7 +457,7 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-version = "2.6.0"
+version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "authlib" },
@@ -470,14 +470,14 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/91/4810d01fc71e48d30e9cf832fb9222e939ff7d9cdcd3d93aaba00d51ba12/fastmcp-2.6.0.tar.gz", hash = "sha256:15ca75ab9b95c3683ada82d7403c82e8fbae74bbded44776990dd192454a8c38", size = 1584748, upload_time = "2025-06-02T22:21:49.432Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/d2/5bd3cf09b63e51c3e10ece07a1031cfe362cf080bb0155e6b894414301b5/fastmcp-2.6.1.tar.gz", hash = "sha256:212f15a4edf8289e5c3c70796910dc612ef891f84df3257a277457bb761d1362", size = 1585121, upload_time = "2025-06-03T13:31:14.354Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/35/dadb94a8fafde637929ef876586857282ce5cc18ff1714a84dffe07cf220/fastmcp-2.6.0-py3-none-any.whl", hash = "sha256:67124db82b7eeb7612e4a6858d051a3c03beb9c4375e4a4011798bce37c841f8", size = 125646, upload_time = "2025-06-02T22:21:47.625Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/33/b452a453f62e9b7f6b3f0f263dffb2fa155bc1cab3c69902f7d32b11d9d1/fastmcp-2.6.1-py3-none-any.whl", hash = "sha256:d83a2fcffa721cbb91b29c738d39de20b54e1b1ebef5be652d6a4956ecac7ad3", size = 125910, upload_time = "2025-06-03T13:31:12.315Z" },
 ]
 
 [[package]]
 name = "fastmcp-agents"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "asyncclick" },
@@ -498,6 +498,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
@@ -525,6 +526,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
@@ -987,7 +989,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.32.3"
+version = "0.32.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -999,9 +1001,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/59/74/c4961b31e0f142a032ea24f477c3a7524dfabfd8126398a968b3cc6bf804/huggingface_hub-0.32.3.tar.gz", hash = "sha256:752c889ebf3a63cbd39803f6d87ccc135a463bbcb36abfa2faff0ccbf1cec087", size = 424525, upload_time = "2025-05-30T08:23:56.042Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/c8/4f7d270285c46324fd66f62159eb16739aa5696f422dba57678a8c6b78e9/huggingface_hub-0.32.4.tar.gz", hash = "sha256:f61d45cd338736f59fb0e97550b74c24ee771bcc92c05ae0766b9116abe720be", size = 424494, upload_time = "2025-06-03T09:59:46.105Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/dc/4f4d8080cbce7a38c1d0f1ba4932f9134480b9761af8ef4c65d49254b2bd/huggingface_hub-0.32.3-py3-none-any.whl", hash = "sha256:e46f7ea7fe2b5e5f67cc4e37eb201140091946a314d7c2b134a9673dadd80b6a", size = 512094, upload_time = "2025-05-30T08:23:54.091Z" },
+    { url = "https://files.pythonhosted.org/packages/67/8b/222140f3cfb6f17b0dd8c4b9a0b36bd4ebefe9fb0098ba35d6960abcda0f/huggingface_hub-0.32.4-py3-none-any.whl", hash = "sha256:37abf8826b38d971f60d3625229221c36e53fe58060286db9baf619cfbf39767", size = 512101, upload_time = "2025-06-03T09:59:44.099Z" },
 ]
 
 [[package]]
@@ -1460,7 +1462,7 @@ wheels = [
 
 [[package]]
 name = "openai"
-version = "1.83.0"
+version = "1.84.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1472,9 +1474,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/5b/b9390060fa75c41281f30a139a9362be591337febde996400021aa8751fd/openai-1.83.0.tar.gz", hash = "sha256:dfb421837962d9e8078929d8fc7e36e51c2a110b23a777a14e27f579d1afd6b6", size = 465976, upload_time = "2025-06-02T19:39:56.991Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/a3/128caf24e116f48fad3e4d5122cdf84db06c5127911849d51663c66158c8/openai-1.84.0.tar.gz", hash = "sha256:4caa43bdab262cc75680ce1a2322cfc01626204074f7e8d9939ab372acf61698", size = 467066, upload_time = "2025-06-03T17:10:53.651Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/f5/dd04dec85c5c711e4d402dd05c8a2aee759e43067f52d12a3aaab3ed4523/openai-1.83.0-py3-none-any.whl", hash = "sha256:d15ec58ba52537d4abc7b744890ecc4ab3cffb0fdaa8e5389830f6e1a2f7f128", size = 723387, upload_time = "2025-06-02T19:39:54.886Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/10/f245db006a860dbc1f2e2c8382e0a1762c7753e7971ba43a1dc3f3ec1404/openai-1.84.0-py3-none-any.whl", hash = "sha256:7ec4436c3c933d68dc0f5a0cef0cb3dbc0864a54d62bddaf2ed5f3d521844711", size = 725512, upload_time = "2025-06-03T17:10:51.195Z" },
 ]
 
 [[package]]
@@ -1906,6 +1908,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fb/aa/405082ce2749be5398045152251ac69c0f3578c7077efc53431303af97ce/pytest-8.4.0.tar.gz", hash = "sha256:14d920b48472ea0dbf68e45b96cd1ffda4705f33307dcc86c676c1b5104838a6", size = 1515232, upload_time = "2025-06-02T17:36:30.03Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2f/de/afa024cbe022b1b318a3d224125aa24939e99b4ff6f22e0ba639a2eaee47/pytest-8.4.0-py3-none-any.whl", hash = "sha256:f40f825768ad76c0977cbacdf1fd37c6f7a468e460ea6a0636078f8972d4517e", size = 363797, upload_time = "2025-06-02T17:36:27.859Z" },
+]
+
+[[package]]
+name = "pytest-asyncio"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d0/d4/14f53324cb1a6381bef29d698987625d80052bb33932d8e7cbf9b337b17c/pytest_asyncio-1.0.0.tar.gz", hash = "sha256:d15463d13f4456e1ead2594520216b225a16f781e144f8fdf6c5bb4667c48b3f", size = 46960, upload_time = "2025-05-26T04:54:40.484Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/05/ce271016e351fddc8399e546f6e23761967ee09c8c568bbfbecb0c150171/pytest_asyncio-1.0.0-py3-none-any.whl", hash = "sha256:4f024da9f1ef945e680dc68610b52550e36590a67fd31bb3b4943979a1f90ef3", size = 15976, upload_time = "2025-05-26T04:54:39.035Z" },
 ]
 
 [[package]]

@@ -2,14 +2,15 @@ import os
 
 import pytest
 from mcp.types import Tool
+from fastmcp.tools import Tool as FastMCPTool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
-from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
+from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
 
 
 @pytest.fixture
-def mock_tool():
+def mock_mcp_tool():
     return Tool(
         name="test_tool",
         description="A test tool",
@@ -20,6 +21,14 @@ def mock_tool():
         },
     )
 
+@pytest.fixture
+def mock_fastmcp_tool():
+    def test_tool():
+        pass
+
+    return FastMCPTool.from_function(
+        fn=test_tool
+    )
 
 @pytest.fixture
 def conversation():
@@ -34,19 +43,15 @@ def test_llm_link_initialization_with_invalid_model():
         AsyncLitellmLLMLink(model="invalid-model")
 
 
-async def test_llm_link_completion_with_tools(mock_tool, conversation):
+async def test_llm_link_completion_with_tools(mock_fastmcp_tool, conversation):
     """Test that LLM link can make a completion with tools."""
     # Use a real model that supports function calling
     model = os.getenv("MODEL", "gpt-3.5-turbo")
     llm_link = AsyncLitellmLLMLink(model=model)
 
-    updated_conversation, tool_calls = await llm_link.async_completion(conversation=conversation, tools=[mock_tool])
+    assistant_conversation_entry = await llm_link.async_completion(conversation=conversation, fastmcp_tools=[mock_fastmcp_tool])
 
-    # Verify the conversation was updated
-    assert len(updated_conversation.entries) > len(conversation.entries)
-    last_entry = updated_conversation.entries[-1]
-    assert last_entry.role == "assistant"
-
+    tool_calls = assistant_conversation_entry.tool_calls
     # Verify tool calls were generated
     assert isinstance(tool_calls, list)
     if tool_calls:  # Some models might not always generate tool calls
