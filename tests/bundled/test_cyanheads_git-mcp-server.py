@@ -140,6 +140,8 @@ class TestGitAgent:
         assert agent_tool_calls[1].name == "git_remote"
         assert "upstream" in agent_tool_calls[1].arguments.get("name", "")
         assert agent_tool_calls[2].name == "git_remote"
-        assert agent_tool_calls[2].arguments.get("mode", "") == "list"
+        assert agent_tool_calls[2].arguments.get("mode", "") == "show"
+        assert agent_tool_calls[3].name == "git_remote"
+        assert agent_tool_calls[3].arguments.get("mode", "") == "list"
 
         return agent, instructions, text_result

@@ -77,7 +77,7 @@ def test_conversation_merge():
     conv1 = Conversation().add(SystemConversationEntry(content="System message"))
     conv2 = Conversation().add(UserConversationEntry(content="User message"))
 
-    merged = Conversation.merge(conv1, conv2)
+    merged = conv1.merge(conv2)
     assert len(merged.entries) == 2
     assert merged.entries[0].role == "system"
     assert merged.entries[1].role == "user"

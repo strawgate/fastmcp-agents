@@ -4,6 +4,9 @@ import pytest
 from mcp.types import Tool
 
 from fastmcp_agents.agent.fastmcp import FastMCPAgent
+from fastmcp_agents.conversation.memory.base import PrivateMemoryFactory
+from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
+from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
 
 MODEL = os.getenv("MODEL")
@@ -50,9 +53,15 @@ def test_agent_system_prompt_formatting():
     agent = FastMCPAgent(name="test_agent", description="A test agent that can do things", llm_link=AsyncLitellmLLMLink())
 
     # The system prompt should contain the agent name and description
-    system_prompt = agent.get_system_prompt()
-    assert "test_agent" in system_prompt.entries[0].content
-    assert "A test agent that can do things" in system_prompt.entries[0].content
+    memory = PrivateMemoryFactory(memory_class=EphemeralMemory)()
+    conversation = agent._prepare_conversation(memory=memory, instructions="Custom Instructions")
+    assert isinstance(conversation, Conversation)
+    assert len(conversation.entries) == 2
+    assert isinstance(conversation.entries[0], SystemConversationEntry)
+    assert "test_agent" in conversation.entries[0].content
+    assert "A test agent that can do things" in conversation.entries[0].content
+    assert isinstance(conversation.entries[1], UserConversationEntry)
+    assert "Custom Instructions" in conversation.entries[1].content
 
 
 def test_agent_with_custom_system_prompt():
@@ -60,8 +69,14 @@ def test_agent_with_custom_system_prompt():
     custom_prompt = "You are a specialized test agent"
     agent = FastMCPAgent(name="test_agent", description="A test agent", system_prompt=custom_prompt, llm_link=AsyncLitellmLLMLink())
 
-    system_prompt = agent.get_system_prompt()
-    assert system_prompt.entries[0].content == custom_prompt
+    memory = PrivateMemoryFactory(memory_class=EphemeralMemory)()
+    conversation = agent._prepare_conversation(memory=memory, instructions="Custom Instructions")
+    assert isinstance(conversation, Conversation)
+    assert len(conversation.entries) == 2
+    assert isinstance(conversation.entries[0], SystemConversationEntry)
+    assert "You are a specialized test agent" in conversation.entries[0].content
+    assert isinstance(conversation.entries[1], UserConversationEntry)
+    assert "Custom Instructions" in conversation.entries[1].content
 
 
 def test_agent_instantiation_step_limit():

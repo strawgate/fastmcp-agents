@@ -107,6 +107,5 @@ class Conversation(BaseModel):
     def to_messages(self) -> list[dict[str, Any]]:
         return [message.model_dump() for message in self.entries]
 
-    @classmethod
-    def merge(cls, *conversations: "Conversation") -> "Conversation":
-        return cls(entries=[entry for conversation in conversations for entry in conversation.entries])
+    def merge(self, conversation: "Conversation") -> "Conversation":
+        return self.model_copy(update={"entries": [*self.entries, *conversation.entries]})
