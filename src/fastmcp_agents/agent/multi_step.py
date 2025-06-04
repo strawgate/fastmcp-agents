@@ -1,19 +1,16 @@
-from typing import TypeAlias, TypeVar
+from typing import ParamSpec, TypeVar
 
 from fastmcp import Context
 from fastmcp.tools import Tool as FastMCPTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from fastmcp_agents.agent.single_step import SingleStepAgent
-from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol
+from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol, MemoryProtocol
 from fastmcp_agents.conversation.types import (
-    AssistantConversationEntry,
     Conversation,
     UserConversationEntry,
 )
-from fastmcp_agents.conversation.utils import join_content
 from fastmcp_agents.errors.agent import NoResponseError, TaskFailureError
-from fastmcp_agents.llm_link.base import AsyncLLMLink
 
 REQUEST_MODEL = TypeVar("REQUEST_MODEL", bound=BaseModel)
 
@@ -23,25 +20,7 @@ ERROR_RESPONSE_MODEL = TypeVar("ERROR_RESPONSE_MODEL", bound=BaseModel)
 DEFAULT_STEP_LIMIT = 15
 DEFAULT_MAX_PARALLEL_TOOL_CALLS = 5
 
-
-class BaseResponseModel(BaseModel):
-    pass
-
-
-class DefaultErrorResponseModel(BaseResponseModel):
-    error: str = Field(..., description="The error message if the agent failed. You must provide a string error message.")
-
-
-class DefaultSuccessResponseModel(BaseResponseModel):
-    success: bool = Field(..., description="Whether the agent was successful")
-    result: str = Field(..., description="The result of the agent. You must provide a string result.")
-
-
-class DefaultRequestModel(BaseModel):
-    instructions: str = Field(..., description="The instructions for the agent")
-
-
-DefaultResponseModelTypes: TypeAlias = DefaultErrorResponseModel | DefaultSuccessResponseModel
+P = ParamSpec("P")
 
 
 class MultiStepAgent(SingleStepAgent):
@@ -49,117 +28,29 @@ class MultiStepAgent(SingleStepAgent):
 
     def __init__(
         self,
-        *,
-        name: str,
-        description: str,
-        llm_link: AsyncLLMLink,
-        system_prompt: str | Conversation,
-        default_tools: list[FastMCPTool],
+        *args,
         memory_factory: MemoryFactoryProtocol,
         max_parallel_tool_calls: int,
         step_limit: int,
+        **kwargs,
     ):
-        super().__init__(
-            name=name,
-            description=description,
-            system_prompt=system_prompt,
-            llm_link=llm_link,
-            default_tools=default_tools,
-        )
+        super().__init__(*args, **kwargs)
 
         self.memory_factory = memory_factory
         self.max_parallel_tool_calls = max_parallel_tool_calls
         self.step_limit = step_limit
 
-    def _log_state(self, conversation: Conversation) -> None:
-        self._logger.info(f"Agent has {len(conversation.get())} entries in its conversation history")
-        self._log_conversation_step(conversation)
-
-    def _log_conversation_step(self, conversation: Conversation) -> None:
-        previous_entry = conversation.get()[-2]
-        previous_entry_content = previous_entry.content
-
-        current_entry = conversation.get()[-1]
-        current_entry_content = current_entry.content
-
-        previous_content = previous_entry_content if isinstance(previous_entry_content, str) else join_content(previous_entry_content or [])
-        current_content = current_entry_content if isinstance(current_entry_content, str) else join_content(current_entry_content or [])
-
-        self._logger.info(f"Previous message: {previous_entry.role}: {previous_content[:200]}...")
-        self._logger.info(f"Current message: {current_entry.role}: {current_content[:200]}...")
-
-    async def run_step(
-        self,
-        ctx: Context,  # noqa: ARG002
-        conversation: Conversation,
-        tools: list[FastMCPTool],
-        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
-        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
-    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL | None]:
-        """Run a single step of the agent.
-
-        This method is called to run a single step of the agent. It will:
-        - Call the LLM
-        - Handle the tool calls
-        - Return the response
-
-        Args:
-            ctx: The context of the agent.
-            conversation: The conversation history to send to the LLM.
-            tools: The tools to use. If None, the default tools will be used.
-            success_response_model: The model to use for the success response.
-            error_response_model: The model to use for the error response.
-
-        Returns:
-            A tuple containing the conversation and the completion.
-        """
-        available_tools: list[FastMCPTool] = tools + self._completion_tools(success_response_model, error_response_model)
-
-        conversation, tool_call_requests = await self._generate_tool_call_requests(conversation, available_tools)
-        tool_names_requested = [tool_call_request.name for tool_call_request in tool_call_requests]
-
-        if "report_task_success" in tool_names_requested:
-            return conversation, success_response_model.model_validate(tool_call_requests[0].arguments)
-
-        if "report_task_failure" in tool_names_requested:
-            return conversation, error_response_model.model_validate(tool_call_requests[0].arguments)
-
-        conversation = await self._perform_tool_call_requests(conversation, tool_call_requests, tools)
-
-        return conversation, None
-
-    async def run_interruption_step(
-        self,
-        ctx: Context,  # noqa: ARG002
-        step_number: int,
-        step_limit: int,
-        conversation: Conversation,
-        tools: list[FastMCPTool],  # noqa: ARG002
-    ) -> Conversation:
-        """Interrupt the running agent to alter the conversation, perform a task, or otherwise change the conversation.
-
-        This method is called before each step of the agent.
-        """
-
-        if step_number % 5 == 0 and step_limit > 5:  # noqa: PLR2004
-            conversation = Conversation.add(
-                conversation,
-                AssistantConversationEntry(
-                    content=f"I am on step {step_number} of {step_limit}. I have {step_limit - step_number} steps left. ",
-                ),
-            )
-
-        return conversation
-
     async def run_steps(
         self,
+        *args,  # noqa: ARG002
         ctx: Context,
         conversation: Conversation,
         tools: list[FastMCPTool],
         step_limit: int,
-        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
-        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL],
+        error_response_model: type[ERROR_RESPONSE_MODEL],
         raise_on_error_response: bool = True,
+        **kwargs,  # noqa: ARG002
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent for a given number of steps.
 
@@ -168,43 +59,68 @@ class MultiStepAgent(SingleStepAgent):
             conversation: The conversation history to send to the LLM.
             tools: The tools to use. If None, the default tools will be used.
             step_limit: The maximum number of steps to perform.
+            success_response_model: The model to use for the success response.
+            error_response_model: The model to use for the error response.
+            raise_on_error_response: Whether to raise an error if the agent fails.
+
+        Returns:
+            A tuple of the final conversation and the requested success or error response model.
         """
-        current_token_usage = self.llm_link.token_usage
+
+        # To be set by a callback function.
+        result: SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL | None = None
+
+        def report_success(**kwargs):
+            """Report successful completion of the task."""
+            nonlocal result
+            result = success_response_model.model_validate(obj=kwargs)
+
+        def report_error(**kwargs):
+            """Report failure of the task."""
+            nonlocal result
+            result = error_response_model.model_validate(obj=kwargs)
+
+        success_tool = FastMCPTool(fn=report_success, name="report_success", parameters=success_response_model.model_json_schema())
+        error_tool = FastMCPTool(fn=report_error, name="report_error", parameters=error_response_model.model_json_schema())
+
+        # Add our callback functions to the tools.
+        available_tools = [*tools, success_tool, error_tool]
 
         for i in range(1, step_limit):
             self._logger.info(f"Running step {i} / {step_limit}")
 
-            # Interrupt the agent to alter the conversation, perform a task, or otherwise change the conversation.
-            conversation = await self.run_interruption_step(ctx, i, step_limit, conversation, tools)
+            assistant_conversation_entry, tool_conversation_entries = await self.run_step(
+                ctx=ctx,
+                prompt=conversation,
+                tools=available_tools,
+                step_number=i,
+                step_limit=step_limit,
+            )
 
-            conversation, completion_result = await self.run_step(ctx, conversation, tools, success_response_model, error_response_model)
+            # Add the assistant and tool conversation entries to the conversation.
+            conversation = conversation.add_entries(
+                entries=[assistant_conversation_entry, *tool_conversation_entries],
+            )
 
-            self._logger.info(f"Finished step {i} / {step_limit}: {self.llm_link.token_usage - current_token_usage} tokens used")
-            
-            current_token_usage = self.llm_link.token_usage
+            # If the result is set, return the conversation and the result.
+            if result is not None:
+                if raise_on_error_response and isinstance(result, error_response_model):
+                    raise TaskFailureError(self.name, result)
 
-            # LLM is tool calling -- continue to the next step
-            if completion_result is None:
-                continue
+                return conversation, result
 
-            self._logger.info(f"Completion: {completion_result.model_dump_json()[:200]}...")
-
-            if raise_on_error_response and isinstance(completion_result, error_response_model):
-                raise TaskFailureError(self.name, completion_result)
-
-            return conversation, completion_result
-
-        raise NoResponseError(self.name)
+        # Agent failed to record a success or failure response within the step limit.
+        raise NoResponseError(agent_name=self.name)
 
     async def run(
         self,
         ctx: Context,
         instructions: str | Conversation,
-        tools: list[FastMCPTool] | None = None,
-        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
-        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
-        raise_on_error_response: bool = True,
-        step_limit: int | None = None,
+        tools: list[FastMCPTool],
+        step_limit: int,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL],
+        error_response_model: type[ERROR_RESPONSE_MODEL],
+        raise_on_error_response: bool,
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent.
 
@@ -216,85 +132,39 @@ class MultiStepAgent(SingleStepAgent):
             error_response_model: The model to use for the error response.
 
         Returns:
-            The requested success or error response model.
+            A tuple of the final conversation and the requested success or error response model.
         """
 
-        memory = self.memory_factory()
+        memory: MemoryProtocol = self.memory_factory()
 
-        if isinstance(instructions, str):
-            instructions = Conversation(entries=[UserConversationEntry(content=instructions)])
+        conversation = self._prepare_conversation(memory, instructions)
 
-        if len(memory.get()) == 0:
-            conversation = Conversation.merge(self._system_prompt, instructions)
-        else:
-            conversation_history = Conversation(entries=memory.get())
-            conversation = Conversation.merge(conversation_history, instructions)
-
-        if tools is None:
-            tools = self.default_tools
-
-        available_tools: list[FastMCPTool] = tools
-
-        self._log_state(conversation)
+        available_tools: list[FastMCPTool] = tools or self.default_tools
 
         conversation, completion_result = await self.run_steps(
-            ctx,
-            conversation,
-            available_tools,
-            step_limit or self.step_limit,
-            success_response_model,
-            error_response_model,
-            raise_on_error_response,
+            ctx=ctx,
+            conversation=conversation,
+            tools=available_tools,
+            step_limit=step_limit or self.step_limit,
+            success_response_model=success_response_model,
+            error_response_model=error_response_model,
+            raise_on_error_response=raise_on_error_response,
         )
+
+        memory.set(conversation)
 
         return conversation, completion_result
 
-    def get_system_prompt(self) -> Conversation:
-        return self._system_prompt
+    def _prepare_conversation(self, memory: MemoryProtocol, instructions: str | Conversation) -> Conversation:
+        """Prepare the conversation for the agent."""
 
-    async def currate(self, ctx: Context, instructions: str) -> str:
-        """Returns a function that can be used to invoke the current agent with instructions, default tools,
-        a request model, and return a TaskFailureError or a text response to the caller.
+        # If there is no conversation history, use the system prompt.
+        if not (conversation := memory.get()):
+            conversation = self._system_prompt
 
-        Useful for making the Agent available as a general purpose tool on the server.s
-        """
+        # If the instructions are a string, convert them to a conversation entry.
+        if isinstance(instructions, str):
+            instructions = Conversation(entries=[UserConversationEntry(content=instructions)])
 
-        _, result = await self.run(
-            ctx, instructions, success_response_model=DefaultSuccessResponseModel, error_response_model=DefaultErrorResponseModel
-        )
-
-        if isinstance(result, DefaultErrorResponseModel):
-            raise TaskFailureError(self.name, result)
-
-        return result.result
-
-    @classmethod
-    def _completion_tools(
-        cls,
-        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
-        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
-    ) -> list[FastMCPTool]:
-        def _do_nothing() -> None:
-            pass
-
-        report_success = FastMCPTool(
-            fn=_do_nothing,
-            name="report_task_success",
-            description="Report successful completion of the task.",
-            parameters=success_response_model.model_json_schema(),
-            annotations=None,
-            serializer=None,
-            exclude_args=None,
-        )
-
-        report_error = FastMCPTool(
-            fn=_do_nothing,
-            name="report_task_failure",
-            description="Report failure of the task.",
-            parameters=error_response_model.model_json_schema(),
-            annotations=None,
-            serializer=None,
-            exclude_args=None,
-        )
-
-        return [report_success, report_error]
+        # Merge the instructions with the conversation history.
+        return conversation.merge(instructions)

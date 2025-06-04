@@ -1,6 +1,5 @@
 from typing import Annotated
 
-from fastmcp.server.server import FastMCP
 from fastmcp.tools.tool import Tool as FastMCPTool
 from fastmcp.utilities.logging import get_logger
 

@@ -13,7 +13,7 @@ def setup_logging(
 ):
     handler = RichHandler(
         console=Console(stderr=True),
-        rich_tracebacks=True,
+        rich_tracebacks=False,
     )
     formatter = logging.Formatter("%(name)s : %(message)s")
     handler.setFormatter(formatter)

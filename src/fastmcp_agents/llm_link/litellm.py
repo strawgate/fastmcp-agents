@@ -1,19 +1,19 @@
-import copy
 import json
 import os
 
+from fastmcp.tools import Tool as FastMCPTool
 from litellm import CustomStreamWrapper, LiteLLM, acompletion
-from litellm.experimental_mcp_client.tools import transform_mcp_tool_to_openai_tool
-from litellm.types.utils import ChatCompletionMessageToolCall, Function, ModelResponse, StreamingChoices
+from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message, ModelResponse, StreamingChoices
 from litellm.utils import supports_function_calling
-from mcp.types import Tool as MCPTool
 
 from fastmcp_agents.conversation.types import AssistantConversationEntry, CallToolRequest, Conversation
 from fastmcp_agents.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError, ModelNotSetError
 from fastmcp_agents.llm_link.base import (
     AsyncLLMLink,
+    CompletionMetadata,
 )
+from fastmcp_agents.llm_link.utils import transform_fastmcp_tool_to_openai_tool
 
 
 class AsyncLitellmLLMLink(AsyncLLMLink):
@@ -48,38 +48,21 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         if not supports_function_calling(model=model):
             raise ModelDoesNotSupportFunctionCallingError(model=model)
 
-    async def _extract_tool_call_requests(
-        self, response: ModelResponse
-    ) -> tuple[list[ChatCompletionMessageToolCall], list[CallToolRequest]]:
-        """Extract the tool calls from the response.
+    def _extract_tool_calls(self, message: Message) -> list[CallToolRequest]:
+        """Extract the tool calls from the message.
 
         Args:
-            response: The response from the LLM.
+            message: The message to extract the tool calls from.
 
         Returns:
-            A tuple containing the raw tool calls and the tool call requests.
+            A list of tool calls.
         """
-
-        if not (choices := response.choices) or len(choices) == 0:
-            raise NoResponseError(missing_item="choices", model=self.model)
-
-        if len(choices) > 1:
-            raise UnsupportedFeatureError(feature="completions returning multiple choices")
-
-        if isinstance(choices[0], StreamingChoices):
-            raise UnsupportedFeatureError(feature="streaming completions")
-
-        choice = choices[0]
-
-        if not (response_message := choice.message):
-            raise NoResponseError(missing_item="response message", model=self.model)
-
-        if not (tool_calls := response_message.tool_calls):
+        if not (tool_calls := message.tool_calls):
             raise NoResponseError(missing_item="tool calls", model=self.model)
 
         self.logger.debug(f"Response contains {len(tool_calls)} tool requests: {tool_calls}")
 
-        tool_call_requests = []
+        tool_call_requests: list[CallToolRequest] = []
 
         for tool_call in tool_calls:
             if not isinstance(tool_call, ChatCompletionMessageToolCall):
@@ -94,33 +77,48 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
 
             cast_arguments = json.loads(tool_call_function.arguments) or {}
 
-            tool_call_request = CallToolRequest(
-                id=tool_call.id,
-                name=tool_call_function.name,
-                arguments=cast_arguments,
+            tool_call_requests.append(
+                CallToolRequest(
+                    id=tool_call.id,
+                    name=tool_call_function.name,
+                    arguments=cast_arguments,
+                )
             )
 
-            tool_call_requests.append(tool_call_request)
+        return tool_call_requests
 
-        return tool_calls, tool_call_requests
+    def _extract_message(self, response: ModelResponse) -> Message:
+        """Extract the response message from the response. This contains the tool_calls and content."""
+        if not (choices := response.choices) or len(choices) == 0:
+            raise NoResponseError(missing_item="choices", model=self.model)
 
-    @classmethod
-    def _copy_tools(cls, tools: list[MCPTool]) -> list[MCPTool]:
-        """Make a deep copy of the tools.
+        if not (choice := choices[0]):
+            raise NoResponseError(missing_item="choice", model=self.model)
 
-        Args:
-            tools: The tools to copy.
+        if isinstance(choice, StreamingChoices):
+            raise UnsupportedFeatureError(feature="streaming completions")
+
+        if not (chosen_message := choice.message):
+            raise NoResponseError(missing_item="response message", model=self.model)
+
+        return chosen_message
+
+    async def _extract_tool_call_requests(self, response: ModelResponse) -> list[CallToolRequest]:
+        """Extract the tool calls from the response.
 
         Returns:
-            A deep copy of the tools.
+            A list of tool call requests.
         """
-        return [copy.deepcopy(tool) for tool in tools]
+
+        message = self._extract_message(response)
+
+        return self._extract_tool_calls(message)
 
     async def async_completion(
         self,
         conversation: Conversation,
-        tools: list[MCPTool],
-    ) -> tuple[Conversation, list[CallToolRequest]]:
+        fastmcp_tools: list[FastMCPTool],
+    ) -> AssistantConversationEntry:
         """Call the LLM with the given messages and tools.
 
         Args:
@@ -128,13 +126,10 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             tools: The tools to use.
 
         Returns:
-            A tuple containing assistant conversation entries and their corresponding tool call requests.
+            The assistant conversation entry.
         """
 
-        # LiteLLM modifies the tool params sometimes so we deep copy them
-        copied_tools = self._copy_tools(tools)
-
-        openai_tools = [transform_mcp_tool_to_openai_tool(tool) for tool in copied_tools]
+        litellm_tools = [transform_fastmcp_tool_to_openai_tool(tool) for tool in fastmcp_tools]
 
         messages = conversation.to_messages()
 
@@ -142,7 +137,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             messages=messages,
             model=self.model,
             **self.completion_kwargs,
-            tools=openai_tools,
+            tools=litellm_tools,
             tool_choice="required",
             num_retries=3,
         )
@@ -151,14 +146,15 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         if isinstance(model_response, CustomStreamWrapper):
             raise UnsupportedFeatureError(feature="streaming completions")
 
+        completion_metadata = CompletionMetadata()
         if model_response.model_extra:
-            self.token_usage += model_response.model_extra.get("usage", {}).get("total_tokens", 0)
+            token_usage = model_response.model_extra.get("usage", {}).get("total_tokens", 0)
 
-        tool_calls, tool_call_requests = await self._extract_tool_call_requests(model_response)
+            completion_metadata.token_usage = token_usage
+            self.token_usage += token_usage
 
-        return conversation.add(
-            AssistantConversationEntry(
-                role="assistant",
-                tool_calls=tool_calls,
-            )
-        ), tool_call_requests
+        message = self._extract_message(model_response)
+
+        tool_call_requests = self._extract_tool_calls(message)
+
+        return AssistantConversationEntry(role="assistant", tool_calls=tool_call_requests, token_usage=completion_metadata.token_usage)

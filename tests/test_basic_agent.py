@@ -3,8 +3,8 @@ import os
 import pytest
 from mcp.types import Tool
 
-from fastmcp_agents.agent.basic import FastMCPAgent
-from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
+from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
 
 MODEL = os.getenv("MODEL")
 

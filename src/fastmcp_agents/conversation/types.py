@@ -1,7 +1,48 @@
+import json
 from typing import Any, Literal, TypeAlias
 
 from mcp.types import EmbeddedResource, ImageContent, TextContent
-from pydantic import BaseModel, Field
+from openai.types.chat.chat_completion_message_tool_call_param import ChatCompletionMessageToolCallParam
+from pydantic import BaseModel, Field, model_serializer
+
+MCPToolResponseTypes = TextContent | ImageContent | EmbeddedResource
+
+
+class CallToolRequest(BaseModel):
+    """A helper class for a tool call request."""
+
+    id: str = Field(
+        ..., description="The id of the tool call request. This is used to match the tool call request to the tool call response."
+    )
+    name: str = Field(..., description="The name of the tool to call.")
+    arguments: dict[str, Any] = Field(..., description="The arguments to pass to the tool.")
+
+    @classmethod
+    def from_openai(cls, message: ChatCompletionMessageToolCallParam) -> "CallToolRequest":
+        function = message["function"]
+        return cls(id=message["id"], name=function["name"], arguments=json.loads(function["arguments"]))
+
+    @model_serializer
+    def serialize(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "function": {
+                "name": self.name,
+                "arguments": json.dumps(self.arguments),
+            },
+            "type": "function",
+        }
+
+
+class CallToolResponse(BaseModel):
+    """A helper class for a tool call response."""
+
+    id: str = Field(
+        ..., description="The id of the tool call request. This is used to match the tool call request to the tool call response."
+    )
+    name: str = Field(..., description="The name of the tool to call.")
+    arguments: dict[str, Any] = Field(..., description="The arguments that were passed to the tool.", exclude=True)
+    content: list[TextContent | ImageContent | EmbeddedResource] = Field(..., description="The content of the tool call response.")
 
 
 class SystemConversationEntry(BaseModel):
@@ -26,25 +67,14 @@ class ToolConversationEntry(BaseModel):
     name: str = Field(..., description="The name of the tool to call.")
     content: list[TextContent | ImageContent | EmbeddedResource] = Field(..., description="The content of the tool call response.")
 
-
-class CallToolRequest(BaseModel):
-    """A tool call request is a request to call a tool."""
-
-    id: str = Field(
-        ..., description="The id of the tool call request. This is used to match the tool call request to the tool call response."
-    )
-    name: str = Field(..., description="The name of the tool to call.")
-    arguments: dict[str, Any] = Field(..., description="The arguments to pass to the tool.")
-
-
-class CallToolResponse(BaseModel):
-    """A tool call response is a response to a tool call request."""
-
-    id: str = Field(
-        ..., description="The id of the tool call request. This is used to match the tool call request to the tool call response."
-    )
-    name: str = Field(..., description="The name of the tool to call.")
-    content: list[TextContent | ImageContent | EmbeddedResource] = Field(..., description="The content of the tool call response.")
+    @classmethod
+    def from_tool_call_response(cls, tool_call_response: CallToolResponse) -> "ToolConversationEntry":
+        return cls(
+            role="tool",
+            tool_call_id=tool_call_response.id,
+            name=tool_call_response.name,
+            content=tool_call_response.content,
+        )
 
 
 class AssistantConversationEntry(BaseModel):
@@ -52,7 +82,8 @@ class AssistantConversationEntry(BaseModel):
 
     role: Literal["assistant"] = Field(default="assistant", description="A conversation entry that is an assistant message")
     content: str | None = Field(default=None, description="The content of the chat entry")
-    tool_calls: list = Field(default_factory=list, description="The tool calls that were made in the assistant message")
+    tool_calls: list[CallToolRequest] = Field(default_factory=list, description="The tool calls that were made in the assistant message")
+    token_usage: int | None = Field(default=None, description="The number of tokens used by the assistant message")
 
 
 ConversationEntryTypes: TypeAlias = SystemConversationEntry | UserConversationEntry | AssistantConversationEntry | ToolConversationEntry
@@ -63,6 +94,9 @@ class Conversation(BaseModel):
 
     def add(self, message: ConversationEntryTypes) -> "Conversation":
         return self.model_copy(update={"entries": [*self.entries, message]})
+
+    def add_entries(self, entries: list[ConversationEntryTypes]) -> "Conversation":
+        return self.model_copy(update={"entries": [*self.entries, *entries]})
 
     def get(self) -> list[ConversationEntryTypes]:
         return self.entries

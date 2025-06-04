@@ -1,22 +1,29 @@
+import contextlib
 import os
 import tempfile
-from typing import Any, Callable, Coroutine
-from collections.abc import AsyncGenerator
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from collections.abc import AsyncGenerator, Callable, Coroutine
 from functools import wraps
+from pathlib import Path
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.server.proxy import FastMCPProxy
 from fastmcp.tools import Tool as FastMCPTool
+from mcp.types import EmbeddedResource, ImageContent, TextContent
 
-from fastmcp_agents.agent.basic import FastMCPAgent
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.bundled.evaluator_optimizer import EvaluationResult, evaluate_conversation_factory, evaluate_result_factory
 from fastmcp_agents.cli.loader import get_config_for_bundled
 from fastmcp_agents.cli.models import AugmentedServerModel, OverriddenStdioMCPServer, ServerSettings
-from fastmcp_agents.conversation.types import TextContent, ImageContent, EmbeddedResource
-import contextlib
+from fastmcp_agents.conversation.types import (
+    AssistantConversationEntry,
+    CallToolRequest,
+    CallToolResponse,
+    ConversationEntryTypes,
+    ToolConversationEntry,
+)
 
 
 class ReturnTrackingAsyncMock(AsyncMock):
@@ -28,6 +35,7 @@ class ReturnTrackingAsyncMock(AsyncMock):
         value = await super()._execute_mock_call(*args, **kwargs)
         self.call_return_value_list.append(value)
         return value
+
 
 @pytest.fixture
 def server_config_name():
@@ -51,9 +59,15 @@ def cli_server_config(server_config_name):
 @pytest.fixture
 async def compiled_configuration(
     cli_server_config: AugmentedServerModel, server_settings: ServerSettings
-) -> tuple[list[FastMCPAgent], list[Client], FastMCP]:
+) -> AsyncGenerator[tuple[list[FastMCPAgent], list[Client], FastMCP], None]:
     """Compile the server configuration with the given settings."""
-    return await cli_server_config.to_fastmcp_server(server_settings=server_settings)
+    agents, mcp_clients, server = await cli_server_config.to_fastmcp_server(server_settings=server_settings)
+
+    try:
+        yield agents, mcp_clients, server
+    finally:
+        for client in mcp_clients:
+            await client.close()
 
 
 @pytest.fixture
@@ -75,6 +89,27 @@ def agents(compiled_configuration: tuple[list[FastMCPAgent], list[Client], FastM
 
 
 @pytest.fixture
+def agent_name():
+    msg = "Override this fixture in test files to specify the name of the agent you are testing."
+    raise NotImplementedError(msg)
+
+
+@pytest.fixture
+def agent(agent_name: str, agents: list[FastMCPAgent]) -> FastMCPAgent:
+    agent = next(agent for agent in agents if agent.name == agent_name)
+    agent.run = ReturnTrackingAsyncMock(wraps=agent.run)
+    agent.call_tool = ReturnTrackingAsyncMock(wraps=agent.call_tool)
+    return agent
+
+
+@pytest.fixture
+def agent_tool_calls(agent: FastMCPAgent) -> list[CallToolResponse]:
+    assert isinstance(agent.call_tool, ReturnTrackingAsyncMock)
+
+    return agent.call_tool.call_return_value_list
+
+
+@pytest.fixture
 def fastmcp_server_client(fastmcp_server: FastMCP) -> Client:
     """Create a client for the FastMCP server."""
     return Client(transport=fastmcp_server, timeout=120, init_timeout=30)
@@ -88,8 +123,8 @@ async def initialized_client(fastmcp_server_client: Client) -> AsyncGenerator[Cl
             yield fastmcp_server_client
         finally:
             with contextlib.suppress(Exception):
+                await fastmcp_server_client._disconnect()
                 await fastmcp_server_client.close()
-
 
 
 @pytest.fixture

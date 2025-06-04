@@ -5,7 +5,7 @@ from mcp.types import Tool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
-from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
+from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
 
 
 @pytest.fixture

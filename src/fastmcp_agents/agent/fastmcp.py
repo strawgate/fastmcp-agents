@@ -1,13 +1,19 @@
-from fastmcp.tools import Tool as FastMCPTool
+from typing import TypeAlias
 
-from fastmcp_agents.agent.multi_step import MultiStepAgent
+from fastmcp import Context
+from fastmcp.tools import Tool as FastMCPTool
+from pydantic import BaseModel, Field
+
+from fastmcp_agents.agent.multi_step import ERROR_RESPONSE_MODEL, SUCCESS_RESPONSE_MODEL, MultiStepAgent
 from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol, PrivateMemoryFactory
+from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
 from fastmcp_agents.conversation.types import (
     Conversation,
+    SystemConversationEntry,
 )
+from fastmcp_agents.errors.agent import TaskFailureError
 from fastmcp_agents.llm_link.base import AsyncLLMLink
-from fastmcp_agents.llm_link.lltellm import AsyncLitellmLLMLink
-from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
+from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
 
 DEFAULT_SYSTEM_PROMPT = """
 You are `{agent_name}`, an AI Agent that is embedded into a FastMCP Server. You act as an
@@ -29,6 +35,22 @@ DEFAULT_STEP_LIMIT = 20
 DEFAULT_MAX_PARALLEL_TOOL_CALLS = 5
 
 
+class DefaultErrorResponseModel(BaseModel):
+    error: str = Field(..., description="The error message if the agent failed. You must provide a string error message.")
+
+
+class DefaultSuccessResponseModel(BaseModel):
+    success: bool = Field(..., description="Whether the agent was successful")
+    result: str = Field(..., description="The result of the agent. You must provide a string result.")
+
+
+class DefaultRequestModel(BaseModel):
+    instructions: str = Field(..., description="The instructions for the agent")
+
+
+DefaultResponseModelTypes: TypeAlias = DefaultErrorResponseModel | DefaultSuccessResponseModel
+
+
 class FastMCPAgent(MultiStepAgent):
     """A basic FastMCP Agent that can be used to perform tasks.
 
@@ -41,12 +63,13 @@ class FastMCPAgent(MultiStepAgent):
         *,
         name: str,
         description: str,
-        system_prompt: str | Conversation = DEFAULT_SYSTEM_PROMPT,
+        system_prompt: str | Conversation | None = None,
         default_tools: list[FastMCPTool] | None = None,
         llm_link: AsyncLLMLink | None = None,
         memory_factory: MemoryFactoryProtocol | None = None,
         max_parallel_tool_calls: int | None = None,
         step_limit: int | None = None,
+        **kwargs,
     ):
         """Create a new FastMCP Agent.
 
@@ -62,17 +85,56 @@ class FastMCPAgent(MultiStepAgent):
             step_limit: The maximum number of steps to perform. Defaults to 10.
         """
 
-        formatted_system_prompt = (
-            system_prompt.format(agent_name=name, agent_description=description) if isinstance(system_prompt, str) else system_prompt
-        )
+        if system_prompt is None:
+            system_prompt = DEFAULT_SYSTEM_PROMPT
+
+        if isinstance(system_prompt, str):
+            system_prompt = system_prompt.format(agent_name=name, agent_description=description)
+
+            system_prompt = Conversation(entries=[SystemConversationEntry(content=system_prompt)])
 
         super().__init__(
             name=name,
             description=description,
-            system_prompt=formatted_system_prompt,
+            system_prompt=system_prompt,
             llm_link=llm_link or AsyncLitellmLLMLink(),
             default_tools=default_tools or [],
             memory_factory=memory_factory or PrivateMemoryFactory(memory_class=EphemeralMemory),
             max_parallel_tool_calls=max_parallel_tool_calls or DEFAULT_MAX_PARALLEL_TOOL_CALLS,
             step_limit=step_limit or DEFAULT_STEP_LIMIT,
+            **kwargs,
         )
+
+    async def run(
+        self,
+        ctx: Context,
+        instructions: str | Conversation,
+        tools: list[FastMCPTool] | None = None,
+        step_limit: int | None = None,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
+        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
+        raise_on_error_response: bool = True,
+    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
+        return await super().run(
+            ctx=ctx,
+            instructions=instructions,
+            tools=tools or [],
+            step_limit=step_limit or DEFAULT_STEP_LIMIT,
+            success_response_model=success_response_model,
+            error_response_model=error_response_model,
+            raise_on_error_response=raise_on_error_response,
+        )
+
+    async def currate(self, ctx: Context, instructions: str) -> str:
+        """Returns a function that can be used to invoke the current agent with instructions, default tools,
+        a request model, and return a TaskFailureError or a text response to the caller.
+
+        Useful for making the Agent available as a general purpose tool on the server.s
+        """
+
+        _, result = await self.run(ctx, instructions, self.default_tools, self.step_limit)
+
+        if isinstance(result, DefaultErrorResponseModel):
+            raise TaskFailureError(self.name, result)
+
+        return result.result

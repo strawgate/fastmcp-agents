@@ -1,17 +1,21 @@
 import logging
 from abc import ABC
 
-from fastmcp.tools import Tool as FastMCPTool
-from mcp.types import EmbeddedResource, ImageContent, TextContent
 import yaml
+from fastmcp import Context
+from fastmcp.tools import Tool as FastMCPTool
+from mcp.types import TextContent
 
 from fastmcp_agents.conversation.types import (
+    AssistantConversationEntry,
     CallToolRequest,
+    CallToolResponse,
     Conversation,
+    MCPToolResponseTypes,
     SystemConversationEntry,
     ToolConversationEntry,
+    UserConversationEntry,
 )
-from fastmcp_agents.conversation.utils import join_content
 from fastmcp_agents.errors.agent import ToolNotFoundError
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
@@ -30,20 +34,28 @@ class SingleStepAgent(ABC):
 
     def __init__(
         self,
-        *,
+        *args,
         name: str,
         description: str,
-        system_prompt: str | Conversation,
-        default_tools: list[FastMCPTool],
         llm_link: AsyncLLMLink,
+        system_prompt: Conversation,
+        default_tools: list[FastMCPTool],
+        **kwargs,
     ):
+        """Initialize the single-step agent.
+
+        Args:
+            name: The name of the agent.
+            description: The description of the agent.
+            llm_link: The LLM link to use.
+            system_prompt: The system prompt to use.
+            default_tools: The default tools to use.
+        """
+
         self.name = name
         self.description = description
 
-        if isinstance(system_prompt, str):
-            self._system_prompt = Conversation(entries=[SystemConversationEntry(content=system_prompt)])
-        else:
-            self._system_prompt = system_prompt
+        self._system_prompt = system_prompt
 
         self.default_tools = default_tools
         self.llm_link = llm_link
@@ -52,76 +64,122 @@ class SingleStepAgent(ABC):
         self._tool_logger = self._logger.getChild("tool_calls")
         self.llm_link.logger = self._logger.getChild("llm_link")
 
-    async def _perform_tool_call_requests(
+        super().__init__(*args, **kwargs)
+
+    async def call_tool(
         self,
-        conversation: Conversation,
-        requests: list[CallToolRequest],
-        tools: list[FastMCPTool],
-    ) -> Conversation:
-        """Run tool call requests.
+        tool_call_request: CallToolRequest,
+        fastmcp_tool: FastMCPTool,
+    ) -> CallToolResponse:
+        """Run a tool call request."""
+
+        self._tool_logger.info(f"Calling tool {tool_call_request.name} with arguments {tool_call_request.arguments}")
+
+        try:
+            tool_response: list[MCPToolResponseTypes] = await fastmcp_tool.run(arguments=tool_call_request.arguments)
+        except Exception as e:
+            tool_response = [TextContent(type="text", text=f"Error calling tool {tool_call_request.name}: {e!s}")]
+
+        self._tool_logger.info(f"{tool_call_request.name} returned {len(tool_response)} items: {str(tool_response)[:200]}...")
+
+        return CallToolResponse(
+            id=tool_call_request.id,
+            name=tool_call_request.name,
+            arguments=tool_call_request.arguments,
+            content=tool_response,
+        )
+
+    async def call_tools(
+        self,
+        tool_call_requests: list[CallToolRequest],
+        fastmcp_tools: list[FastMCPTool],
+    ) -> list[CallToolResponse]:
+        """Run the tool call requests.
 
         Args:
-            conversations: The conversation to add the tool call responses to.
-            requests: The tool call requests to run.
-            tools: The tools to use. If None, the default tools of the agentwill be used.
+            tool_call_requests: The tool call requests to run.
+            fastmcp_tools: The tools to use.
 
         Returns:
-            The conversation with the tool call responses added.
+            The tool call responses.
         """
 
-        tools_by_name = {tool.name: tool for tool in tools}
+        for tool_call_request in tool_call_requests:
+            if tool_call_request.name not in [tool.name for tool in fastmcp_tools]:
+                raise ToolNotFoundError(self.name, tool_call_request.name)
 
-        log_requests = yaml.safe_dump([{request.name: request.arguments} for request in requests], indent=2)
-        self._tool_logger.info(f"Agent requests {len(requests)} tool calls: \n{log_requests}")
+        return [
+            await self.call_tool(tool_call_request, fastmcp_tool)
+            for tool_call_request in tool_call_requests
+            for fastmcp_tool in fastmcp_tools
+            if tool_call_request.name == fastmcp_tool.name
+        ]
 
-        for request in requests:
-            tool_name = request.name
-            tool_args = request.arguments
-            tool_call_id = request.id
-
-            if tool_name not in tools_by_name:
-                raise ToolNotFoundError(self.name, tool_name)
-
-            fastmcp_tool = tools_by_name[tool_name]
-
-            # self._tool_logger.info(f"{tool_name} called with arguments {tool_args}")
-
-            try:
-                tool_response: list[TextContent | ImageContent | EmbeddedResource] = await fastmcp_tool.run(arguments=tool_args)
-
-            # I want any underlying exception to be included in the tool response, even if it's not a ToolError
-            # But this should be configurable
-            except Exception as e:
-                tool_response = [TextContent(type="text", text=f"Error calling tool {tool_name}: {e!s}")]
-
-            base_log_message = f"{tool_name} returned {len(tool_response)} items. "
-
-            if len(tool_response) > 0:
-                joined_tool_response = join_content(tool_response).replace("\n", " ")
-                base_log_message += f"\n{joined_tool_response[:150]}..."
-
-            self._tool_logger.info(base_log_message)
-
-            conversation = conversation.add(ToolConversationEntry(tool_call_id=tool_call_id, name=tool_name, content=tool_response))
-
-        return conversation
-
-    async def _generate_tool_call_requests(
+    async def pick_tools(
         self,
-        conversation: Conversation,
+        prompt: str | Conversation,
         tools: list[FastMCPTool],
-    ) -> tuple[Conversation, list[CallToolRequest]]:
-        """Send the conversation to the LLM and ask it what tool calls it wants to make.
+    ) -> AssistantConversationEntry:
+        """Send the prompt to the LLM and ask it what tool calls it wants to make.
 
         Args:
-            conversation: The conversation to add the tool call requests to.
-            tools: The tools to use. If None, the default tools of the agentwill be used.
+            prompt: The prompt to send to the LLM to solicit tool call requests
+            tools: The tools to use.
 
         Returns:
             A list of CallToolRequest objects.
         """
 
-        return await self.llm_link.async_completion(
-            conversation=conversation,
-            tools=[tool.to_mcp_tool() for tool in tools],
+        if isinstance(prompt, str):
+            prompt = self._system_prompt.add(UserConversationEntry(content=prompt))
+
+        assistant_conversation_entry = await self.llm_link.async_completion(conversation=prompt, fastmcp_tools=tools)
+
+        tool_calls = assistant_conversation_entry.tool_calls
+        tokens = assistant_conversation_entry.token_usage
+
+        self._logger.info(
+            f"Agent picked {len(tool_calls)} tool calls ({tokens} tokens): {
+                yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)}"
         )
+
+        return assistant_conversation_entry
+
+    async def run_step(
+        self,
+        *args,  # noqa: ARG002
+        ctx: Context,  # noqa: ARG002
+        prompt: str | Conversation,
+        tools: list[FastMCPTool],
+        **kwargs,  # noqa: ARG002
+    ) -> tuple[AssistantConversationEntry, list[ToolConversationEntry]]:
+        """Run a single step of the agent.
+
+        This method is called to run a single step of the agent. It will:
+        - Ask the LLM what tool calls it wants to make
+        - Call the tools
+
+        Args:
+            ctx: The context of the agent.
+            prompt: The prompt to send to the LLM to solicit tool call requests
+            tools: The tools to use.
+
+        Returns:
+            A tuple containing the assistant conversation entry with the tool call requests and the tool
+            conversation entries with the tool call responses.
+
+        Example:
+            ```python
+            assistant_conversation_entry, tool_conversation_entries = await self.run_step(ctx, prompt, tools)
+            ```
+        """
+
+        if isinstance(prompt, str):
+            prompt = self._system_prompt.add(UserConversationEntry(content=prompt))
+
+        assistant_conversation_entry = await self.pick_tools(prompt, tools)
+
+        return assistant_conversation_entry, [
+            ToolConversationEntry.from_tool_call_response(tool_call_response)
+            for tool_call_response in await self.call_tools(assistant_conversation_entry.tool_calls, tools)
+        ]

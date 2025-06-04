@@ -1,12 +1,14 @@
 import asyncio
-from typing import Any, Callable, Coroutine, Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 import asyncclick as click
 from fastmcp import Context, FastMCP
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field, computed_field
+import yaml
 
-from fastmcp_agents.agent.basic import FastMCPAgent
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.conversation.types import Conversation
 
 evaluator = FastMCPAgent(
@@ -113,12 +115,25 @@ Total Score: 33 out of 40 (82.5%)
 
 def evaluate_conversation_factory(criteria: str) -> Callable[..., Coroutine[Any, Any, EvaluationResult]]:
     async def evaluate_conversation(ctx: Context, goal: str, proposed_solution: str, conversation: Conversation) -> EvaluationResult:
-        formatted_conversation_history: str = ""
+        truncated_messages: list[dict[str, Any]] = []
 
         for message in conversation.to_messages():
-            content = message.get("content", "")
-            if len(content) > 1000:
-                content = content[:1000] + "..."
+            for key, value in message.items():
+                if isinstance(value, str) and len(value) > 1000:
+                    message[key] = value[:1000] + "..."
+            truncated_messages.append(message)
+
+        if goal is None:
+            raise EvaluationError(message="The goal is not set")
+
+        if proposed_solution is None:
+            raise EvaluationError(message="The proposed solution is not set")
+
+        if not criteria:
+            raise EvaluationError(message="The criteria is not set")
+
+        if not truncated_messages:
+            raise EvaluationError(message="The conversation history is not set")
 
         _, evaluation_result = await evaluator.run(
             ctx,
@@ -127,7 +142,10 @@ def evaluate_conversation_factory(criteria: str) -> Callable[..., Coroutine[Any,
         feedback on the quality of the result. You will not do any of the work yourself, you are only evaluating
         the result.
 
-        The goal of the task was: `{goal}`
+        The goal of the task was:
+        ```
+        {goal}
+        ```
         The proposed solution is:
         ```
         {proposed_solution}
@@ -140,7 +158,7 @@ def evaluate_conversation_factory(criteria: str) -> Callable[..., Coroutine[Any,
 
         The conversation history is:
         ```
-        {formatted_conversation_history}
+        {yaml.safe_dump(truncated_messages, indent=2, sort_keys=True)}
         ```
 
         Note: This is a worklog from the agent that was working to achieve the goal. Entries longer than 1000 characters have
@@ -168,7 +186,6 @@ def evaluate_conversation_factory(criteria: str) -> Callable[..., Coroutine[Any,
 
 
 def evaluate_result_factory(criteria: str) -> Callable[..., Coroutine[Any, Any, EvaluationResult]]:
-
     async def evaluate_result(ctx: Context, goal: str, proposed_solution: str) -> EvaluationResult:
         _, evaluation_result = await evaluator.run(
             ctx,

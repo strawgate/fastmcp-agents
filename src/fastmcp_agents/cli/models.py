@@ -6,8 +6,7 @@ from fastmcp.tools import Tool as FastMCPTool
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
 from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.basic import FastMCPAgent
-from fastmcp_agents.agent.planning import PlanningFastMCPAgent
+from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
 from fastmcp_agents.errors.cli import MCPServerError
 from fastmcp_agents.observability.logging import BASE_LOGGER
