@@ -1,3 +1,5 @@
+"""Custom errors for the loader."""
+
 from fastmcp_agents.errors.base import FastMCPAgentsError
 
 

@@ -27,7 +27,7 @@ def test_conversation_add_system_message():
     """Test adding a system message to the conversation."""
     conv: Conversation = Conversation()
     system_entry = SystemConversationEntry(content="You are a test assistant")
-    new_conv = conv.add(system_entry)
+    new_conv = conv.append(system_entry)
 
     assert len(new_conv.entries) == 1
     assert new_conv.entries[0].role == "system"
@@ -38,7 +38,7 @@ def test_conversation_add_user_message():
     """Test adding a user message to the conversation."""
     conv: Conversation = Conversation()
     user_entry = UserConversationEntry(content="Hello")
-    new_conv = conv.add(user_entry)
+    new_conv = conv.append(user_entry)
 
     assert len(new_conv.entries) == 1
     assert new_conv.entries[0].role == "user"
@@ -50,7 +50,7 @@ def test_conversation_add_assistant_message_with_tool_calls():
     conv: Conversation = Conversation()
     tool_calls = [CallToolRequest(id="call_1", name="test_tool", arguments={"param": "value"})]
     assistant_entry = AssistantConversationEntry(content="I'll help you with that", tool_calls=tool_calls)
-    new_conv = conv.add(assistant_entry)
+    new_conv = conv.append(assistant_entry)
 
     assert len(new_conv.entries) == 1
     assert new_conv.entries[0].role == "assistant"
@@ -63,7 +63,7 @@ def test_conversation_add_tool_response():
     """Test adding a tool response to the conversation."""
     conv: Conversation = Conversation()
     tool_entry = ToolConversationEntry(tool_call_id="call_1", name="test_tool", content=[TextContent(type="text", text="Tool response")])
-    new_conv = conv.add(tool_entry)
+    new_conv = conv.append(tool_entry)
 
     assert len(new_conv.entries) == 1
     assert new_conv.entries[0].role == "tool"
@@ -74,8 +74,8 @@ def test_conversation_add_tool_response():
 
 def test_conversation_merge():
     """Test merging multiple conversations."""
-    conv1 = Conversation().add(SystemConversationEntry(content="System message"))
-    conv2 = Conversation().add(UserConversationEntry(content="User message"))
+    conv1 = Conversation().append(SystemConversationEntry(content="System message"))
+    conv2 = Conversation().append(UserConversationEntry(content="User message"))
 
     merged = conv1.merge(conv2)
     assert len(merged.entries) == 2
@@ -86,8 +86,8 @@ def test_conversation_merge():
 def test_conversation_to_messages():
     """Test converting conversation to message format."""
     conv: Conversation = Conversation()
-    conv = conv.add(SystemConversationEntry(content="System message"))
-    conv = conv.add(UserConversationEntry(content="User message"))
+    conv = conv.append(SystemConversationEntry(content="System message"))
+    conv = conv.append(UserConversationEntry(content="User message"))
 
     messages = conv.to_messages()
     assert len(messages) == 2
@@ -99,8 +99,8 @@ def test_get_messages(conversation: Conversation):
     """Test retrieving messages from the conversation."""
 
     # Conversation is immutable, so we need to add to a new conversation
-    conversation = conversation.add(UserConversationEntry(content="Hello"))
-    conversation = conversation.add(AssistantConversationEntry(content="Hi there!"))
+    conversation = conversation.append(UserConversationEntry(content="Hello"))
+    conversation = conversation.append(AssistantConversationEntry(content="Hi there!"))
 
     messages = conversation.get()
     assert len(messages) == 2

@@ -1,5 +1,5 @@
 agents:
-  - name: request_filesystem_operations
+  - name: ask_filesystem_operations_agent
     description: >-
       Assists with performing Filesystem read and write operations as requested
       by the user.

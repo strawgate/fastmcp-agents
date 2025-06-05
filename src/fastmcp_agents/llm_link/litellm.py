@@ -1,3 +1,5 @@
+"""LiteLLM integration for FastMCP Agents."""
+
 import json
 import os
 

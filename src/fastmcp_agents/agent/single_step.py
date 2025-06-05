@@ -1,3 +1,5 @@
+"""Base class for single-step agents."""
+
 import logging
 from abc import ABC
 
@@ -12,19 +14,20 @@ from fastmcp_agents.conversation.types import (
     CallToolResponse,
     Conversation,
     MCPToolResponseTypes,
-    SystemConversationEntry,
     ToolConversationEntry,
     UserConversationEntry,
 )
+from fastmcp_agents.conversation.utils import join_content
 from fastmcp_agents.errors.agent import ToolNotFoundError
 from fastmcp_agents.llm_link.base import AsyncLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
-from fastmcp_agents.conversation.utils import join_content
 
 logger = BASE_LOGGER
 
 
 class SingleStepAgent(ABC):
+    """A single-step agent, which can pick tools, calls them or do both in a single step."""
+
     name: str
     description: str
     llm_link: AsyncLLMLink
@@ -72,7 +75,7 @@ class SingleStepAgent(ABC):
         tool_call_request: CallToolRequest,
         fastmcp_tool: FastMCPTool,
     ) -> CallToolResponse:
-        """Run a tool call request."""
+        """Run a single tool call request with a single tool."""
 
         self._tool_logger.info(f"Calling tool {tool_call_request.name} with arguments {tool_call_request.arguments}")
 
@@ -96,7 +99,7 @@ class SingleStepAgent(ABC):
         tool_call_requests: list[CallToolRequest],
         fastmcp_tools: list[FastMCPTool],
     ) -> list[CallToolResponse]:
-        """Run the tool call requests.
+        """Run a list of tool call requests with a list of tools.
 
         Args:
             tool_call_requests: The tool call requests to run.
@@ -133,7 +136,7 @@ class SingleStepAgent(ABC):
         """
 
         if isinstance(prompt, str):
-            prompt = self._system_prompt.add(UserConversationEntry(content=prompt))
+            prompt = self._system_prompt.append(UserConversationEntry(content=prompt))
 
         assistant_conversation_entry = await self.llm_link.async_completion(conversation=prompt, fastmcp_tools=tools)
 
@@ -142,7 +145,8 @@ class SingleStepAgent(ABC):
 
         self._logger.info(
             f"Agent picked {len(tool_calls)} tool calls ({tokens} tokens): {
-                yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)}"
+                yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)
+            }"
         )
 
         return assistant_conversation_entry
@@ -162,22 +166,17 @@ class SingleStepAgent(ABC):
         - Call the tools
 
         Args:
-            ctx: The context of the agent.
+            ctx: The context of the FastMCP Request.
             prompt: The prompt to send to the LLM to solicit tool call requests
             tools: The tools to use.
 
         Returns:
             A tuple containing the assistant conversation entry with the tool call requests and the tool
             conversation entries with the tool call responses.
-
-        Example:
-            ```python
-            assistant_conversation_entry, tool_conversation_entries = await self.run_step(ctx, prompt, tools)
-            ```
         """
 
         if isinstance(prompt, str):
-            prompt = self._system_prompt.add(UserConversationEntry(content=prompt))
+            prompt = self._system_prompt.append(UserConversationEntry(content=prompt))
 
         assistant_conversation_entry = await self.pick_tools(prompt, tools)
 

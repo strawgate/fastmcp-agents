@@ -1,5 +1,5 @@
 agents:
-- name: ask_duckdb
+- name: ask_duckdb_agent
   description: "Ask the duckdb agent to work with an in-memory database on your behalf."
   instructions: "You are a helpful assistant that provides users a simple way to find items in their database."
   default_instructions: | 

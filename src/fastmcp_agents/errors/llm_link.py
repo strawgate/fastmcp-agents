@@ -1,3 +1,5 @@
+"""Custom errors for LLM link."""
+
 from fastmcp_agents.errors.base import FastMCPAgentsError
 
 

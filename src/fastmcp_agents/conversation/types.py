@@ -1,3 +1,5 @@
+"""Pydantic models for conversation and tool calls."""
+
 import json
 from typing import Any, Literal, TypeAlias
 
@@ -92,20 +94,26 @@ ConversationEntryTypes: TypeAlias = SystemConversationEntry | UserConversationEn
 class Conversation(BaseModel):
     entries: list[ConversationEntryTypes] = Field(default_factory=list[ConversationEntryTypes], frozen=True)
 
-    def add(self, message: ConversationEntryTypes) -> "Conversation":
+    def append(self, message: ConversationEntryTypes) -> "Conversation":
+        """Returns a new conversation with the message appended."""
         return self.model_copy(update={"entries": [*self.entries, message]})
 
-    def add_entries(self, entries: list[ConversationEntryTypes]) -> "Conversation":
+    def extend(self, entries: list[ConversationEntryTypes]) -> "Conversation":
+        """Returns a new conversation with the messages extended."""
         return self.model_copy(update={"entries": [*self.entries, *entries]})
 
     def get(self) -> list[ConversationEntryTypes]:
+        """Get the conversation history."""
         return self.entries
 
     def set(self, entries: list[ConversationEntryTypes]) -> "Conversation":
+        """Returns a new conversation with the conversation history set."""
         return self.model_copy(update={"entries": entries})
 
     def to_messages(self) -> list[dict[str, Any]]:
+        """Convert the conversation to a list of dictionaries."""
         return [message.model_dump() for message in self.entries]
 
     def merge(self, conversation: "Conversation") -> "Conversation":
+        """Returns a new conversation with the conversation history merged."""
         return self.model_copy(update={"entries": [*self.entries, *conversation.entries]})

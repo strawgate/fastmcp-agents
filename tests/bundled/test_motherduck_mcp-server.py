@@ -1,13 +1,16 @@
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from fastmcp import FastMCP
-from fastmcp.tools import Tool as FastMCPTool
 
 from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.conversation.types import TextContent
 from tests.conftest import evaluate_with_criteria
+
+if TYPE_CHECKING:
+    from fastmcp.tools import Tool as FastMCPTool
 
 
 @pytest.fixture
@@ -18,7 +21,7 @@ def server_config_name():
 class TestDuckDBAgent:
     @pytest.fixture
     def agent_name(self):
-        return "ask_duckdb"
+        return "ask_duckdb_agent"
 
     @pytest.fixture
     async def populate_database(self, fastmcp_server: FastMCP):
@@ -26,7 +29,7 @@ class TestDuckDBAgent:
 
         query_tool: FastMCPTool = tools["query"]
 
-        result = await query_tool.run(
+        await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE people (id INTEGER, name TEXT);
@@ -39,7 +42,7 @@ class TestDuckDBAgent:
             }
         )
 
-        result = await query_tool.run(
+        await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE dogs (id INTEGER, name TEXT, age INTEGER, color TEXT, sibling_ages INTEGER[]);
@@ -111,9 +114,6 @@ class TestDuckDBAgent:
         Load the JSON data from the file 'dogs.json' into a table called 'dogs'.
         Show me the schema and a sample of the data from both tables.
         """
-        tools = await fastmcp_server.get_tools()
-
-        query_tool: FastMCPTool = tools["query"]
 
         # Create a temporary file with JSON data
         people_json = [
@@ -201,7 +201,7 @@ class TestDuckDBAgent:
         # Verify tool calls
         assert len(agent_tool_calls) >= 1
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
-        
+
         assert "query" in tool_call_names
 
         return agent, instructions, text_result

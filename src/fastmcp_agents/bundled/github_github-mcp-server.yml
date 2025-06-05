@@ -1,4 +1,11 @@
 agents:
+  - name: ask_github_agent
+    description: >-
+      Assists with performing GitHub operations as requested by the user.
+    default_instructions: >-
+      You are a helpful assistant that can perform GitHub operations as requested by the user.
+      You will be given a GitHub issue number, and you will need to use the tools available to you to perform the operation.
+
   - name: summarize_github_issue
     description: >-
       Assists with summarizing a GitHub issue and comments.

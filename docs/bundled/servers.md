@@ -1,93 +1,236 @@
-# Bundled MCP Servers
+| Server | Agents |  MCP Inspector  | Direct CLI  | IDE / MCP Client    | Open WebUI |
+|--------|------------|------------|------------|------------|------------|
+| [Git (from Cyanheads)](#1-git-from-cyanheads) | [ask_git_agent](/src/fastmcp_agents/bundled/cyanheads_git-mcp-server.yml) | [🔎 Inspector](#11-run-with-mcp-inspector) | [Call Tools from CLI](#12-directly-call-tools-via-the-cli) | [mcpServers](#13-use-in-an-mcp-server-configuration) | [Open WebUI](#14-use-in-open-webui) |
+| [Github](#2-github) | [ask_github_agent, summarize_github_issue, summarize_pull_request](/src/fastmcp_agents/bundled/github_github-mcp-server.yml) | [🔎 Inspector](#21-run-with-mcp-inspector) | [Call Tools from CLI](#22-directly-call-tools-via-the-cli) | [mcpServers](#23-use-in-an-mcp-server-configuration) | [Open WebUI](#24-use-in-open-webui) |
+| [Tree Sitter](#3-tree-sitter) | [ask_tree_sitter_agent](/src/fastmcp_agents/bundled/wrale_mcp-server-tree-sitter.yml) | [🔎 Inspector](#31-run-with-mcp-inspector) | [Call Tools from CLI](#32-directly-call-tools-via-the-cli) | [mcpServers](#33-use-in-an-mcp-server-configuration) | [Open WebUI](#34-use-in-open-webui) |
+| [MotherDuckDB](#4-motherduckdb) | [ask_duckdb_agent](/src/fastmcp_agents/bundled/motherduckdb_mcp-server-motherduck.yml) | [🔎 Inspector](#41-run-with-mcp-inspector) | [Call Tools from CLI](#42-directly-call-tools-via-the-cli) | [mcpServers](#43-use-in-an-mcp-server-configuration) | [Open WebUI](#44-use-in-open-webui) |
+| [Git (from MCP)](#5-git-official-mcp-server) | [ask_git_agent](/src/fastmcp_agents/bundled/mcp_git.yml) | [🔎 Inspector](#51-run-with-mcp-inspector) | [Call Tools from CLI](#52-directly-call-tools-via-the-cli) | [mcpServers](#53-use-in-an-mcp-server-configuration) | [Open WebUI](#54-use-in-open-webui) |
 
-FastMCP-Agents comes bundled with several pre-configured MCP server wrappers. These bundled configurations demonstrate how to integrate third-party MCP servers and expose them with augmented agents and tools.
+# Running Bundled MCP Servers
 
-You can run these bundled servers using the `config --bundled` option with the FastMCP-Agents CLI.
+## 1. Git (from Cyanheads)
+A version of the [Cyanheads Git MCP server](https://github.com/cyanheads/git-mcp-server) that is wrapped with an agent and has improved descriptions and parameter names for the Git tools.
 
-| Server | How to Run |
-|--------|------------|
-| Git (from MCP) | `uvx fastmcp_agents config --bundled mcp_git run` |
-| Git (from Cyanheads) | `uvx fastmcp_agents config --bundled cyanheads_git-mcp-server run` |
-| Github | `uvx fastmcp_agents config --bundled github_github-mcp-server run` |
-| Tree Sitter | `uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run` |
-| Evaluator Optimizer | `uvx fastmcp_agents config --bundled evaluator_optimizer run` |
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `ask_git_agent` | Assists with performing Git operations as requested by the user. |
 
-## Available Bundled Servers
+### 1.1 Run with MCP Inspector
 
-### Git (from MCP)
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled cyanheads_git-mcp-server run`
 
-*   **Description:** An embedded Git Agent for performing Git operations. This configuration uses the Git MCP server from the main MCP repository.
-*   **Agent Name:** `Git Agent`
-*   **Agent Description:** Assists with performing Git operations as requested by the user.
-*   **Enhancements:** Provides better descriptions and parameter names for the Git tools.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled mcp_git run
-    ```
+### 1.2 Directly call tools via the CLI
 
-### Git (from Cyanheads)
+```
+uvx fastmcp_agents config --bundled cyanheads_git-mcp-server \
+call ask_git_agent '{"instructions": "Clone the https://github.com/modelcontextprotocol/servers.git repository for me."}' \
+run
+```
 
-*   **Description:** Another embedded Git Agent for performing Git operations. This configuration uses the Git MCP server from the Cyanheads repository.
-*   **Agent Name:** `git_agent`
-*   **Agent Description:** Assists with performing Git operations as requested by the user.
-*   **Enhancements:** Includes a fix for the `git_clone` tool related to the `depth: 0` issue.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled cyanheads_git-mcp-server run
-    ```
+### 1.3 Use in an MCP Server configuration
 
-### Github
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_git": {
+            "command": "uvx",
+            "args": [
+                "fastmcp_agents",
+                "config", "--bundled", "cyanheads_git-mcp-server",
+                "run"
+            ]
+        }
+    }
+}
+```
 
-*   **Description:** An embedded Github Agent focused on triaging GitHub issues and pull requests.
-*   **Agent Names:**
-    *   `summarize_github_issue`: Assists with summarizing a GitHub issue and comments.
-    *   `summarize_pull_request`: Request a report on a GitHub pull request.
-*   **Enhancements:** Adds a tool (`search_issues_query_syntax`) for getting documentation on the GitHub issue search query syntax.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled github_github-mcp-server run
-    ```
+### 1.4 Use in Open WebUI
 
-### Tree Sitter
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
 
-*   **Description:** An embedded Tree Sitter Agent for code search and analysis.
-*   **Agent Name:** `ask_tree_sitter`
-*   **Agent Description:** Ask the tree-sitter agent to find items in the codebase. It can search for text, symbols, classes, functions, variables, and more.
-*   **Enhancements:** Adds a tool (`list_query_templates_tool`) for getting available query templates. (Note: The YAML description mentioned GitHub query syntax, but the actual tool added is `list_query_templates_tool` based on the `wrale_mcp-server-tree-sitter.yml` content. I will update the description to match the tool).
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run
-    ```
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled cyanheads_git-mcp-server run
+```
 
-### Evaluator Optimizer
+## 2. Github
 
-*   **Description:** An MCP server that provides a tool for evaluating the result of a task based on predefined criteria.
-*   **Agent Name:** `task_result_evaluator`
-*   **Agent Description:** Evaluates the result of a task and provides feedback on the quality of the result.
-*   **Enhancements:** Provides a structured evaluation result including a grade and feedback.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled evaluator_optimizer run
-    ```
+A version of the [Github MCP server](https://github.com/github/github-mcp-server) that is wrapped with an agent and has improved descriptions and parameter names for the Github tools.
 
-### Filesystem Operations
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `ask_github_agent` | Assists with performing GitHub operations as requested by the user. |
+| `summarize_github_issue` | Assists with summarizing a GitHub issue and comments. |
+| `summarize_pull_request` | Request a report on a GitHub pull request. |
 
-*   **Description:** Provides tools for performing filesystem read and write operations.
-*   **Agent Names:**
-    *   `request_filesystem_operations`: Assists with performing Filesystem read and write operations.
-    *   `request_filesystem_search`: Assists with locating file names, paths, sizes, and other metadata.
-*   **Enhancements:** Wraps the underlying filesystem tools.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled strawgate_filesystem-operations run
-    ```
+### 2.1 Run with MCP Inspector
 
-### MotherDuckDB
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled github_github-mcp-server run`
 
-*   **Description:** An embedded agent for interacting with an in-memory DuckDB database.
-*   **Agent Name:** `ask_duckdb`
-*   **Agent Description:** Ask the duckdb agent to work with an in-memory database on your behalf.
-*   **Enhancements:** Provides tools for getting tips on loading JSON and writing DuckDB queries.
-*   **How to Run:**
-    ```bash
-    uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck run
+### 2.2 Directly call tools via the CLI
+
+```bash
+uvx fastmcp_agents config --bundled github_github-mcp-server \
+call ask_github_agent '{"instructions": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
+run
+```
+
+### 2.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_github": {
+            "command": "uvx",
+            "args": [
+                "fastmcp_agents",
+                "config", "--bundled", "github_github-mcp-server",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 2.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled github_github-mcp-server run
+```
+
+## 3. Tree Sitter
+
+A version of the [Tree Sitter MCP server](https://github.com/wrale/mcp-server-tree-sitter) that is wrapped with an agent and has improved descriptions and parameter names for the Tree Sitter tools.
+
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `ask_tree_sitter_agent` | Ask the tree-sitter agent to find items in the codebase. It can search for text, symbols, classes, functions, variables, and more. |
+
+### 3.1 Run with MCP Inspector
+
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run`
+
+### 3.2 Directly call tools via the CLI
+
+```
+uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter \
+call ask_tree_sitter_agent '{"instructions": "Tell me all the classes in the repository located in the current working directory."}' \
+run
+```
+
+### 3.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_tree_sitter": {
+            "command": "uvx",
+            "args": [
+                "fastmcp_agents",
+                "config", "--bundled", "wrale_mcp-server-tree-sitter",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 3.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run
+```
+
+## 4. MotherDuckDB
+
+A version of the [MotherDuckDB MCP server](https://github.com/motherduckdb/mcp-server-motherduck) that is wrapped with an agent and has improved descriptions and parameter names for the MotherDuckDB tools.
+
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `ask_duckdb_agent` | Ask the duckdb agent to work with an in-memory database on your behalf. |
+
+### 4.1 Run with MCP Inspector
+
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck run`
+
+### 4.2 Directly call tools via the CLI
+
+```bash
+uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck \
+call ask_duckdb_agent '{"instructions": "Create a table called 'users' with the following columns: id, name, email."}' \
+run
+```
+
+### 4.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_motherduckdb": {
+            "command": "uvx",
+            "args": [
+                "fastmcp_agents",
+                "config", "--bundled", "motherduckdb_mcp-server-motherduck",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 4.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck run
+```
+
+## 5. Git (Official MCP Server)
+
+A version of the [ModelContextProtocol Git MCP server](https://github.com/modelcontextprotocol/servers) that is wrapped with an agent and has improved descriptions and parameter names for the Git tools.
+
+### 5.1 Run with MCP Inspector
+
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled mcp_git run`
+
+### 5.2 Directly call tools via the CLI
+
+```bash
+uvx fastmcp_agents config --bundled mcp_git \
+call ask_git_agent '{"instructions": "Show me the status of the repository."}' \
+run
+```
+
+### 5.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_git": {
+            "command": "uvx",
+            "args": [
+                "fastmcp_agents",
+                "config", "--bundled", "mcp_git",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 5.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled mcp_git run
+```

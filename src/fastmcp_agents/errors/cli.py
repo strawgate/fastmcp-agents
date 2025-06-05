@@ -1,3 +1,5 @@
+"""Custom errors for the CLI."""
+
 from fastmcp_agents.errors.base import FastMCPAgentsError
 
 

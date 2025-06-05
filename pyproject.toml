@@ -1,7 +1,7 @@
 [project]
 name = "fastmcp-agents"
-version = "0.2.2"
-description = "Fastmcp Agents project"
+version = "0.2.3"
+description = "Fastmcp Agents Project"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -99,6 +99,10 @@ asyncio_default_fixture_loop_scope = "function"
     "PLR2004", # Ignore magic values
     "PLR6301", # Ignore could be class or static method
     "FURB118", # Ignore functions for extracting values from tuple
+    "S101", # Ignore asserts in tests
+    "ARG002", # Ignore unused arguments
+    "S607", # Starting a subprocess with a partial path
+    "S603", # Ignore untrusted input in subprocesses
 ]
 "**/references/*" = ["ALL"]
 "**/example-*.py" = ["ALL"]

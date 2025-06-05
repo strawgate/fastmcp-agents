@@ -1,3 +1,6 @@
+"""Base custom errors for FastMCP Agents."""
+
+
 class FastMCPAgentsError(Exception):
     """Base class for all FastMCPAgents errors."""
 

@@ -1,3 +1,5 @@
+"""Functions for loading configurations."""
+
 from pathlib import Path
 from urllib.parse import ParseResult, urlparse
 
@@ -88,22 +90,3 @@ def process_arg_replacements(augmented_server_model: AugmentedServerModel, repla
             server.args = args
 
     return augmented_server_model
-
-
-# def get_config_for_python(python_module: str) -> AugmentedServerModel:
-#     """Serialize a config for a Python module."""
-#     python_module_path: Path = Path(__file__).parent.parent / "bundled" / "servers" / f"{python_module}.py"
-
-#     if not python_module_path.exists():
-#         msg = f"Python module {python_module_path} not found"
-#         raise FileNotFoundError(msg)
-
-#     return AugmentedServerModel(
-#         agents=[],
-#         mcpServers={
-#             "python_stdio": OverriddenStdioMCPServer(
-#                 command="uv",
-#                 args=["run", python_module],
-#             )
-#         },
-#     )

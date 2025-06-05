@@ -1,3 +1,5 @@
+"""Tools for redirecting tool calls."""
+
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -25,7 +27,7 @@ async def redirect_to_tool_call(
         second_tool_response_argument: The name of the argument to insert the result of the first tool call into.
 
     Returns:
-        True if the tool call was successful, False otherwise.
+        A list of content from the second tool call.
     """
 
     tools = await ctx.fastmcp.get_tools()

@@ -4,7 +4,7 @@ import pytest
 
 from fastmcp_agents.agent.fastmcp import FastMCPAgent
 from fastmcp_agents.conversation.types import TextContent
-from tests.conftest import ReturnTrackingAsyncMock, evaluate_with_criteria
+from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
@@ -15,14 +15,14 @@ def server_config_name():
 class TestGitAgent:
     @pytest.fixture
     def agent_name(self):
-        return "git_agent"
+        return "ask_git_agent"
 
     @evaluate_with_criteria(
         criteria="""
         The result and the conversation historymust indicate:
         1. that the repository was successfully cloned
         2. that it has been cloned to a path that is appropriate for the task
-        3. 
+        3. that the agent used the correct sequence of git commands
 
         Any other response is a failure.
         """,

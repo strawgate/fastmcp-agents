@@ -1,3 +1,5 @@
+"""OpenTelemetry configuration for FastMCP Agents."""
+
 import os
 
 from opentelemetry.sdk.trace import TracerProvider

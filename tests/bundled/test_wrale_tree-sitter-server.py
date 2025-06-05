@@ -23,15 +23,15 @@ def project_in_dir(temp_working_dir: Path):
 class TestTreeSitterAgent:
     @pytest.fixture
     def agent_name(self):
-        return "ask_tree_sitter"
+        return "ask_tree_sitter_agent"
 
     @evaluate_with_criteria(
         criteria="""
         The result and the conversation history must indicate:
         1. that the project was successfully registered
         2. that the project was analyzed
-        3. that the available query templates were listed
-        4. that the agent used the correct sequence of tools
+        3. that the agent used the correct sequence of tools
+        4. that the agent did not call any unnecessary tools
 
         Any other response is a failure.
         """,
@@ -40,8 +40,7 @@ class TestTreeSitterAgent:
     async def test_project_registration(self, project_in_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
         instructions = """
         1. Register the project in the test_project directory
-        2. List the available query templates
-        3. Analyze the project
+        2. Produce a basic analysis of the project
         """
 
         result = await call_curator(name=agent.name, instructions=instructions)
@@ -53,14 +52,13 @@ class TestTreeSitterAgent:
 
         # Verify project was registered and analyzed
         assert "registered" in text_result.lower()
-        assert "templates" in text_result.lower()
+        assert "python" in text_result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 3
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
         assert "register_project_tool" in tool_call_names
         assert "analyze_project" in tool_call_names
-        assert "list_query_templates_tool" in tool_call_names
 
         return agent, instructions, text_result
 

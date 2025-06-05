@@ -1,3 +1,5 @@
+"""Base class for multi-step agents."""
+
 from typing import ParamSpec, TypeVar
 
 from fastmcp import Context
@@ -7,6 +9,7 @@ from pydantic import BaseModel
 from fastmcp_agents.agent.single_step import SingleStepAgent
 from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol, MemoryProtocol
 from fastmcp_agents.conversation.types import (
+    AssistantConversationEntry,
     Conversation,
     UserConversationEntry,
 )
@@ -98,7 +101,7 @@ class MultiStepAgent(SingleStepAgent):
             )
 
             # Add the assistant and tool conversation entries to the conversation.
-            conversation = conversation.add_entries(
+            conversation = conversation.extend(
                 entries=[assistant_conversation_entry, *tool_conversation_entries],
             )
 
@@ -125,11 +128,13 @@ class MultiStepAgent(SingleStepAgent):
         """Run the agent.
 
         Args:
-            ctx: The context of the agent.
-            conversation: The conversation history to send to the LLM.
+            ctx: The context of the FastMCP Request.
+            instructions: The instructions to send to the LLM.
+            tools: The tools to use. If None, the default tools will be used.
             step_limit: The maximum number of steps to perform.
             success_response_model: The model to use for the success response.
             error_response_model: The model to use for the error response.
+            raise_on_error_response: Whether to raise an error if the agent fails.
 
         Returns:
             A tuple of the final conversation and the requested success or error response model.
@@ -155,8 +160,13 @@ class MultiStepAgent(SingleStepAgent):
 
         return conversation, completion_result
 
+    def _log_total_token_usage(self, conversation: Conversation):
+        """Log the total token usage for the conversation."""
+        total_tokens = sum(entry.token_usage or 0 for entry in conversation.entries if isinstance(entry, AssistantConversationEntry))
+        self._logger.info(f"Total token usage: {total_tokens}")
+
     def _prepare_conversation(self, memory: MemoryProtocol, instructions: str | Conversation) -> Conversation:
-        """Prepare the conversation for the agent."""
+        """Prepare the conversation for the agent. Either by using the conversation history or the instructions."""
 
         # If there is no conversation history, use the system prompt.
         if not (conversation := memory.get()):

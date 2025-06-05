@@ -1,3 +1,5 @@
+"""FastMCP Agent implementation."""
+
 from typing import TypeAlias
 
 from fastmcp import Context
@@ -32,20 +34,23 @@ for which calls you can do in parallel (multiple in a single request) and which 
 """
 
 DEFAULT_STEP_LIMIT = 20
+"""The default step limit for the agent."""
+
 DEFAULT_MAX_PARALLEL_TOOL_CALLS = 5
+"""The default maximum number of tool calls to perform in parallel."""
 
 
 class DefaultErrorResponseModel(BaseModel):
+    """A default error response model for the agent."""
+
     error: str = Field(..., description="The error message if the agent failed. You must provide a string error message.")
 
 
 class DefaultSuccessResponseModel(BaseModel):
+    """A default success response model for the agent."""
+
     success: bool = Field(..., description="Whether the agent was successful")
     result: str = Field(..., description="The result of the agent. You must provide a string result.")
-
-
-class DefaultRequestModel(BaseModel):
-    instructions: str = Field(..., description="The instructions for the agent")
 
 
 DefaultResponseModelTypes: TypeAlias = DefaultErrorResponseModel | DefaultSuccessResponseModel
@@ -126,8 +131,7 @@ class FastMCPAgent(MultiStepAgent):
         )
 
     async def currate(self, ctx: Context, instructions: str) -> str:
-        """Returns a function that can be used to invoke the current agent with instructions, default tools,
-        a request model, and return a TaskFailureError or a text response to the caller.
+        """Runs the agent with the provided instructions and default tools, returning a string result or raising a TaskFailureError.
 
         Useful for making the Agent available as a general purpose tool on the server.s
         """
