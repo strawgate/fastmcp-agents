@@ -23,6 +23,9 @@ COPY pyproject.toml .
 COPY src/ src/
 COPY README.md .
 
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/root/.local/bin/:$PATH"
+
 # Install dependencies using UV
 RUN uv sync
 
