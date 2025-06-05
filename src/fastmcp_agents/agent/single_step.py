@@ -143,11 +143,8 @@ class SingleStepAgent(ABC):
         tool_calls = assistant_conversation_entry.tool_calls
         tokens = assistant_conversation_entry.token_usage
 
-        self._logger.info(
-            f"Agent picked {len(tool_calls)} tool calls ({tokens} tokens): {
-                yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)
-            }"
-        )
+        tool_call_yaml = yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)
+        self._logger.info(f"Agent picked {len(tool_calls)} tool calls ({tokens} tokens): {tool_call_yaml}")
 
         return assistant_conversation_entry
 

@@ -20,6 +20,7 @@ For more specific instructions on how to use FastMCP Agents with your preferred 
 | Web UI | [Setup](./usage/web_ui.md) |
 | Inspector | [Setup](./usage/inspector.md) |
 | IDE (VSCode, Roo Code) | [Setup](./usage/ide.md) |
+| Docker | [Setup](./usage/docker.md) |
 
 ## Start running with the bundled MCP servers
 
