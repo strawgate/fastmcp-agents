@@ -1,3 +1,5 @@
+"""Pydantic models for tool transformation."""
+
 from collections.abc import Awaitable, Callable
 from copy import deepcopy
 from typing import Annotated, Any, Generic, Literal, Protocol, TypeVar, runtime_checkable

@@ -1,3 +1,5 @@
+"""Disk-backed memory implementation."""
+
 from pathlib import Path
 
 import yaml
@@ -37,7 +39,7 @@ class DiskBackedMemory(MemoryProtocol):
             self.conversation_history = Conversation()
 
     def add(self, message: ConversationEntryTypes):
-        self.conversation_history.add(message)
+        self.conversation_history.append(message)
 
     def get(self):
         return self.conversation_history.get()

@@ -1,3 +1,5 @@
+"""Base CLI for FastMCP Agents."""
+
 import asyncio
 import json
 import os
@@ -32,17 +34,23 @@ if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None:
 
 
 class PendingToolCall(BaseModel):
+    """A pending tool call. Only used in the CLI class."""
+
     name: str
     arguments: dict[str, Any]
 
 
 class ToolCallResult(PendingToolCall):
+    """A result of a tool call. Only used in the CLI class."""
+
     name: str
     arguments: dict[str, Any]
     result: list[TextContent | ImageContent | EmbeddedResource]
 
 
 class CliContext(BaseModel):
+    """A context object that gets passed around the CLI commands."""
+
     server_settings: ServerSettings
     augmented_server_model: AugmentedServerModel = Field(default_factory=AugmentedServerModel)
     pending_tool_calls: list[PendingToolCall] = Field(default_factory=list)
@@ -189,6 +197,7 @@ async def run_server_or_call_tools(
     pending_tool_calls: list[PendingToolCall],
     transport: Literal["stdio", "sse", "streamable-http"],
 ):
+    """A shared helper for either running the server or handling pending tool calls."""
     if pending_tool_calls:
         await handle_pending_tool_calls(mcp_clients, server, pending_tool_calls)
     else:
@@ -201,7 +210,7 @@ async def run_server_or_call_tools(
 @cli_with_config.command(name="run")
 @click.pass_context
 async def cli_with_config_run(ctx: click.Context):
-    """Run the server."""
+    """Run the server with configuration from a config source."""
     cli_context: CliContext = ctx.obj
 
     agents, mcp_clients, server = await cli_context.augmented_server_model.to_fastmcp_server(server_settings=cli_context.server_settings)

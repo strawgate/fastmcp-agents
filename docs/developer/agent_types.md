@@ -50,18 +50,3 @@ The `MultiStepAgent` extends `SingleStepAgent` by adding the capability to manag
 ### `FastMCPAgent`
 
 The `FastMCPAgent` is a concrete implementation of `MultiStepAgent` that provides default configurations for LLM link, memory, and other parameters, making it easier to get started with a multi-step agent.
-
-### `PlanningFastMCPAgent`
-
-The `PlanningFastMCPAgent` extends `FastMCPAgent` by incorporating a planning mechanism. This agent will periodically pause its execution to generate or update a plan for completing the task.
-
-*   **Key Characteristics:**
-    *   Inherits multi-step capabilities from `FastMCPAgent`.
-    *   Includes a planning phase where the LLM is prompted to create or refine a plan.
-    *   Planning occurs at specified intervals or at the beginning of the task.
-    *   Aims to improve task completion by encouraging the LLM to think ahead.
-
-*   **Core Methods:**
-    *   `__init__`: Initializes with planning interval and planning prompts.
-    *   `plan`: Orchestrates the planning phase.
-    *   `run_interruption_step`: Handles the interruption for planning during the multi-step execution.

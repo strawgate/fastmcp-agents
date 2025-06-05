@@ -1,3 +1,5 @@
+"""Logging configuration for FastMCP Agents."""
+
 import logging
 from typing import Literal
 

@@ -1,3 +1,5 @@
+"""Ephemeral memory implementation."""
+
 from fastmcp_agents.conversation.memory.base import MemoryProtocol
 from fastmcp_agents.conversation.types import Conversation, ConversationEntryTypes
 
@@ -11,7 +13,7 @@ class EphemeralMemory(MemoryProtocol):
         self.conversation_history = Conversation()
 
     def add(self, message: ConversationEntryTypes):
-        self.conversation_history.add(message)
+        self.conversation_history.append(message)
 
     def get(self):
         return self.conversation_history.get()

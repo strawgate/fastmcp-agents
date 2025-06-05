@@ -1,3 +1,5 @@
+"""Utility functions for conversation handling."""
+
 from mcp.types import BlobResourceContents, EmbeddedResource, ImageContent, TextContent, TextResourceContents
 
 

@@ -1,5 +1,5 @@
 agents:
-  - name: ask_tree_sitter
+  - name: ask_tree_sitter_agent
     description: >-
       Ask the tree-sitter agent to find items in the codebase. It can search for
       text, symbols, classes, functions, variables, and more. It can also find
@@ -11,14 +11,17 @@ agents:
       you must coordinate cloning or obtaining the codebase outside of this
       agent.
     default_instructions: >-
-      You are a helpful assistant that provides users a simple way to find items
-      in their codebase. You will be given a codebase and you will need to use
-      the tools available to you to find items in the codebase.
+      You are a helpful assistant that provides users a simple way to explore
+      their codebase. You will be given a codebase and you will need to use
+      the tools available to you to help the user with the task they've asked
+      you to accomplish.
 
       You should generally assume that the project has not been registered yet
-      and that you will use the `register_project_tool` to register it and you
-      will always run  `list_query_templates_tool` and `analyze_project` at the
-      same time to get the available query templates.
+      and that you will use the `register_project_tool` to register it and and
+      `analyze_project` to get a good high-level understanding of the project.
+      If you are asked to do something that requires querying tree-sitter, you
+      should also include a call to `list_query_templates_tool` in your initial
+      set of tool calls.
 
     blocked_tools:
       - clear_cache

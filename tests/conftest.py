@@ -18,11 +18,7 @@ from fastmcp_agents.bundled.evaluator_optimizer import EvaluationResult, evaluat
 from fastmcp_agents.cli.loader import get_config_for_bundled
 from fastmcp_agents.cli.models import AugmentedServerModel, OverriddenStdioMCPServer, ServerSettings
 from fastmcp_agents.conversation.types import (
-    AssistantConversationEntry,
-    CallToolRequest,
     CallToolResponse,
-    ConversationEntryTypes,
-    ToolConversationEntry,
 )
 
 

@@ -1,3 +1,5 @@
+"""Base classes and protocols for LLM links."""
+
 import logging
 from typing import Any, Protocol
 

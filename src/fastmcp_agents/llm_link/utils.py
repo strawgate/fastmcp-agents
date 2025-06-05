@@ -1,3 +1,5 @@
+"""Utility functions for LLM link."""
+
 from copy import deepcopy
 
 from fastmcp.tools import Tool as FastMCPTool

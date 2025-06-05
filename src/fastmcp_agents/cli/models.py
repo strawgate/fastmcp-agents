@@ -1,3 +1,5 @@
+"""Pydantic models for the CLI."""
+
 from typing import TYPE_CHECKING, Any, Literal
 
 from fastmcp import Client, FastMCP
@@ -19,17 +21,19 @@ logger = BASE_LOGGER.getChild("agent.loader")
 
 
 class ServerSettings(BaseModel):
-    transport: Literal["stdio", "sse", "streamable-http"]
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    agent_only: bool = False
-    tool_only: bool = False
+    """Settings for the server."""
+
+    transport: Literal["stdio", "sse", "streamable-http"] = Field(..., description="The transport to use for the server.")
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(..., description="The log level to use for the server.")
+    agent_only: bool = Field(default=False, description="Whether to only run the agents.")
+    tool_only: bool = Field(default=False, description="Whether to only run the tools.")
 
 
 class BaseExtraTool(BaseModel):
     """A set of overrides for a tool."""
 
-    name: str
-    description: str
+    name: str = Field(..., description="The name of the tool.")
+    description: str = Field(..., description="The description of the tool.")
 
     def to_fastmcp_tool(self) -> FastMCPTool:
         msg = "Subclasses must implement this method."
@@ -37,9 +41,13 @@ class BaseExtraTool(BaseModel):
 
 
 class StaticExtraTool(BaseExtraTool):
-    returns: str
+    """A tool that returns a static string."""
+
+    returns: str = Field(..., description="The string to return from the tool.")
 
     def to_fastmcp_tool(self) -> FastMCPTool:
+        """Convert the tool to a FastMCP tool."""
+
         def tool_fn() -> str:
             return self.returns
 
@@ -54,6 +62,8 @@ ExtraToolTypes = StaticExtraTool
 
 
 async def _wrap_client_tools(client: Client, tool_overrides: dict[str, ToolOverride]) -> list[FastMCPTool]:
+    """Wrap the client's tools with the tool overrides."""
+
     async with client:
         client_tools = await client.list_tools()
 
@@ -72,12 +82,14 @@ class OverriddenStdioMCPServer(StdioMCPServer):
 
     tools: dict[str, ToolOverride] = Field(default_factory=dict[str, ToolOverride])
 
-    def to_fastmcp_client(self, init_timeout: float = 10.0) -> Client:
+    def to_fastmcp_client(self, init_timeout: float = 20.0) -> Client:
+        """Convert the server to a FastMCP client."""
         transport = self.to_transport()
         transport.keep_alive = True
         return Client(transport=transport, init_timeout=init_timeout)
 
     async def to_wrapped_client(self) -> tuple[Client, list[FastMCPTool]]:
+        """Convert the server to a wrapped FastMCP client."""
         client = self.to_fastmcp_client()
         return client, await _wrap_client_tools(client, self.tools)
 
@@ -88,19 +100,25 @@ class OverriddenRemoteMCPServer(RemoteMCPServer):
     tools: dict[str, ToolOverride] = Field(default_factory=dict)
 
     def to_fastmcp_client(self, init_timeout: float = 10.0) -> Client:
+        """Convert the server to a FastMCP client."""
         return Client(transport=self.to_transport(), init_timeout=init_timeout)
 
     async def to_wrapped_client(self) -> tuple[Client, list[FastMCPTool]]:
+        """Convert the server to a wrapped FastMCP client."""
         client = self.to_fastmcp_client()
         return client, await _wrap_client_tools(client, self.tools)
 
 
 class OverriddenMCPConfig(MCPConfig):
+    """A MCP config with overridden tools."""
+
     mcpServers: dict[str, OverriddenStdioMCPServer | OverriddenRemoteMCPServer] = Field(default_factory=dict)  # type: ignore # noqa: N815
 
 
 class AgentModel(BaseModel):
-    type: Literal["fastmcp"] = "fastmcp"
+    """A model for an agent."""
+
+    type: Literal["fastmcp"] = Field(default="fastmcp", description="The type of agent.")
     name: str = Field(..., description="The name of the agent.")
     description: str = Field(..., description="The description of the agent.")
     default_instructions: str = Field(..., description="The default instructions to provide to the agent.")
@@ -110,6 +128,7 @@ class AgentModel(BaseModel):
 
     @classmethod
     def to_fastmcp_agent(cls, agent_model: "AgentModel", tools: list[FastMCPTool]) -> FastMCPAgent:
+        """Convert the agent model to a FastMCP agent."""
         agent_tools = list(tools)
 
         if agent_model.allowed_tools:
@@ -130,6 +149,7 @@ class AgentModel(BaseModel):
 
     @classmethod
     def to_fastmcp_tool(cls, agent_model: "AgentModel", tools: list[FastMCPTool]) -> tuple[FastMCPAgent, FastMCPTool]:
+        """Convert the agent model to a FastMCP tool."""
         agent = cls.to_fastmcp_agent(agent_model, tools)
 
         return agent, FastMCPTool.from_function(fn=agent.currate, name=agent.name, description=agent.description)
@@ -143,6 +163,8 @@ class AugmentedServerModel(BaseModel):
     tools: list[ExtraToolTypes] = Field(default_factory=list)
 
     async def to_fastmcp_server(self, server_settings: ServerSettings) -> tuple[list[FastMCPAgent], list[Client], FastMCP]:
+        """Convert the server model to a FastMCP server, agents, and tools."""
+
         wrapped_mcp_clients: list[tuple[Client, list[FastMCPTool]]] = []
 
         for name, server in self.mcpServers.items():

@@ -1,3 +1,5 @@
+"""Functions for transforming tools."""
+
 from typing import Annotated
 
 from fastmcp.tools.tool import Tool as FastMCPTool

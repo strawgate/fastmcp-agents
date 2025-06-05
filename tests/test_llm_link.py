@@ -1,8 +1,8 @@
 import os
 
 import pytest
-from mcp.types import Tool
 from fastmcp.tools import Tool as FastMCPTool
+from mcp.types import Tool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
@@ -21,20 +21,20 @@ def mock_mcp_tool():
         },
     )
 
+
 @pytest.fixture
 def mock_fastmcp_tool():
     def test_tool():
         pass
 
-    return FastMCPTool.from_function(
-        fn=test_tool
-    )
+    return FastMCPTool.from_function(fn=test_tool)
+
 
 @pytest.fixture
 def conversation():
     conv = Conversation()
-    conv = conv.add(SystemConversationEntry(content="You are a test assistant"))
-    return conv.add(UserConversationEntry(content="Test message"))
+    conv = conv.append(SystemConversationEntry(content="You are a test assistant"))
+    return conv.append(UserConversationEntry(content="Test message"))
 
 
 def test_llm_link_initialization_with_invalid_model():

@@ -1,3 +1,6 @@
+"""Custom errors for tool transformation."""
+
+
 class TransformedToolError(Exception):
     """An error that occurs when a tool is transformed."""
 
