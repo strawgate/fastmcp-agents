@@ -3,6 +3,8 @@ name: Docker Build and Publish
 on:
   release:
     types: [published]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:  # Allow manual triggering
 
 env:
@@ -43,6 +45,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=sha,format=short
             type=ref,event=branch
+            type=raw,value=pr-{{sha}},enable=${{ github.event_name == 'pull_request' }}
             latest
 
       - name: Build and push Docker image
