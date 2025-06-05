@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  fastmcp-agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MODEL=${MODEL:-gemini/gemini-2.5-flash-preview-05-20}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+    volumes:
+      - .:/app
+      - ${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}:${GOOGLE_APPLICATION_CREDENTIALS:-/dev/null}
+    ports:
+      - "8000:8000"  # For MCP server
+    command: --transport sse config --bundled wrale_mcp-server-tree-sitter run
