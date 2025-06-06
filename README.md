@@ -27,7 +27,7 @@ So like me, you decide that your AI Agents shouldn't have 100 tools, they should
 ## How's it work?!
 
 Simply take your existing MCP Server 
-```bash
+```json
 "mcp-server-tree-sitter": {
   "command": "uvx",
   "args": ["mcp-server-tree-sitter"]
