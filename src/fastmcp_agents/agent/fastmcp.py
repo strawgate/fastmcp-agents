@@ -1,5 +1,6 @@
 """FastMCP Agent implementation."""
 
+from collections.abc import Sequence
 from typing import TypeAlias
 
 from fastmcp import Context
@@ -114,7 +115,7 @@ class FastMCPAgent(MultiStepAgent):
         self,
         ctx: Context,
         instructions: str | Conversation,
-        tools: list[FastMCPTool] | None = None,
+        tools: Sequence[FastMCPTool] | None = None,
         step_limit: int | None = None,
         success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
         error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,

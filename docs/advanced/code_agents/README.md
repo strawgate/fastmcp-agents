@@ -56,7 +56,7 @@ agent = FastMCPAgent(
     instructions="You are a helpful assistant that responds to user messages.",
 )
 
-tool = FastMCPTool.from_function(
+tool = FunctionTool.from_function(
     fn=agent.currate,
     name=agent.name,
     description=agent.description,

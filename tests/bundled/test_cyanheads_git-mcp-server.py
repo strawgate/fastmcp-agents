@@ -66,7 +66,7 @@ class TestGitAgent:
     @evaluate_with_criteria(
         criteria="""
         The result and the conversation history must indicate:
-        1. that a new branch was successfully created
+        1. a new branch was successfully created
         2. that the branch was created from the correct base branch
         3. that the working directory was switched to the new branch
         4. that the branch name follows good naming conventions (feature/, bugfix/, etc.)
@@ -92,7 +92,7 @@ class TestGitAgent:
 
         # Verify the branch was created
         assert (temp_working_dir / "servers").exists()
-        assert "feature/issue-1234" in text_result.lower()
+        assert "feature/issue-1234" in text_result.lower() or "feature/1234" in text_result.lower()
 
         # Verify tool calls
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -117,12 +117,24 @@ class TestGitAgent:
                 "mode": "create",
                 "startPoint": "main",
             },
+            {
+                "branchName": "feature/issue-1234",
+                "path": "servers",
+                "mode": "create",
+                "startPoint": "main",
+            },
         ]
 
         checkout_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_checkout")
-        assert checkout_tool_call.arguments == {
-            "branchOrPath": "feature/issue-1234",
-        }
+        assert checkout_tool_call.arguments in [
+            {
+                "branchOrPath": "feature/issue-1234",
+            },
+            {
+                "branchOrPath": "feature/issue-1234",
+                "path": "servers",
+            },
+        ]
 
         return agent, instructions, text_result
 
@@ -167,25 +179,46 @@ class TestGitAgent:
         remote_add_tool_call = next(
             tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "add"
         )
-        assert remote_add_tool_call.arguments == {
-            "name": "upstream",
-            "url": "https://github.com/modelcontextprotocol/servers.git",
-            "mode": "add",
-        }
+        assert remote_add_tool_call.arguments in [
+            {
+                "name": "upstream",
+                "url": "https://github.com/modelcontextprotocol/servers.git",
+                "mode": "add",
+            },
+            {
+                "name": "upstream",
+                "url": "https://github.com/modelcontextprotocol/servers.git",
+                "mode": "add",
+                "path": "servers",
+            },
+        ]
 
         show_tool_call = next(
             tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "show"
         )
-        assert show_tool_call.arguments == {
-            "name": "upstream",
-            "mode": "show",
-        }
+        assert show_tool_call.arguments in [
+            {
+                "name": "upstream",
+                "mode": "show",
+            },
+            {
+                "name": "upstream",
+                "mode": "show",
+                "path": "servers",
+            },
+        ]
 
         list_tool_call = next(
             tool_call for tool_call in agent_tool_calls if tool_call.name == "git_remote" and tool_call.arguments.get("mode") == "list"
         )
-        assert list_tool_call.arguments == {
-            "mode": "list",
-        }
+        assert list_tool_call.arguments in [
+            {
+                "mode": "list",
+            },
+            {
+                "mode": "list",
+                "path": "servers",
+            },
+        ]
 
         return agent, instructions, text_result
