@@ -71,11 +71,11 @@ class TestDuckDBAgent:
     async def test_database_inspection(
         self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, call_curator, agent_tool_calls
     ):
-        instructions = """
+        task = """
         Show me the current tables in the database, their schemas, and a sample of data from each table.
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -91,10 +91,10 @@ class TestDuckDBAgent:
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
         assert len(tool_call_names) > 4
 
-        assert "tips_writing_queries" in tool_call_names
+        assert "tips_using_query_tool" in tool_call_names
         assert "query" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -109,7 +109,7 @@ class TestDuckDBAgent:
         minimum_grade=0.9,
     )
     async def test_json_loading(self, temp_working_dir: Path, agent: FastMCPAgent, fastmcp_server: FastMCP, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         Load the JSON data from the file 'people.json' into a table called 'people'.
         Load the JSON data from the file 'dogs.json' into a table called 'dogs'.
         Show me the schema and a sample of the data from both tables.
@@ -134,7 +134,7 @@ class TestDuckDBAgent:
         with Path("dogs.json").open("w", encoding="utf-8") as f:
             json.dump(dogs_json, f)
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -150,7 +150,7 @@ class TestDuckDBAgent:
         assert "query" in tool_call_names
         assert "tips_load_json" in tool_call_names or "tips_load_json_file" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -167,7 +167,7 @@ class TestDuckDBAgent:
     async def test_query_execution(
         self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, fastmcp_server: FastMCP, call_curator, agent_tool_calls
     ):
-        instructions = """
+        task = """
         Execute the following query and explain the results:
         SELECT * FROM my_data WHERE age > 100 ORDER BY birthyear DESC LIMIT 5;
         """
@@ -187,7 +187,7 @@ class TestDuckDBAgent:
             """
             }
         )
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -204,7 +204,7 @@ class TestDuckDBAgent:
 
         assert "query" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -219,12 +219,12 @@ class TestDuckDBAgent:
         minimum_grade=0.9,
     )
     async def test_data_visualization(self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         Create an ascii visualization of the data in dogs table.
         Show the distribution of values in sibling ages.
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -238,7 +238,7 @@ class TestDuckDBAgent:
         # Verify tool calls
         assert len(agent_tool_calls) >= 1
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
-        assert "tips_writing_queries" in tool_call_names
+        assert "tips_using_query_tool" in tool_call_names
         assert "query" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result

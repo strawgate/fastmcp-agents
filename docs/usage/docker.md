@@ -21,3 +21,6 @@ While using `uv` and `python` is recommended, you can also use FastMCP Agents in
   ]
 }
 ```
+
+# Via the CLI
+docker run -i --rm -e GEMINI_API_KEY=YOUR_GEMINI_API_KEY ghcr.io/strawgate/fastmcp-agents cli config --bundled motherduckdb_mcp-server-motherduck run

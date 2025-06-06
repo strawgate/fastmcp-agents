@@ -3,7 +3,7 @@ agents:
     description: >-
       Assists with performing Filesystem read and write operations as requested
       by the user.
-    default_instructions: >-
+    instructions: >-
       When you are asked to perform a task that requires you to interact with
       local files, you should leverage the tools available to you to perform the
       task. If you are asked a question, you should leverage the tools available
@@ -13,7 +13,7 @@ agents:
       Assists with locating file names, paths, sizes, and other metadata in a
       filesystem. Can summarize file contents and provide a list of files whose
       names match or contents contain a given search term.
-    default_instructions: >-
+    instructions: >-
       When you are asked to perform a task that requires you to search the
       filesystem, you should leverage the tools available to you to perform the
       task. If you are asked a question, you should leverage the tools available

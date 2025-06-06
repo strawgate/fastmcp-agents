@@ -28,6 +28,7 @@ FastMCP-Agents comes bundled with some great MCP Servers. These bundled servers 
 
 The following bundled servers are available:
 
+- [DuckDuckGo (from nickclyde)](./bundled/servers.md#6-duckduckgo)
 - [Git (from Cyanheads)](./bundled/servers.md#1-git-from-cyanheads)
 - [Git (from MCP)](./bundled/servers.md#5-git-official-mcp-server)
 - [Github](./bundled/servers.md#2-github)

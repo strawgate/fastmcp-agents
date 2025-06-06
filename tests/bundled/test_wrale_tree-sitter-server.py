@@ -38,12 +38,12 @@ class TestTreeSitterAgent:
         minimum_grade=0.9,
     )
     async def test_project_registration(self, project_in_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         1. Register the project in the test_project directory
         2. Produce a basic analysis of the project
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -60,7 +60,7 @@ class TestTreeSitterAgent:
         assert "register_project_tool" in tool_call_names
         assert "analyze_project" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -75,13 +75,13 @@ class TestTreeSitterAgent:
         minimum_grade=0.9,
     )
     async def test_text_search(self, project_in_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         1. Register the project in the test_project directory
         2. Search for the text 'def test_' in all files
         3. Return the results in a clear format
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -98,7 +98,7 @@ class TestTreeSitterAgent:
         assert "register_project_tool" in tool_call_names
         assert "find_text" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -113,13 +113,13 @@ class TestTreeSitterAgent:
         minimum_grade=0.9,
     )
     async def test_symbol_search(self, project_in_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         1. Register the project in the test_project directory
         2. Analyze the project and find all function definitions in the project
         3. Return the results in a clear format
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -137,4 +137,4 @@ class TestTreeSitterAgent:
         assert "analyze_project" in tool_call_names
         assert "run_query" in tool_call_names
 
-        return agent, instructions, text_result
+        return agent, task, text_result

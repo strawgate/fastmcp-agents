@@ -23,7 +23,7 @@ A version of the [Cyanheads Git MCP server](https://github.com/cyanheads/git-mcp
 
 ```
 uvx fastmcp_agents config --bundled cyanheads_git-mcp-server \
-call ask_git_agent '{"instructions": "Clone the https://github.com/modelcontextprotocol/servers.git repository for me."}' \
+call ask_git_agent '{"task": "Clone the https://github.com/modelcontextprotocol/servers.git repository for me."}' \
 run
 ```
 
@@ -71,7 +71,7 @@ A version of the [Github MCP server](https://github.com/github/github-mcp-server
 
 ```bash
 uvx fastmcp_agents config --bundled github_github-mcp-server \
-call ask_github_agent '{"instructions": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
+call ask_github_agent '{"task": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
 run
 ```
 
@@ -117,7 +117,7 @@ A version of the [Tree Sitter MCP server](https://github.com/wrale/mcp-server-tr
 
 ```
 uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter \
-call ask_tree_sitter_agent '{"instructions": "Tell me all the classes in the repository located in the current working directory."}' \
+call ask_tree_sitter_agent '{"task": "Tell me all the classes in the repository located in the current working directory."}' \
 run
 ```
 
@@ -163,7 +163,7 @@ A version of the [MotherDuckDB MCP server](https://github.com/motherduckdb/mcp-s
 
 ```bash
 uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck \
-call ask_duckdb_agent '{"instructions": "Create a table called 'users' with the following columns: id, name, email."}' \
+call ask_duckdb_agent '{"task": "Create a table called 'users' with the following columns: id, name, email."}' \
 run
 ```
 
@@ -205,7 +205,7 @@ A version of the [ModelContextProtocol Git MCP server](https://github.com/modelc
 
 ```bash
 uvx fastmcp_agents config --bundled mcp_git \
-call ask_git_agent '{"instructions": "Show me the status of the repository."}' \
+call ask_git_agent '{"task": "Show me the status of the repository."}' \
 run
 ```
 
@@ -233,4 +233,75 @@ Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
 You can expose the server via mcpo:
 ```bash
 uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled mcp_git run
+```
+
+### 6. DuckDuckGo (from nickclyde)
+
+A version of the [DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo-mcp-server) that is wrapped with an agent.
+
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `duckduckgo_agent` | Assists with searching the web with the DuckDuckGo search engine. |
+
+### 6.1 Run with MCP Inspector
+
+`npx @modelcontextprotocol/inspector uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run`
+
+### 6.2 Directly call tools via the CLI
+
+```bash
+uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server \
+    call duckduckgo-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
+    run
+```
+
+Now run the same server with modified instructions and a change to the agent as tool:
+
+```bash
+uv run fastmcp_agents cli \
+    agent \
+    --name ddg-agent \
+    --description "Search with DuckDuckGo" \
+    --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
+    call ddg-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
+    wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+```
+
+Close inspection will show that the search query changes from:
+
+```
+{'query': 'fried cheese curds recipes'}
+```
+
+to:
+
+```
+{'query': 'recipes for preparing fried cheese curds -site:allrecipes.com'}
+```
+
+### 6.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_duckduckgo": {
+            "command": "uv",
+            "args": [
+                "run",
+                "fastmcp_agents",
+                "config", "--bundled", "nickclyde_duckduckgo-mcp-server",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 6.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
 ```

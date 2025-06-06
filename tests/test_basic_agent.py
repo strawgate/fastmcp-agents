@@ -54,7 +54,7 @@ def test_agent_system_prompt_formatting():
 
     # The system prompt should contain the agent name and description
     memory = PrivateMemoryFactory(memory_class=EphemeralMemory)()
-    conversation = agent._prepare_conversation(memory=memory, instructions="Custom Instructions")
+    conversation = agent._prepare_conversation(memory=memory, task="Custom Instructions")
     assert isinstance(conversation, Conversation)
     assert len(conversation.entries) == 2
     assert isinstance(conversation.entries[0], SystemConversationEntry)
@@ -70,7 +70,7 @@ def test_agent_with_custom_system_prompt():
     agent = FastMCPAgent(name="test_agent", description="A test agent", system_prompt=custom_prompt, llm_link=AsyncLitellmLLMLink())
 
     memory = PrivateMemoryFactory(memory_class=EphemeralMemory)()
-    conversation = agent._prepare_conversation(memory=memory, instructions="Custom Instructions")
+    conversation = agent._prepare_conversation(memory=memory, task="Custom Instructions")
     assert isinstance(conversation, Conversation)
     assert len(conversation.entries) == 2
     assert isinstance(conversation.entries[0], SystemConversationEntry)

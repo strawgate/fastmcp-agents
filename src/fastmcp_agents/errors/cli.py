@@ -30,6 +30,14 @@ class NoConfigError(FastMCPAgentsError):
 class MCPServerError(FastMCPAgentsError):
     """Raised when an MCP server fails to wrap."""
 
-    def __init__(self, server: str, error: Exception):
-        self.message = f"Error wrapping MCP server {server}: {error}"
+    def __init__(self, server: str):
+        self.message = f"Error wrapping MCP server {server}"
+        super().__init__(self.message)
+
+
+class MCPServerStartupError(FastMCPAgentsError):
+    """Raised when an MCP server fails to start."""
+
+    def __init__(self, server: str):
+        self.message = f"Error starting MCP server {server}"
         super().__init__(self.message)

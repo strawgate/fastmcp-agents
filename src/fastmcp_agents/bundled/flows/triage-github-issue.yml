@@ -2,7 +2,7 @@ agents:
 - name: triage_github_issue
   description: >-
     The `triage_github_issue` agent is responsible for triaging a GitHub issue.
-  default_instructions: >-
+  instructions: >-
     You are a helpful assistant that can help with triaging GitHub issues. You
     will be given a GitHub issue number and you will need to use the tools
     available to you to triage the issue.
@@ -14,7 +14,7 @@ agents:
 - name: triage_github_bug
   description: >-
     The `triage_github_bug` agent is responsible for triaging a GitHub bug.
-  default_instructions: >-
+  instructions: >-
     You are a helpful assistant that can help with triaging GitHub bugs. You
     will be given a GitHub issue number and you will need to use the tools
     available to you to triage the bug.

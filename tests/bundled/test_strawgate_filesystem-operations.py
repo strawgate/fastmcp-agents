@@ -30,11 +30,11 @@ class TestFilesystemOperationsAgent:
         minimum_grade=0.9,
     )
     async def test_file_creation(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         Create a new file called 'test.txt' in the current directory with the content 'Hello, World!'
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -50,7 +50,7 @@ class TestFilesystemOperationsAgent:
         assert len(agent_tool_calls) >= 1
         assert agent_tool_calls[0].name == "write_file"
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -68,11 +68,11 @@ class TestFilesystemOperationsAgent:
         # First create a file to read
         (temp_working_dir / "test.txt").write_text("Hello, World!")
 
-        instructions = """
+        task = """
         Read the contents of the file 'test.txt' and show me its metadata.
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -87,7 +87,7 @@ class TestFilesystemOperationsAgent:
         assert len(agent_tool_calls) >= 1
         assert agent_tool_calls[0].name == "read_file"
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
 
 class TestFilesystemSearchAgent:
@@ -113,12 +113,12 @@ class TestFilesystemSearchAgent:
         (temp_working_dir / "test2.txt").write_text("Hello, Python!")
         (temp_working_dir / "other.txt").write_text("Different content")
 
-        instructions = """
+        task = """
         Search for files containing the text 'Hello' in the current directory.
         Show me the file names and their contents.
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -134,7 +134,7 @@ class TestFilesystemSearchAgent:
         assert len(agent_tool_calls) >= 1
         assert agent_tool_calls[0].name == "search_files"
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -154,11 +154,11 @@ class TestFilesystemSearchAgent:
         (temp_working_dir / "test2.txt").write_text("Hello, Python!")
         (temp_working_dir / "other.txt").write_text("Different content")
 
-        instructions = """
+        task = """
         List all files in the current directory with their sizes and last modified dates.
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -176,4 +176,4 @@ class TestFilesystemSearchAgent:
         assert len(agent_tool_calls) >= 1
         assert agent_tool_calls[0].name == "list_directory"
 
-        return agent, instructions, text_result
+        return agent, task, text_result

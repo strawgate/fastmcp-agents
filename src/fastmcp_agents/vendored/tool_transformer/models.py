@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import Annotated, Any, Generic, Literal, Protocol, TypeVar, runtime_checkable
 
 from fastmcp.exceptions import ToolError
+from fastmcp.tools import FunctionTool
 from fastmcp.tools import Tool as FastMCPTool
 from jsonschema import ValidationError, validate
 from mcp.types import EmbeddedResource, ImageContent, TextContent
@@ -260,7 +261,7 @@ class ToolOverride(BaseModel):
     def apply_to_tool(
         self,
         tool: FastMCPTool,
-    ) -> FastMCPTool:
+    ) -> FunctionTool:
         return _transform_tool(tool, self)
 
 
@@ -347,7 +348,7 @@ def _create_transformed_function(
 def _transform_tool(
     tool: FastMCPTool,
     override: Annotated[ToolOverride, "Tool overrides for the tool."],
-) -> FastMCPTool:
+) -> FunctionTool:
     transformed_parameters: dict[str, Any] = deepcopy(tool.parameters)
 
     transformed_parameters = _apply_hook_parameters(schema=transformed_parameters, hook_parameters=override.hook_parameters)
@@ -370,7 +371,7 @@ def _transform_tool(
     if override.description is not None:
         transformed_description = override.description
 
-    return FastMCPTool(
+    return FunctionTool(
         fn=transformed_fn_callable,
         name=transformed_name,
         description=transformed_description,

@@ -1,0 +1,32 @@
+agents:
+- name: code_explorer_agent
+  description: >-
+    Assists with performing Filesystem read and write operations as requested
+    by the user.
+  instructions: >-
+    When you are asked to perform a task that requires you to interact with
+    local files, you should leverage the tools available to you to perform the
+    task. If you are asked a question, you should leverage the tools available
+    to you to answer the question.
+
+mcpServers:
+  cyanheads_git:
+    command: uv
+    args:
+      - run
+      - fastmcp_agents
+      - config
+      - --bundled
+      - "cyanheads_git-mcp-server"
+      - run
+
+  tree-sitter:
+    command: uv
+    args:
+      - run
+      - fastmcp_agents
+      - config
+      - --bundled
+      - "wrale_mcp-server-tree-sitter"
+      - run
+

@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from fastmcp.tools import Tool as FastMCPTool
+from fastmcp.tools import FunctionTool
 from mcp.types import Tool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
@@ -27,7 +27,7 @@ def mock_fastmcp_tool():
     def test_tool():
         pass
 
-    return FastMCPTool.from_function(fn=test_tool)
+    return FunctionTool.from_function(fn=test_tool)
 
 
 @pytest.fixture
