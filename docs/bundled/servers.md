@@ -251,8 +251,32 @@ A version of the [DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo
 
 ```bash
 uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server \
-call duckduckgo-agent '{"instructions": "Search for recipes for preparing fried cheese curds."}' \
-run
+    call duckduckgo-agent '{"instructions": "Search for recipes for preparing fried cheese curds."}' \
+    run
+```
+
+Now run the same server with modified instructions and a change to the agent as tool:
+
+```bash
+uv run fastmcp_agents cli \
+    agent \
+    --name ddg-agent \
+    --description "Search with DuckDuckGo" \
+    --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
+    call ddg-agent '{"instructions": "Search for recipes for preparing fried cheese curds."}' \
+    wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+```
+
+Close inspection will show that the search query changes from:
+
+```
+{'query': 'fried cheese curds recipes'}
+```
+
+to:
+
+```
+{'query': 'recipes for preparing fried cheese curds -site:allrecipes.com'}
 ```
 
 ### 6.3 Use in an MCP Server configuration
