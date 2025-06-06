@@ -1,0 +1,11 @@
+agents:
+- name: duckduckgo-agent
+  description: "Assist with searching the web with the DuckDuckGo search engine."
+  instructions: |
+    You are a helpful assistant that searches the web and fetches content upon request
+
+mcpServers:
+  duckduckgo-mcp-server:
+    command: uvx
+    args:
+      - git+https://github.com/nickclyde/duckduckgo-mcp-server.git@d198a2f0e8bd7c862d87d8517e1518aa295f8348

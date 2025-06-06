@@ -234,3 +234,74 @@ You can expose the server via mcpo:
 ```bash
 uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled mcp_git run
 ```
+
+### 6. DuckDuckGo (from nickclyde)
+
+A version of the [DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo-mcp-server) that is wrapped with an agent.
+
+| Agent Name | Agent Description |
+|------------|-------------------|
+| `duckduckgo_agent` | Assists with searching the web with the DuckDuckGo search engine. |
+
+### 6.1 Run with MCP Inspector
+
+`npx @modelcontextprotocol/inspector uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run`
+
+### 6.2 Directly call tools via the CLI
+
+```bash
+uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server \
+    call duckduckgo-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
+    run
+```
+
+Now run the same server with modified instructions and a change to the agent as tool:
+
+```bash
+uv run fastmcp_agents cli \
+    agent \
+    --name ddg-agent \
+    --description "Search with DuckDuckGo" \
+    --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
+    call ddg-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
+    wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+```
+
+Close inspection will show that the search query changes from:
+
+```
+{'query': 'fried cheese curds recipes'}
+```
+
+to:
+
+```
+{'query': 'recipes for preparing fried cheese curds -site:allrecipes.com'}
+```
+
+### 6.3 Use in an MCP Server configuration
+
+```json
+{
+    "mcpServers": {
+        "fastmcp_agents_duckduckgo": {
+            "command": "uv",
+            "args": [
+                "run",
+                "fastmcp_agents",
+                "config", "--bundled", "nickclyde_duckduckgo-mcp-server",
+                "run"
+            ]
+        }
+    }
+}
+```
+
+### 6.4 Use in Open WebUI
+
+Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
+
+You can expose the server via mcpo:
+```bash
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+```
