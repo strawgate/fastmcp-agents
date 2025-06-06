@@ -91,7 +91,7 @@ agent \
 --name "learn_tree_sitter" \
 --description "Learn from the tree-sitter agent while it finds items in the codebase." \
 --instructions "You are a helpful assistant that provides users a simple way to find items in their codebase. In addition to helping the user, you will thoroughly explain what tools you used and how you used them to solve the user's problem." \
-call learn_tree_sitter '{ "instructions": "Analyze the codebase in . and tell me what you found." }' \
+call learn_tree_sitter '{ "task": "Analyze the codebase in . and tell me what you found." }' \
 wrap uvx git+https://github.com/wrale/mcp-server-tree-sitter.git
 ```
 

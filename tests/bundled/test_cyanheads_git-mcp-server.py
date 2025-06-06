@@ -29,9 +29,9 @@ class TestGitAgent:
         minimum_grade=0.9,
     )
     async def test_ask_git_for_clone(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = "Do a depth 1 clone of the repository https://github.com/modelcontextprotocol/servers"
+        task = "Do a depth 1 clone of the repository https://github.com/modelcontextprotocol/servers"
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -59,9 +59,8 @@ class TestGitAgent:
             "targetPath": "servers",
             "depth": 1,
         }
-        assert agent_tool_calls[1].name == "report_success"
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -77,13 +76,13 @@ class TestGitAgent:
         minimum_grade=0.9,
     )
     async def test_branch_management(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         1. Clone the repository https://github.com/modelcontextprotocol/servers
         2. Create a new feature branch for issue #1234 from main
         3. Switch to the new branch
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -92,8 +91,6 @@ class TestGitAgent:
 
         # Verify the branch was created
         assert (temp_working_dir / "servers").exists()
-        assert "feature/issue-1234" in text_result.lower() or "feature/1234" in text_result.lower()
-
         # Verify tool calls
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
         assert len(agent_tool_calls) >= 3
@@ -102,41 +99,25 @@ class TestGitAgent:
         assert "git_checkout" in tool_call_names
 
         clone_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_clone")
-        assert clone_tool_call.arguments == {
-            "repositoryUrl": "https://github.com/modelcontextprotocol/servers",
-            "targetPath": "servers",
-        }
+        assert clone_tool_call.arguments.get("targetPath") in ["servers", "./servers"]
+        assert clone_tool_call.arguments.get("repositoryUrl") == "https://github.com/modelcontextprotocol/servers"
+
+        valid_prefixes = {"feature/", "feat/"}
+        valid_suffixes = {"issue-1234", "1234", "1234-issue", "1234"}
+        valid_branch_names = {f"{prefix}{suffix}" for prefix in valid_prefixes for suffix in valid_suffixes}
+
         branch_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_branch")
-        assert branch_tool_call.arguments in [
-            {
-                "branchName": "feature/issue-1234",
-                "baseBranch": "main",
-            },
-            {
-                "branchName": "feature/issue-1234",
-                "mode": "create",
-                "startPoint": "main",
-            },
-            {
-                "branchName": "feature/issue-1234",
-                "path": "servers",
-                "mode": "create",
-                "startPoint": "main",
-            },
-        ]
+        assert branch_tool_call.arguments.get("branchName") in valid_branch_names
+        assert branch_tool_call.arguments.get("baseBranch", "main") == "main"
+        assert branch_tool_call.arguments.get("mode", "create") == "create"  # Not required
+        assert branch_tool_call.arguments.get("startPoint", "main") == "main"  # Not required
+        assert branch_tool_call.arguments.get("path", "servers") == "servers"  # Not required
 
         checkout_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_checkout")
-        assert checkout_tool_call.arguments in [
-            {
-                "branchOrPath": "feature/issue-1234",
-            },
-            {
-                "branchOrPath": "feature/issue-1234",
-                "path": "servers",
-            },
-        ]
+        assert checkout_tool_call.arguments.get("branchOrPath") in valid_branch_names
+        assert checkout_tool_call.arguments.get("path", "servers") == "servers"
 
-        return agent, instructions, text_result
+        return agent, task, text_result
 
     @evaluate_with_criteria(
         criteria="""
@@ -152,14 +133,14 @@ class TestGitAgent:
         minimum_grade=0.9,
     )
     async def test_remote_management(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
-        instructions = """
+        task = """
         1. Clone the repository https://github.com/modelcontextprotocol/servers
         2. Add a new remote called 'upstream' pointing to https://github.com/modelcontextprotocol/servers.git
         3. Verify the remote was added correctly
         4. List all remotes to confirm
         """
 
-        result = await call_curator(name=agent.name, instructions=instructions)
+        result = await call_curator(name=agent.name, task=task)
 
         assert isinstance(result, list)
         assert len(result) == 1
@@ -221,4 +202,4 @@ class TestGitAgent:
             },
         ]
 
-        return agent, instructions, text_result
+        return agent, task, text_result

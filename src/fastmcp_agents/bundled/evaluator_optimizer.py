@@ -123,7 +123,7 @@ ONE_KB = 1024
 async def perform_evaluation(ctx: Context, prompt: str) -> EvaluationResult:
     _, evaluation_result = await evaluator.run(
         ctx,
-        instructions=prompt,
+        task=prompt,
         success_response_model=EvaluationResult,
         raise_on_error_response=True,
     )

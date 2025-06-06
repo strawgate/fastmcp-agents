@@ -223,7 +223,7 @@
                 "You are a helpful assistant that provides users a simple way to find items in their codebase.",
                 "call",
                 "ask_tree_sitter",
-                "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "wrap",
                 "--env",
                 "MCP_TS_LOG_LEVEL=WARNING",
@@ -244,7 +244,7 @@
                 "--directory",
                 "${workspaceFolder}/src/fastmcp_agents/bundled",
                 "--file","wrale_mcp-server-tree-sitter.yml",
-                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "call", "ask_tree_sitter", "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "run"
             ]
         },
@@ -261,7 +261,7 @@
                 "--directory",
                 "${workspaceFolder}/src/fastmcp_agents/bundled",
                 "--bundled","evaluator_optimizer",
-                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "call", "ask_tree_sitter", "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "run"
             ]
         },

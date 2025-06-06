@@ -120,7 +120,7 @@ class MultiStepAgent(SingleStepAgent):
     async def run(
         self,
         ctx: Context,
-        instructions: str | Conversation,
+        task: str | Conversation,
         tools: Sequence[FastMCPTool],
         step_limit: int,
         success_response_model: type[SUCCESS_RESPONSE_MODEL],
@@ -144,7 +144,7 @@ class MultiStepAgent(SingleStepAgent):
 
         memory: MemoryProtocol = self.memory_factory()
 
-        conversation = self._prepare_conversation(memory, instructions)
+        conversation = self._prepare_conversation(memory, task)
 
         available_tools: Sequence[FastMCPTool] = tools or self.default_tools
 
@@ -167,16 +167,18 @@ class MultiStepAgent(SingleStepAgent):
         total_tokens = sum(entry.token_usage or 0 for entry in conversation.entries if isinstance(entry, AssistantConversationEntry))
         self._logger.info(f"Total token usage: {total_tokens}")
 
-    def _prepare_conversation(self, memory: MemoryProtocol, instructions: str | Conversation) -> Conversation:
+    def _prepare_conversation(self, memory: MemoryProtocol, task: str | Conversation) -> Conversation:
         """Prepare the conversation for the agent. Either by using the conversation history or the instructions."""
 
+        conversation: Conversation = memory.get()
+
         # If there is no conversation history, use the system prompt.
-        if not (conversation := memory.get()):
+        if len(conversation.entries) == 0:
             conversation = self._system_prompt
 
-        # If the instructions are a string, convert them to a conversation entry.
-        if isinstance(instructions, str):
-            instructions = Conversation(entries=[UserConversationEntry(content=instructions)])
+        # If the task is a string, convert it to a conversation entry.
+        if isinstance(task, str):
+            task = Conversation(entries=[UserConversationEntry(content=task)])
 
         # Merge the instructions with the conversation history.
-        return conversation.merge(instructions)
+        return conversation.merge(task)

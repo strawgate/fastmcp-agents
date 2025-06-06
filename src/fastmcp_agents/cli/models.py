@@ -134,7 +134,7 @@ class AgentModel(BaseModel):
     type: Literal["fastmcp"] = Field(default="fastmcp", description="The type of agent.")
     name: str = Field(..., description="The name of the agent.")
     description: str = Field(..., description="The description of the agent.")
-    default_instructions: str = Field(..., description="The default instructions to provide to the agent.")
+    instructions: str = Field(..., description="The default instructions to provide to the agent.")
     model: str | None = Field(default=None, description="The GenAI model to use for the agent.")
     allowed_tools: list[str] | None = Field(None, description="An optional list of the tools to provide to the agent.")
     blocked_tools: list[str] | None = Field(None, description="An optional list of the tools to block from the agent.")
@@ -155,7 +155,7 @@ class AgentModel(BaseModel):
         return FastMCPAgent(
             name=agent_model.name,
             description=agent_model.description,
-            system_prompt=agent_model.default_instructions,
+            system_prompt=agent_model.instructions,
             default_tools=agent_tools,
             memory_factory=EphemeralMemory,
         )

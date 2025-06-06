@@ -23,7 +23,7 @@ A version of the [Cyanheads Git MCP server](https://github.com/cyanheads/git-mcp
 
 ```
 uvx fastmcp_agents config --bundled cyanheads_git-mcp-server \
-call ask_git_agent '{"instructions": "Clone the https://github.com/modelcontextprotocol/servers.git repository for me."}' \
+call ask_git_agent '{"task": "Clone the https://github.com/modelcontextprotocol/servers.git repository for me."}' \
 run
 ```
 
@@ -71,7 +71,7 @@ A version of the [Github MCP server](https://github.com/github/github-mcp-server
 
 ```bash
 uvx fastmcp_agents config --bundled github_github-mcp-server \
-call ask_github_agent '{"instructions": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
+call ask_github_agent '{"task": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
 run
 ```
 
@@ -117,7 +117,7 @@ A version of the [Tree Sitter MCP server](https://github.com/wrale/mcp-server-tr
 
 ```
 uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter \
-call ask_tree_sitter_agent '{"instructions": "Tell me all the classes in the repository located in the current working directory."}' \
+call ask_tree_sitter_agent '{"task": "Tell me all the classes in the repository located in the current working directory."}' \
 run
 ```
 
@@ -163,7 +163,7 @@ A version of the [MotherDuckDB MCP server](https://github.com/motherduckdb/mcp-s
 
 ```bash
 uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck \
-call ask_duckdb_agent '{"instructions": "Create a table called 'users' with the following columns: id, name, email."}' \
+call ask_duckdb_agent '{"task": "Create a table called 'users' with the following columns: id, name, email."}' \
 run
 ```
 
@@ -205,7 +205,7 @@ A version of the [ModelContextProtocol Git MCP server](https://github.com/modelc
 
 ```bash
 uvx fastmcp_agents config --bundled mcp_git \
-call ask_git_agent '{"instructions": "Show me the status of the repository."}' \
+call ask_git_agent '{"task": "Show me the status of the repository."}' \
 run
 ```
 

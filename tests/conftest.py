@@ -127,8 +127,8 @@ async def initialized_client(fastmcp_server_client: Client) -> AsyncGenerator[Cl
 def call_curator(
     initialized_client: Client,
 ) -> Callable[[str, str], Coroutine[Any, Any, list[TextContent | ImageContent | EmbeddedResource]]]:
-    async def call_curator(name: str, instructions: str) -> list[TextContent | ImageContent | EmbeddedResource]:
-        return await initialized_client.call_tool(name=name, arguments={"instructions": instructions})
+    async def call_curator(name: str, task: str) -> list[TextContent | ImageContent | EmbeddedResource]:
+        return await initialized_client.call_tool(name=name, arguments={"task": task})
 
     return call_curator
 
