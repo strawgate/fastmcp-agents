@@ -251,7 +251,7 @@ A version of the [DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo
 
 ```bash
 uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server \
-    call duckduckgo-agent '{"instructions": "Search for recipes for preparing fried cheese curds."}' \
+    call duckduckgo-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
     run
 ```
 
@@ -263,7 +263,7 @@ uv run fastmcp_agents cli \
     --name ddg-agent \
     --description "Search with DuckDuckGo" \
     --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
-    call ddg-agent '{"instructions": "Search for recipes for preparing fried cheese curds."}' \
+    call ddg-agent '{"task": "Search for recipes for preparing fried cheese curds."}' \
     wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
 ```
 
