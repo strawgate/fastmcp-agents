@@ -10,7 +10,7 @@ agents:
       You will need to provide the path to the codebase you want to search and
       you must coordinate cloning or obtaining the codebase outside of this
       agent.
-    default_instructions: >-
+    instructions: >-
       You are a helpful assistant that provides users a simple way to explore
       their codebase. You will be given a codebase and you will need to use
       the tools available to you to help the user with the task they've asked

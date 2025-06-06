@@ -2,6 +2,7 @@
 
 import json
 import os
+from collections.abc import Sequence
 
 from fastmcp.tools import Tool as FastMCPTool
 from litellm import CustomStreamWrapper, LiteLLM, acompletion
@@ -119,7 +120,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
     async def async_completion(
         self,
         conversation: Conversation,
-        fastmcp_tools: list[FastMCPTool],
+        fastmcp_tools: Sequence[FastMCPTool],
     ) -> AssistantConversationEntry:
         """Call the LLM with the given messages and tools.
 

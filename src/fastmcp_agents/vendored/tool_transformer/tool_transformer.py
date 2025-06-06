@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+from fastmcp.tools.tool import FunctionTool
 from fastmcp.tools.tool import Tool as FastMCPTool
 from fastmcp.utilities.logging import get_logger
 
@@ -31,7 +32,7 @@ def transform_tool(
         PostToolCallHookProtocol | None,
         "A hook that is called after a tool call is made.",
     ] = None,
-) -> FastMCPTool:
+) -> FunctionTool:
     """
     Transforms a tool with the given overrides.
 

@@ -52,7 +52,7 @@ The `agents` section is an optional list of agent definitions. Each item in the 
 
 *   `name` (string, required): The unique name of the agent.
 *   `description` (string, required): A brief description of the agent's purpose.
-*   `default_instructions` (string, required): The default instructions provided to the LLM for this agent.
+*   `instructions` (string, required): The default instructions provided to the LLM for this agent.
 *   `allowed_tools` (list of strings, optional): A list of tool names that this agent is allowed to use. If not specified, the agent can use all available tools unless blocked.
 *   `blocked_tools` (list of strings, optional): A list of tool names that this agent is explicitly prevented from using.
 
@@ -60,7 +60,7 @@ The `agents` section is an optional list of agent definitions. Each item in the 
 agents:
   - name: "my_agent"
     description: "An agent for performing file operations."
-    default_instructions: "Use the available tools to read and list files as requested."
+    instructions: "Use the available tools to read and list files as requested."
     allowed_tools:
       - "read_file"
       - "list_files"

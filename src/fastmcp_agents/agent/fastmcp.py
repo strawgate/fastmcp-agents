@@ -1,5 +1,6 @@
 """FastMCP Agent implementation."""
 
+from collections.abc import Sequence
 from typing import TypeAlias
 
 from fastmcp import Context
@@ -113,8 +114,8 @@ class FastMCPAgent(MultiStepAgent):
     async def run(
         self,
         ctx: Context,
-        instructions: str | Conversation,
-        tools: list[FastMCPTool] | None = None,
+        task: str | Conversation,
+        tools: Sequence[FastMCPTool] | None = None,
         step_limit: int | None = None,
         success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
         error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
@@ -122,7 +123,7 @@ class FastMCPAgent(MultiStepAgent):
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         return await super().run(
             ctx=ctx,
-            instructions=instructions,
+            task=task,
             tools=tools or [],
             step_limit=step_limit or DEFAULT_STEP_LIMIT,
             success_response_model=success_response_model,
@@ -130,13 +131,13 @@ class FastMCPAgent(MultiStepAgent):
             raise_on_error_response=raise_on_error_response,
         )
 
-    async def currate(self, ctx: Context, instructions: str) -> str:
-        """Runs the agent with the provided instructions and default tools, returning a string result or raising a TaskFailureError.
+    async def currate(self, ctx: Context, task: str) -> str:
+        """Runs the agent with the provided task and default tools, returning a string result or raising a TaskFailureError.
 
         Useful for making the Agent available as a general purpose tool on the server.s
         """
 
-        _, result = await self.run(ctx, instructions, self.default_tools, self.step_limit)
+        _, result = await self.run(ctx, task, self.default_tools, self.step_limit)
 
         if isinstance(result, DefaultErrorResponseModel):
             raise TaskFailureError(self.name, result)

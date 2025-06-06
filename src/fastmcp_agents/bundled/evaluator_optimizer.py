@@ -7,7 +7,7 @@ from typing import Any, Literal
 import asyncclick as click
 import yaml
 from fastmcp import Context, FastMCP
-from fastmcp.tools import Tool as FastMCPTool
+from fastmcp.tools import FunctionTool
 from pydantic import BaseModel, Field, computed_field
 
 from fastmcp_agents.agent.fastmcp import FastMCPAgent
@@ -123,7 +123,7 @@ ONE_KB = 1024
 async def perform_evaluation(ctx: Context, prompt: str) -> EvaluationResult:
     _, evaluation_result = await evaluator.run(
         ctx,
-        instructions=prompt,
+        task=prompt,
         success_response_model=EvaluationResult,
         raise_on_error_response=True,
     )
@@ -182,7 +182,7 @@ def evaluate_result_factory(criteria: str) -> Callable[..., Coroutine[Any, Any, 
     help="The evaluation criteria to use for scoring the result.",
 )
 async def cli(evaluation_criteria: str | None = None):
-    evaluator_tool = FastMCPTool.from_function(fn=evaluate_result_factory(evaluation_criteria or DEFAULT_CRITERIA))
+    evaluator_tool = FunctionTool.from_function(fn=evaluate_result_factory(evaluation_criteria or DEFAULT_CRITERIA))
 
     mcp = FastMCP(name="Local Evaluate Optimize", tools=[evaluator_tool])
 

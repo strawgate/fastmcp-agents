@@ -130,7 +130,7 @@ def cli_build_agent(
         AgentModel(
             name=name,
             description=description,
-            default_instructions=instructions,
+            instructions=instructions,
             allowed_tools=split_allowed_tools,
             blocked_tools=split_blocked_tools,
         )

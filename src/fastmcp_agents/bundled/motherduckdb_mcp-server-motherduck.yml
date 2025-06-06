@@ -1,54 +1,25 @@
 agents:
 - name: ask_duckdb_agent
   description: "Ask the duckdb agent to work with an in-memory database on your behalf."
-  instructions: "You are a helpful assistant that provides users a simple way to find items in their database."
-  default_instructions: | 
+  instructions: | 
     You are a helpful assistant that provides users a simple way to find items in their DuckDB databases.
 
-    By default, you have access to an in-memory database, which may be empty or may not be.
-
-    It will be important for you to list out the current tables, their schemas, and a small sample
-    of the data in each table before attempting to help the user. It will also be important for you to
-    call the `tips_writing_queries` tool to get tips for writing DuckDB queries.
-
-    If you are asked to load JSON data, you should call the `tips_load_json` tool to get tips for loading JSON data.
-
-    You may be given a query to execute or an outcome to deliver. 
-
-    You can also install extensions as needed. The following extensions are available:
-
-    ### Full Text search
-
-    ```sql
-    INSTALL fts;
-    LOAD fts;
-    ```
-
-    ### JSON
-
-    Your job is to:
-    1. Gather necessary information:
-      - Run any `tips` tool calls to get background information on the database functionality you need to use.
-      - Run any calls needed to understand the current state of the database, its tables, and the data in them.
-
-    2. Execute Queries:
-      - Parse user's analytical questions
-      - Match questions to available data structures
-      - Review the schema of tables before writing queries
-      - Review the schema of the data before deciding on columns or types
-      - Generate appropriate SQL queries
-      - Execute queries and display results
-      - Provide clear explanations of findings
-      - Explain query logic when needed
-
-    3. Visualization Support:
-      - When a visualization is requested, you should make one.
-      - Create artifacts for data visualization when appropriate
-      - Support common chart types and dashboards
-      - Ensure visualizations enhance understanding of results
-
-    You will never create a table, view, or other database object before checking if it already exists. You will 
+    By default, you have access to an in-memory database, which may be empty or may not be. You will never
+    create a table, view, or other database object before checking if it already exists. You will 
     always analyze the schema of database objects before querying them.
+
+    Before starting on the overall task you must:
+    1. You **must** call the `tips_using_query_tool`.
+    2. Run **must** run a `SHOW ALL TABLES;` query to get a list of all tables and their schemas.
+
+    When you are asked to perform a task that requires you to interact with the tables:
+    1. Before querying any table, perform a small sample of the data in the table to get a sense of the data.
+
+    If you are asked to load JSON data, you must:
+    1. Call the `tips_load_json` tool to get tips for loading JSON data.
+
+    Once you have the results from these calls, you can run any other queries you need to understand the database
+    before attempting to complete the task.
 
 tools:
   - name: tips_load_json
@@ -424,8 +395,8 @@ tools:
       | `timestampformat` | Specifies the date format to use when parsing timestamps. See [Date Format]({% link docs/stable/sql/functions/dateformat.md %}) | `VARCHAR` | `iso`|
       | `union_by_name` | Whether the schema's of multiple JSON files should be [unified]({% link docs/stable/data/multiple_files/combining_schemas.md %}). | `BOOL` | `false` |
 
-  - name: tips_writing_queries
-    description: "Get tips for writing a query."
+  - name: tips_using_query_tool
+    description: "Get tips for using the `query` tool."
     returns: >-
       Remember:
       - Use artifacts for visualizations
@@ -857,8 +828,10 @@ tools:
 
 mcpServers:
   mcp-server-motherduck:
-    command: "uvx"
+    command: "uv"
     args:
+      - "tool"
+      - "run"
       - mcp-server-motherduck
       - --db-path
       - ":memory:"

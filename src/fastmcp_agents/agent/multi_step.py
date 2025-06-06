@@ -1,8 +1,10 @@
 """Base class for multi-step agents."""
 
+from collections.abc import Sequence
 from typing import ParamSpec, TypeVar
 
 from fastmcp import Context
+from fastmcp.tools import FunctionTool
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel
 
@@ -48,7 +50,7 @@ class MultiStepAgent(SingleStepAgent):
         *args,  # noqa: ARG002
         ctx: Context,
         conversation: Conversation,
-        tools: list[FastMCPTool],
+        tools: Sequence[FastMCPTool],
         step_limit: int,
         success_response_model: type[SUCCESS_RESPONSE_MODEL],
         error_response_model: type[ERROR_RESPONSE_MODEL],
@@ -83,8 +85,8 @@ class MultiStepAgent(SingleStepAgent):
             nonlocal result
             result = error_response_model.model_validate(obj=kwargs)
 
-        success_tool = FastMCPTool(fn=report_success, name="report_success", parameters=success_response_model.model_json_schema())
-        error_tool = FastMCPTool(fn=report_error, name="report_error", parameters=error_response_model.model_json_schema())
+        success_tool = FunctionTool(fn=report_success, name="report_success", parameters=success_response_model.model_json_schema())
+        error_tool = FunctionTool(fn=report_error, name="report_error", parameters=error_response_model.model_json_schema())
 
         # Add our callback functions to the tools.
         available_tools = [*tools, success_tool, error_tool]
@@ -118,8 +120,8 @@ class MultiStepAgent(SingleStepAgent):
     async def run(
         self,
         ctx: Context,
-        instructions: str | Conversation,
-        tools: list[FastMCPTool],
+        task: str | Conversation,
+        tools: Sequence[FastMCPTool],
         step_limit: int,
         success_response_model: type[SUCCESS_RESPONSE_MODEL],
         error_response_model: type[ERROR_RESPONSE_MODEL],
@@ -142,9 +144,9 @@ class MultiStepAgent(SingleStepAgent):
 
         memory: MemoryProtocol = self.memory_factory()
 
-        conversation = self._prepare_conversation(memory, instructions)
+        conversation = self._prepare_conversation(memory, task)
 
-        available_tools: list[FastMCPTool] = tools or self.default_tools
+        available_tools: Sequence[FastMCPTool] = tools or self.default_tools
 
         conversation, completion_result = await self.run_steps(
             ctx=ctx,
@@ -165,16 +167,18 @@ class MultiStepAgent(SingleStepAgent):
         total_tokens = sum(entry.token_usage or 0 for entry in conversation.entries if isinstance(entry, AssistantConversationEntry))
         self._logger.info(f"Total token usage: {total_tokens}")
 
-    def _prepare_conversation(self, memory: MemoryProtocol, instructions: str | Conversation) -> Conversation:
+    def _prepare_conversation(self, memory: MemoryProtocol, task: str | Conversation) -> Conversation:
         """Prepare the conversation for the agent. Either by using the conversation history or the instructions."""
 
+        conversation: Conversation = memory.get()
+
         # If there is no conversation history, use the system prompt.
-        if not (conversation := memory.get()):
+        if len(conversation.entries) == 0:
             conversation = self._system_prompt
 
-        # If the instructions are a string, convert them to a conversation entry.
-        if isinstance(instructions, str):
-            instructions = Conversation(entries=[UserConversationEntry(content=instructions)])
+        # If the task is a string, convert it to a conversation entry.
+        if isinstance(task, str):
+            task = Conversation(entries=[UserConversationEntry(content=task)])
 
         # Merge the instructions with the conversation history.
-        return conversation.merge(instructions)
+        return conversation.merge(task)

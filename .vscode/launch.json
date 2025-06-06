@@ -9,7 +9,8 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "envFile": "${workspaceFolder}/.env"
         },
         {
             "name": "Python Debugger: Module",
@@ -117,6 +118,7 @@
             "module": "fastmcp_agents.cli.base",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
+            "subProcess": true,
             "cwd": "${workspaceFolder}/agent-working-dir",
             "args": [
                 "--transport",
@@ -158,6 +160,23 @@
                 "config",
                 "--file",
                 "${workspaceFolder}/src/fastmcp_agents/bundled/wrale_mcp-server-tree-sitter.yml",
+                "run"
+            ]
+        },
+        {
+            "name": "Config/SSE - Code Explorer",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.base",
+            "justMyCode": false,
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/agent-working-dir",
+            "args": [
+                "--transport",
+                "sse",
+                "config",
+                "--file",
+                "${workspaceFolder}/src/fastmcp_agents/bundled/flows/code-explorer.yml",
                 "run"
             ]
         },
@@ -204,7 +223,7 @@
                 "You are a helpful assistant that provides users a simple way to find items in their codebase.",
                 "call",
                 "ask_tree_sitter",
-                "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "wrap",
                 "--env",
                 "MCP_TS_LOG_LEVEL=WARNING",
@@ -225,7 +244,7 @@
                 "--directory",
                 "${workspaceFolder}/src/fastmcp_agents/bundled",
                 "--file","wrale_mcp-server-tree-sitter.yml",
-                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "call", "ask_tree_sitter", "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "run"
             ]
         },
@@ -242,7 +261,7 @@
                 "--directory",
                 "${workspaceFolder}/src/fastmcp_agents/bundled",
                 "--bundled","evaluator_optimizer",
-                "call", "ask_tree_sitter", "{\"instructions\": \"Analyze the codebase in . and tell me what you found.\"}",
+                "call", "ask_tree_sitter", "{\"task\": \"Analyze the codebase in . and tell me what you found.\"}",
                 "run"
             ]
         },
