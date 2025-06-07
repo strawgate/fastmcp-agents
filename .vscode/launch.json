@@ -90,7 +90,7 @@
                 "sse",
                 "config",
                 "--bundled",
-                "filesystem_filesystem-mcp-server",
+                "strawgate_filesystem-operations-mcp",
                 "run"
             ]
         },
@@ -171,6 +171,7 @@
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
+            "subProcess": true,
             "args": [
                 "--transport",
                 "sse",

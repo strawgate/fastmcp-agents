@@ -103,7 +103,7 @@ class TestGitAgent:
         assert clone_tool_call.arguments.get("repositoryUrl") == "https://github.com/modelcontextprotocol/servers"
 
         valid_prefixes = {"feature/", "feat/"}
-        valid_suffixes = {"issue-1234", "1234", "1234-issue", "1234"}
+        valid_suffixes = {"issue-1234", "1234", "1234-issue"}
         valid_branch_names = {f"{prefix}{suffix}" for prefix in valid_prefixes for suffix in valid_suffixes}
 
         branch_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_branch")
