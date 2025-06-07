@@ -19,6 +19,8 @@ A version of the [Cyanheads Git MCP server](https://github.com/cyanheads/git-mcp
 
 `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled cyanheads_git-mcp-server run`
 
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
+
 ### 1.2 Directly call tools via the CLI
 
 ```
@@ -67,6 +69,8 @@ A version of the [Github MCP server](https://github.com/github/github-mcp-server
 
 `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled github_github-mcp-server run`
 
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
+
 ### 2.2 Directly call tools via the CLI
 
 ```bash
@@ -112,6 +116,8 @@ A version of the [Tree Sitter MCP server](https://github.com/wrale/mcp-server-tr
 ### 3.1 Run with MCP Inspector
 
 `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled wrale_mcp-server-tree-sitter run`
+
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
 
 ### 3.2 Directly call tools via the CLI
 
@@ -159,6 +165,8 @@ A version of the [MotherDuckDB MCP server](https://github.com/motherduckdb/mcp-s
 
 `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled motherduckdb_mcp-server-motherduck run`
 
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
+
 ### 4.2 Directly call tools via the CLI
 
 ```bash
@@ -200,6 +208,8 @@ A version of the [ModelContextProtocol Git MCP server](https://github.com/modelc
 ### 5.1 Run with MCP Inspector
 
 `npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled mcp_git run`
+
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
 
 ### 5.2 Directly call tools via the CLI
 
@@ -246,6 +256,8 @@ A version of the [DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo
 ### 6.1 Run with MCP Inspector
 
 `npx @modelcontextprotocol/inspector uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run`
+
+When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
 
 ### 6.2 Directly call tools via the CLI
 

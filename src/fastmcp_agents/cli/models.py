@@ -1,9 +1,12 @@
 """Pydantic models for the CLI."""
 
+import sys
 from collections.abc import Sequence
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Literal
 
 from fastmcp import Client, FastMCP
+from fastmcp.client.transports import StdioTransport
 from fastmcp.server.proxy import ProxyTool
 from fastmcp.tools import FunctionTool
 from fastmcp.tools import Tool as FastMCPTool
@@ -90,6 +93,66 @@ class FastMCPAgentServer(BaseModel):
     tools: dict[str, ToolOverride] = Field(default_factory=dict)
 
 
+class FastMCPAgentsStdioTransport(StdioTransport):
+    """Transport for running Python modules."""
+
+    def __init__(
+        self,
+        args: list[str],
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+        keep_alive: bool | None = None,
+    ):
+        """
+        Initialize a Python transport.
+
+        Args:
+            script_path: Path to the Python script to run
+            args: Additional arguments to pass to the script
+            env: Environment variables to set for the subprocess
+            cwd: Current working directory for the subprocess
+            python_cmd: Python command to use (default: "python")
+            keep_alive: Whether to keep the subprocess alive between connections.
+                       Defaults to True. When True, the subprocess remains active
+                       after the connection context exits, allowing reuse in
+                       subsequent connections.
+        """
+
+        if len(args) == 0:
+            msg = "No arguments provided to the FastMCPAgentsStdioTransport."
+            raise ValueError(msg)
+
+        # python
+        command = sys.executable
+
+        # python -m fastmcp_agents.cli.base
+        base_args = ["-m", "fastmcp_agents.cli.base"]
+
+        full_args = base_args + args
+
+        super().__init__(
+            command=command,
+            args=full_args,
+            env=env,
+            cwd=cwd,
+            keep_alive=keep_alive,
+        )
+
+
+def strip_uv_uvx_python_args(command: str, args: list[str]) -> list[str]:
+    """Strip the first couple of args if they are uv run or uvx."""
+
+    new_args = deepcopy(args)
+
+    if command == "uv" and args[0] == "run" and args[1] == "fastmcp_agents":
+        new_args = args[2:]
+
+    if command == "uvx" and args[0] == "fastmcp_agents":
+        new_args = args[1:]
+
+    return new_args
+
+
 class OverriddenStdioMCPServer(StdioMCPServer):
     """A Stdio server with overridden tools."""
 
@@ -98,6 +161,10 @@ class OverriddenStdioMCPServer(StdioMCPServer):
     def to_fastmcp_client(self, init_timeout: float = 20.0) -> Client:
         """Convert the server to a FastMCP client."""
         transport = self.to_transport()
+        if transport.command in {"uv", "uvx", "python"} and "fastmcp_agents" in transport.args:
+            transport = FastMCPAgentsStdioTransport(
+                args=strip_uv_uvx_python_args(transport.command, transport.args), env=transport.env, cwd=transport.cwd
+            )
         transport.keep_alive = True
         return Client(transport=transport, init_timeout=init_timeout)
 

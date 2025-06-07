@@ -52,6 +52,17 @@ agents:
       - get_node_types
       - find_similar_code
 
+tools:
+  - name: tips_using_tree_sitter_tool
+    description: "Get tips for using the `tree-sitter` tool."
+    returns: >-
+      You should generally assume that the project has not been registered yet
+      and that you will use the `register_project_tool` to register it and and
+      `analyze_project` to get a good high-level understanding of the project.
+      If you are asked to do something that requires querying tree-sitter, you
+      should also include a call to `list_query_templates_tool` in your initial
+      set of tool calls.
+
 mcpServers:
   tree-sitter:
     command: uvx

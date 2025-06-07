@@ -136,6 +136,7 @@ class FastMCPAgent(MultiStepAgent):
 
         Useful for making the Agent available as a general purpose tool on the server.s
         """
+        self._logger.info(f"Running agent {self.name} with task {task}")
 
         _, result = await self.run(ctx, task, self.default_tools, self.step_limit)
 
