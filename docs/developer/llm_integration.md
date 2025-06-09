@@ -2,14 +2,14 @@
 
 The `LLMLink` module in FastMCP-Agents provides an abstraction layer for interacting with various Large Language Models (LLMs). This abstraction allows agents to communicate with different LLM providers without needing to know the specifics of each provider's API.
 
-The core component is the `AsyncLLMLink` protocol, which defines the expected interface for any LLM integration.
+The core component is the `LLMLink` protocol, which defines the expected interface for any LLM integration.
 
-## `AsyncLLMLink` Protocol
+## `LLMLink` Protocol
 
-The `AsyncLLMLink` protocol specifies the methods and attributes that an LLM link implementation must provide.
+The `LLMLink` protocol specifies the methods and attributes that an LLM link implementation must provide.
 
 ```python
-class AsyncLLMLink(Protocol):
+class LLMLink(Protocol):
     """Base class for all LLM links.
 
     This class is used to abstract the LLM link implementation from the agent.
@@ -43,9 +43,9 @@ class AsyncLLMLink(Protocol):
 
 Any class implementing this protocol must provide an `async_completion` method that takes a `Conversation` object and a list of `FastMCPTool` objects and returns an `AssistantConversationEntry`. It should also manage `completion_kwargs`, `token_usage`, and a `logger`.
 
-## `AsyncLitellmLLMLink` Implementation
+## `LitellmLLMLink` Implementation
 
-`AsyncLitellmLLMLink` is a concrete implementation of the `AsyncLLMLink` protocol that uses the LiteLLM library to interact with various LLM providers. LiteLLM provides a unified API for many different models.
+`LitellmLLMLink` is a concrete implementation of the `LLMLink` protocol that uses the LiteLLM library to interact with various LLM providers. LiteLLM provides a unified API for many different models.
 
 *   **Key Features:**
     *   Uses LiteLLM for broad model support.
@@ -59,7 +59,7 @@ Any class implementing this protocol must provide an `async_completion` method t
 
 ## Implementing a Custom LLM Link
 
-To integrate a different LLM provider, you would create a new class that implements the `AsyncLLMLink` protocol. This class would need to:
+To integrate a different LLM provider, you would create a new class that implements the `LLMLink` protocol. This class would need to:
 
 1.  Handle authentication and initialization for the specific LLM provider's SDK.
 2.  Implement the `async_completion` method to send the conversation history and tool definitions to the LLM and process the response.

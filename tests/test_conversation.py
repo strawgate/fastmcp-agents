@@ -2,11 +2,11 @@ import pytest
 
 from fastmcp_agents.conversation.types import (
     AssistantConversationEntry,
-    CallToolRequest,
     Conversation,
     SystemConversationEntry,
     TextContent,
     ToolConversationEntry,
+    ToolRequestPart,
     UserConversationEntry,
 )
 
@@ -48,7 +48,7 @@ def test_conversation_add_user_message():
 def test_conversation_add_assistant_message_with_tool_calls():
     """Test adding an assistant message with tool calls."""
     conv: Conversation = Conversation()
-    tool_calls = [CallToolRequest(id="call_1", name="test_tool", arguments={"param": "value"})]
+    tool_calls = [ToolRequestPart(id="call_1", name="test_tool", arguments={"param": "value"})]
     assistant_entry = AssistantConversationEntry(content="I'll help you with that", tool_calls=tool_calls)
     new_conv = conv.append(assistant_entry)
 
@@ -62,7 +62,13 @@ def test_conversation_add_assistant_message_with_tool_calls():
 def test_conversation_add_tool_response():
     """Test adding a tool response to the conversation."""
     conv: Conversation = Conversation()
-    tool_entry = ToolConversationEntry(tool_call_id="call_1", name="test_tool", content=[TextContent(type="text", text="Tool response")])
+    tool_entry = ToolConversationEntry(
+        tool_call_id="call_1",
+        name="test_tool",
+        content=[TextContent(type="text", text="Tool response")],
+        arguments={"param": "value"},
+        success=True,
+    )
     new_conv = conv.append(tool_entry)
 
     assert len(new_conv.entries) == 1

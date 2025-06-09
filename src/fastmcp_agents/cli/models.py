@@ -1,5 +1,6 @@
 """Pydantic models for the CLI."""
 
+import os
 import sys
 from collections.abc import Sequence
 from copy import deepcopy
@@ -13,9 +14,10 @@ from fastmcp.tools import Tool as FastMCPTool
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
 from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
-from fastmcp_agents.conversation.memory.ephemeral import EphemeralMemory
+from fastmcp_agents.agent.curator import CuratorAgent
+from fastmcp_agents.agent.multi_step import MultiStepAgent
 from fastmcp_agents.errors.cli import MCPServerStartupError
+from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
 from fastmcp_agents.vendored.tool_transformer.models import ToolOverride
 
@@ -32,6 +34,7 @@ class ServerSettings(BaseModel):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(..., description="The log level to use for the server.")
     agent_only: bool = Field(default=False, description="Whether to only run the agents.")
     tool_only: bool = Field(default=False, description="Whether to only run the tools.")
+    mutable_agents: bool = Field(default=False, description="Whether to publish a tool to mutate the Agent's System Prompt.")
 
 
 class BaseExtraTool(BaseModel):
@@ -68,6 +71,8 @@ ExtraToolTypes = StaticExtraTool
 
 async def _wrap_client_tools(client: Client, tool_overrides: dict[str, ToolOverride], name: str) -> Sequence[FastMCPTool]:
     """Wrap the client's tools with the tool overrides."""
+
+    logger.info(f"Starting MCP server {name}")
 
     async with client:
         try:
@@ -160,10 +165,15 @@ class OverriddenStdioMCPServer(StdioMCPServer):
 
     def to_fastmcp_client(self, init_timeout: float = 20.0) -> Client:
         """Convert the server to a FastMCP client."""
+
+        new_envs = os.environ.copy()
+        new_envs.update(self.env)
+        self.env = new_envs
         transport = self.to_transport()
-        if transport.command in {"uv", "uvx", "python"} and "fastmcp_agents" in transport.args:
+
+        if self.command in {"uv", "uvx", "python"} and "fastmcp_agents" in self.args:
             transport = FastMCPAgentsStdioTransport(
-                args=strip_uv_uvx_python_args(transport.command, transport.args), env=transport.env, cwd=transport.cwd
+                args=strip_uv_uvx_python_args(self.command, self.args), env=new_envs, cwd=self.cwd
             )
         transport.keep_alive = True
         return Client(transport=transport, init_timeout=init_timeout)
@@ -207,7 +217,7 @@ class AgentModel(BaseModel):
     blocked_tools: list[str] | None = Field(None, description="An optional list of the tools to block from the agent.")
 
     @classmethod
-    def to_fastmcp_agent(cls, agent_model: "AgentModel", tools: Sequence[FastMCPTool]) -> FastMCPAgent:
+    def to_curator_agent(cls, agent_model: "AgentModel", tools: Sequence[FastMCPTool]) -> CuratorAgent:
         """Convert the agent model to a FastMCP agent."""
         agent_tools = list(tools)
 
@@ -219,20 +229,20 @@ class AgentModel(BaseModel):
 
         logger.debug(f"Agent {agent_model.name} will have access to the following tools: {agent_tools}")
 
-        return FastMCPAgent(
+        return CuratorAgent(
             name=agent_model.name,
             description=agent_model.description,
-            system_prompt=agent_model.instructions,
+            instructions=agent_model.instructions,
             default_tools=agent_tools,
-            memory_factory=EphemeralMemory,
+            llm_link=LitellmLLMLink(),
         )
 
     @classmethod
-    def to_fastmcp_tool(cls, agent_model: "AgentModel", tools: Sequence[FastMCPTool]) -> tuple[FastMCPAgent, FastMCPTool]:
+    def to_fastmcp_tool(cls, agent_model: "AgentModel", tools: Sequence[FastMCPTool]) -> tuple[CuratorAgent, FastMCPTool]:
         """Convert the agent model to a FastMCP tool."""
-        agent = cls.to_fastmcp_agent(agent_model, tools)
+        agent = cls.to_curator_agent(agent_model, tools)
 
-        return agent, FunctionTool.from_function(fn=agent.currate, name=agent.name, description=agent.description)
+        return agent, FunctionTool.from_function(fn=agent.perform_task, name=agent.name, description=agent.description)
 
 
 class AugmentedServerModel(BaseModel):
@@ -242,7 +252,7 @@ class AugmentedServerModel(BaseModel):
     mcpServers: dict[str, OverriddenStdioMCPServer | OverriddenRemoteMCPServer] = Field(default_factory=dict)  # noqa: N815
     tools: list[ExtraToolTypes] = Field(default_factory=list)
 
-    async def to_fastmcp_server(self, server_settings: ServerSettings) -> tuple[list[FastMCPAgent], list[Client], FastMCP]:
+    async def to_fastmcp_server(self, server_settings: ServerSettings) -> tuple[Sequence[MultiStepAgent], list[Client], FastMCP]:
         """Convert the server model to a FastMCP server, agents, and tools."""
 
         wrapped_mcp_clients: list[tuple[Client, Sequence[FastMCPTool]]] = []
@@ -255,11 +265,22 @@ class AugmentedServerModel(BaseModel):
         all_standard_tools: Sequence[FastMCPTool] = mcp_tools + extra_tools
 
         exposed_tools: Sequence[FastMCPTool | Callable[..., Any]] = []
-        fastmcp_agents: list[FastMCPAgent] = []
+        fastmcp_agents: list[CuratorAgent] = []
 
         if not server_settings.tool_only:
             for agent_model in self.agents:
                 fastmcp_agent, agent_tool = AgentModel.to_fastmcp_tool(agent_model, all_standard_tools)
+
+                if server_settings.mutable_agents:
+                    exposed_tools.append(FunctionTool.from_function(
+                        fn=fastmcp_agent.get_instructions, name=agent_model.name + "_get_instructions"
+                    ))
+                    exposed_tools.append(FunctionTool.from_function(
+                        fn=fastmcp_agent.change_instructions, name=agent_model.name + "_change_instructions"
+                    ))
+                    exposed_tools.append(FunctionTool.from_function(
+                        fn=fastmcp_agent.perform_task_return_conversation, name=agent_model.name + "_trace_conversation"
+                    ))
 
                 fastmcp_agents.append(fastmcp_agent)
                 exposed_tools.append(agent_tool)

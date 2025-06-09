@@ -1,7 +1,8 @@
 """Base classes and protocols for LLM links."""
 
 import logging
-from typing import Any, Protocol
+from collections.abc import Sequence
+from typing import Any, Protocol, runtime_checkable
 
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field
@@ -19,7 +20,8 @@ class CompletionMetadata(BaseModel):
     """The number of tokens used by the LLM."""
 
 
-class AsyncLLMLink(Protocol):
+@runtime_checkable
+class LLMLink(Protocol):
     """Base class for all LLM links.
 
     This class is used to abstract the LLM link implementation from the agent.
@@ -37,7 +39,7 @@ class AsyncLLMLink(Protocol):
     async def async_completion(
         self,
         conversation: Conversation,
-        fastmcp_tools: list[FastMCPTool],
+        fastmcp_tools: Sequence[FastMCPTool],
     ) -> AssistantConversationEntry: ...
 
     """Call the LLM with the given messages and tools.

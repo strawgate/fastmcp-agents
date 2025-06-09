@@ -1,4 +1,4 @@
-# Wrapping Tools: Tool Transformation and Rewriting
+# Tool Transformation and Rewriting
 
 FastMCP-Agents offers powerful capabilities to customize the tools exposed by wrapped MCP servers. This process, known as "tool rewriting" or "tool transformation," allows you to modify tool metadata and behavior to better suit your agents' needs. This tutorial explores how to transform and rewrite tools.
 
@@ -11,9 +11,9 @@ Transforming tools is essential for several reasons:
 *   **Add Custom Logic:** You can inject custom Python code to run before or after a tool call, enabling data manipulation, validation, logging, or integration with other services.
 *   **Adapt Tools to Context:** You can modify tool behavior to align with the specific requirements of your agent or the overall workflow.
 
-## Aspects of Tool Rewriting
+## Aspects of Tool Transformation
 
-Tool rewriting in fastmcp-agents primarily involves two aspects: **Tool Overriding** and **Tool Wrapping**.
+Tool transformation in fastmcp-agents primarily involves two aspects: **Tool Overriding** and **Tool Wrapping**.
 
 ### 1. Tool Overriding
 
@@ -51,6 +51,19 @@ When configuring your agents and servers programmatically with Python, you use t
 
 ```python
 from fastmcp_agents.vendored.tool_transformer import transform_tool, ToolOverride, StringToolParameter
+from fastmcp.tools import FunctionTool
+
+# Assume original_tool_definition is a FastMCPTool instance
+# For demonstration, let's create a dummy one
+async def dummy_tool_fn(name: str):
+    return f"Dummy tool called with {name}"
+
+original_tool_definition = FunctionTool.from_function(
+    fn=dummy_tool_fn,
+    name="register_project_tool",
+    description="Original description for register_project_tool",
+    parameters={"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}
+)
 
 # Define the override using ToolOverride
 override = ToolOverride(
@@ -66,8 +79,12 @@ override = ToolOverride(
 )
 
 # Apply the override to the original tool definition
-# original_tool_definition would be the tool object obtained from the wrapped server
 transformed_tool = override.apply_to_tool(original_tool_definition)
+
+# You can now use transformed_tool in your FastMCP server
+# For example:
+# server = FastMCP("MyServer", tools=[transformed_tool])
+# server.run()
 ```
 
 ### 2. Tool Wrapping
@@ -125,8 +142,9 @@ async def post_call_hook(tool_call_result: Any):
 
 # Apply the wrapping using transform_tool
 # original_tool_definition would be the tool object obtained from the wrapped server
+# For demonstration, let's use the dummy_tool_fn again
 wrapped_tool = transform_tool(
-    original_tool_definition,
+    original_tool_definition, # Using the dummy tool defined above
     name="enhanced_tool_with_hooks", # You can also rename the tool
     description="Enhanced version of the original tool with pre/post processing.",
     pre_call_hook=pre_call_hook,
@@ -167,8 +185,9 @@ async def post_call_hook(tool_call_result: Any):
 
 # Combine both approaches in a single transform_tool call
 # original_tool_definition would be the tool object obtained from the wrapped server
+# For demonstration, let's use the dummy_tool_fn again
 combined_tool = transform_tool(
-    original_tool_definition,
+    original_tool_definition, # Using the dummy tool defined above
     name=override_name,
     description=override_description,
     parameter_overrides=parameter_overrides,

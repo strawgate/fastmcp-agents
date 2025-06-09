@@ -1,6 +1,6 @@
 """Custom errors for agents."""
 
-from litellm import BaseModel
+from pydantic import BaseModel
 
 from fastmcp_agents.errors.base import FastMCPAgentsError
 

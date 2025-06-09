@@ -16,6 +16,9 @@ logger = BASE_LOGGER.getChild("loader")
 
 BUNDLED_DIR = Path(__file__).parent.parent / "bundled"
 
+SERVER_DIR = Path(__file__).parent.parent / "bundled" / "servers"
+FLOW_DIR = Path(__file__).parent.parent / "bundled" / "flows"
+
 DEFAULT_ARG_REPLACEMENTS: dict[str, str] = {
     "bundled": str(BUNDLED_DIR),
 }
@@ -65,17 +68,44 @@ def get_config_from_file(file: str, directory: str | None = None) -> AugmentedSe
     return process_arg_replacements(config, replacements)
 
 
+def get_server_dir(server_name: str) -> Path:
+    """Get the directory for a bundled server."""
+    server_dir = BUNDLED_DIR / server_name
+    if not server_dir.exists():
+        msg = f"Server directory {server_dir} not found"
+        raise FileNotFoundError(msg)
+    return server_dir
+
+
+def get_server_readme(server_name: str) -> str | None:
+    """Get the README content for a bundled server."""
+    server_dir = get_server_dir(server_name)
+    readme_path = server_dir / "README.md"
+    if readme_path.exists():
+        return readme_path.read_text(encoding="utf-8")
+    return None
+
+
+def get_server_or_flow_dir(server_or_flow_name: str) -> Path:
+    """Get the directory for a bundled server or flow."""
+    server_or_flow_dir = SERVER_DIR / server_or_flow_name
+    if not server_or_flow_dir.exists():
+        msg = f"Server or flow directory {server_or_flow_dir} not found"
+        raise FileNotFoundError(msg)
+    return server_or_flow_dir
+
+
 def get_config_for_bundled(config_bundled: str) -> AugmentedServerModel:
     """Serialize a config for a bundled server."""
-    bundled_config_yml = BUNDLED_DIR / f"{config_bundled}.yml"
+    server_dir = get_server_or_flow_dir(config_bundled)
+    server_yml = server_dir / "server.yml"
 
-    if bundled_config_yml.exists():
-        bundled_config_path = bundled_config_yml
-        config_raw = bundled_config_path.read_text(encoding="utf-8")
+    if server_yml.exists():
+        config_raw = server_yml.read_text(encoding="utf-8")
         config = get_config_from_string(config_raw)
         return process_arg_replacements(config, DEFAULT_ARG_REPLACEMENTS)
 
-    msg = f"Bundled server config file {bundled_config_yml} not found"
+    msg = f"Server config file {server_yml} not found"
     raise FileNotFoundError(msg)
 
 

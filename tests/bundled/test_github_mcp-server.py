@@ -1,9 +1,11 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
-from fastmcp_agents.conversation.types import TextContent
+from fastmcp_agents.agent.curator import CuratorAgent
+from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
+from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
 from tests.conftest import evaluate_with_criteria
 
 
@@ -29,29 +31,27 @@ class TestGitHubAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_issue_summarization(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_issue_summarization(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         Summarize issue #1 in the repository modelcontextprotocol/servers.
         Include any relevant comments and provide a clear overview of the issue's status and content.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify issue was retrieved and summarized
-        assert "issue" in text_result.lower()
-        assert "summary" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "issue" in task_success.result.lower()
+        assert "summary" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
         assert agent_tool_calls[0].name == "get_issue"
         assert agent_tool_calls[1].name == "get_issue_comments"
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -65,29 +65,26 @@ class TestGitHubAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_related_issues(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_related_issues(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         Find issues related to issue #1 in the repository modelcontextprotocol/servers.
         Include a confidence rating for each related issue and explain why it's related.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify related issues were found
-        assert "related" in text_result.lower()
-        assert "confidence" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "related" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
         assert agent_tool_calls[0].name == "get_issue"
         assert agent_tool_calls[1].name == "search_issues"
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
 
 class TestPullRequestAgent:
@@ -108,22 +105,20 @@ class TestPullRequestAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_pr_summarization(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_pr_summarization(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         Summarize pull request #1 in the repository modelcontextprotocol/servers.
         Include the files changed, review status, and any relevant comments.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify PR was retrieved and summarized
-        assert "pull request" in text_result.lower()
-        assert "summary" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "pull request" in task_success.result.lower()
+        assert "summary" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 4
@@ -132,7 +127,7 @@ class TestPullRequestAgent:
         assert agent_tool_calls[2].name == "get_pull_request_status"
         assert agent_tool_calls[3].name == "get_pull_request_comments"
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -146,26 +141,24 @@ class TestPullRequestAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_pr_reviews(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_pr_reviews(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         Summarize the review status of pull request #1 in the repository modelcontextprotocol/servers.
         Include the review status, reviewer comments, and any requested changes.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify reviews were retrieved and summarized
-        assert "review" in text_result.lower()
-        assert "status" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "review" in task_success.result.lower()
+        assert "status" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
         assert agent_tool_calls[0].name == "get_pull_request"
         assert agent_tool_calls[1].name == "get_pull_request_reviews"
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation

@@ -6,7 +6,7 @@ from mcp.types import Tool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
-from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
+from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 
 
 @pytest.fixture
@@ -40,14 +40,14 @@ def conversation():
 def test_llm_link_initialization_with_invalid_model():
     """Test that LLM link initialization fails with an invalid model."""
     with pytest.raises(ModelDoesNotSupportFunctionCallingError):
-        AsyncLitellmLLMLink(model="invalid-model")
+        LitellmLLMLink(model="invalid-model")
 
 
 async def test_llm_link_completion_with_tools(mock_fastmcp_tool, conversation):
     """Test that LLM link can make a completion with tools."""
     # Use a real model that supports function calling
     model = os.getenv("MODEL", "gpt-3.5-turbo")
-    llm_link = AsyncLitellmLLMLink(model=model)
+    llm_link = LitellmLLMLink(model=model)
 
     assistant_conversation_entry = await llm_link.async_completion(conversation=conversation, fastmcp_tools=[mock_fastmcp_tool])
 

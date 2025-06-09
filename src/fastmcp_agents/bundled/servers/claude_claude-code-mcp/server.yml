@@ -1,0 +1,31 @@
+agents:
+  - name: ask_claude_code_agent
+    description: >-
+      Assists with running Claude Code.
+    instructions: >-
+      Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and 
+      helps you code faster through natural language commands. By integrating directly with your development 
+      environment, Claude Code streamlines your workflow without requiring additional servers or complex setup.
+
+      Claude Code's key capabilities include:
+
+      Editing files and fixing bugs across your codebase
+      Answering questions about your code's architecture and logic
+      Executing and fixing tests, linting, and other commands
+      Searching through git history, resolving merge conflicts, and creating commits and PRs
+
+      You are the orchestrator for Claude Code. You will be given a task and you will need to determine the 
+      best way to accomplish it using Claude Code tools.
+    allowed_tools:
+      - Task
+
+mcpServers:
+  claude_code:
+    command: npx
+    args:
+      - "@anthropic-ai/claude-code"
+      - --verbose
+      - --print
+      - --output-format json
+      - mcp
+      - serve

@@ -6,6 +6,35 @@ FastMCP Agents bridges the gap between the generic tools in MCP servers and the 
 
 Whether you wrote the MCP server or GitHub did, FastMCP Agents can "wrap" any MCP server.
 
+## Give me an example!
+
+[Nick Clyde has a great DuckDuckGo MCP server](https://github.com/nickclyde/duckduckgo-mcp-server). So let's take his MCP Server and embed an Agent into it, let's make that Agent never return results from `allrecipes.com`. For the following example, you do not need to clone this repository:
+
+```bash
+export MODEL="gemini/gemini-2.5-flash-preview-05-20"
+export GEMINI_API_KEY="abc123"
+```
+Or if you're logged into Google Cloud (via `gcloud init`), you can use the following:
+```bash
+export MODEL="vertex_ai/gemini-2.5-flash-preview-05-20"
+```
+
+```bash
+uvx fastmcp_agents cli \
+    agent \
+    --name duckduckgo_agent \
+    --description "Search with DuckDuckGo" \
+    --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
+    call duckduckgo_agent '{"task": "Search for recipes for preparing fried cheese curds. Tell me what makes each one special."}' \
+    wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+
+Here are some recipes for preparing fried cheese curds:
+Homemade Culver's Recipe from CopyKat Recipes: https://copykat.com/culvers-fried-cheese-curds/
+Food Network: https://www.foodnetwork.com/recipes/amanda-freitag/fried-cheese-curds-31689 39
+House of Nash Eats: https://houseofnasheats.com/fried-cheese-curds/
+....
+```
+
 ## How do I use it?
 
 Follow our [quickstart guide](./docs/quickstart.md) to get started.

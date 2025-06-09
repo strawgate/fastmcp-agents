@@ -52,6 +52,10 @@ uvx fastmcp_agents cli call NAME PARAMETERS
 * `NAME`: The name of the tool to call.
 * `PARAMETERS`: A JSON string of the arguments for the tool call.
 
+**Options:**
+* `--print TEXT`: The format to use when printing the result: `markdown` (default), `text`, `none`
+* `--file TEXT`: The file to write the result to.
+
 ### `wrap`
 
 Take the last of the cli args and use them to run the mcp server and run it.

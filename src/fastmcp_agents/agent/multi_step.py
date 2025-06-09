@@ -1,21 +1,18 @@
 """Base class for multi-step agents."""
 
+from collections import Counter
 from collections.abc import Sequence
-from typing import ParamSpec, TypeVar
+from typing import ParamSpec, TypeAlias, TypeVar, overload
 
 from fastmcp import Context
 from fastmcp.tools import FunctionTool
 from fastmcp.tools import Tool as FastMCPTool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from fastmcp_agents.agent.single_step import SingleStepAgent
-from fastmcp_agents.conversation.memory.base import MemoryFactoryProtocol, MemoryProtocol
-from fastmcp_agents.conversation.types import (
-    AssistantConversationEntry,
-    Conversation,
-    UserConversationEntry,
-)
-from fastmcp_agents.errors.agent import NoResponseError, TaskFailureError
+from fastmcp_agents.agent.single_step import SINGLE_STEP_SYSTEM_PROMPT, SingleStepAgent
+from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
+from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
+from fastmcp_agents.errors.agent import NoResponseError
 
 REQUEST_MODEL = TypeVar("REQUEST_MODEL", bound=BaseModel)
 
@@ -23,45 +20,102 @@ SUCCESS_RESPONSE_MODEL = TypeVar("SUCCESS_RESPONSE_MODEL", bound=BaseModel)
 ERROR_RESPONSE_MODEL = TypeVar("ERROR_RESPONSE_MODEL", bound=BaseModel)
 
 DEFAULT_STEP_LIMIT = 15
-DEFAULT_MAX_PARALLEL_TOOL_CALLS = 5
+DEFAULT_MAX_PARALLEL_TOOL_CALLS = 10
 
 P = ParamSpec("P")
+
+MULTI_STEP_SYSTEM_PROMPT = (
+    SINGLE_STEP_SYSTEM_PROMPT
+    + f"""
+You should plan for which calls you can do in parallel (multiple in a single request) and which
+you should do sequentially (one tool call per request). You should not call more than {DEFAULT_MAX_PARALLEL_TOOL_CALLS}
+tools in a single request.
+
+When you are done, you should call the `report_success` tool with the result of the task.
+If you are unable to complete the task, you should call the `report_failure` tool with the
+reason you are unable to complete the task.
+"""
+)
+
+
+class DefaultErrorResponseModel(BaseModel):
+    """A default error response model for the agent."""
+
+    success: bool = Field(default=False)
+    """Whether the agent was successful."""
+
+    error: str = Field(...)
+    """The error message if the agent failed. You must provide a string error message."""
+
+
+class DefaultSuccessResponseModel(BaseModel):
+    """A default success response model for the agent."""
+
+    success: bool = Field(default=True)
+    """Whether the agent was successful."""
+
+    result: str = Field(...)
+    """The result of the agent. You must provide a string result."""
+
+
+DefaultResponseModelTypes: TypeAlias = DefaultErrorResponseModel | DefaultSuccessResponseModel
 
 
 class MultiStepAgent(SingleStepAgent):
     """A Multi-step agent that can be registered as a tool on a FastMCP server."""
 
-    def __init__(
+    # max_parallel_tool_calls: int = Field(default=DEFAULT_MAX_PARALLEL_TOOL_CALLS)
+    # """The maximum number of tool calls to perform in parallel."""
+
+    system_prompt: SystemConversationEntry | str = Field(default=MULTI_STEP_SYSTEM_PROMPT)
+    """The system prompt to use."""
+
+    step_limit: int = Field(default=DEFAULT_STEP_LIMIT)
+    """The maximum number of steps to perform."""
+
+    @overload
+    async def run_steps(
         self,
         *args,
-        memory_factory: MemoryFactoryProtocol,
-        max_parallel_tool_calls: int,
-        step_limit: int,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+        ctx: Context,
+        task: list[UserConversationEntry] | UserConversationEntry | str,
+        conversation: Conversation | None = None,
+        tools: Sequence[FastMCPTool] | None = None,
+        step_limit: int = DEFAULT_STEP_LIMIT,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
+        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
+    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]: ...
 
-        self.memory_factory = memory_factory
-        self.max_parallel_tool_calls = max_parallel_tool_calls
-        self.step_limit = step_limit
+    @overload
+    async def run_steps(
+        self,
+        *args,
+        ctx: Context,
+        conversation: Conversation,
+        tools: Sequence[FastMCPTool],
+        step_limit: int,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
+        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
+    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]: ...
 
     async def run_steps(
         self,
         *args,  # noqa: ARG002
         ctx: Context,
-        conversation: Conversation,
-        tools: Sequence[FastMCPTool],
-        step_limit: int,
-        success_response_model: type[SUCCESS_RESPONSE_MODEL],
-        error_response_model: type[ERROR_RESPONSE_MODEL],
-        raise_on_error_response: bool = True,
+        task: list[UserConversationEntry] | UserConversationEntry | str | None = None,
+        conversation: Conversation | None = None,
+        tools: Sequence[FastMCPTool] | None = None,
+        step_limit: int = DEFAULT_STEP_LIMIT,
+        success_response_model: type[SUCCESS_RESPONSE_MODEL] = DefaultSuccessResponseModel,
+        error_response_model: type[ERROR_RESPONSE_MODEL] = DefaultErrorResponseModel,
         **kwargs,  # noqa: ARG002
     ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
         """Run the agent for a given number of steps.
 
         Args:
-            ctx: The context of the agent.
-            conversation: The conversation history to send to the LLM.
+            ctx: The context of the FastMCP request.
+            task: The task to send to the LLM to solicit tool call requests.
+            conversation: A conversation to continue from.
             tools: The tools to use. If None, the default tools will be used.
             step_limit: The maximum number of steps to perform.
             success_response_model: The model to use for the success response.
@@ -71,6 +125,12 @@ class MultiStepAgent(SingleStepAgent):
         Returns:
             A tuple of the final conversation and the requested success or error response model.
         """
+
+        # Use the conversation if provided, otherwise build a new one from the system prompt and instructions.
+        new_conversation = self._prepare_conversation(
+            conversation=conversation,
+            task=task,
+        )
 
         # To be set by a callback function.
         result: SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL | None = None
@@ -80,105 +140,62 @@ class MultiStepAgent(SingleStepAgent):
             nonlocal result
             result = success_response_model.model_validate(obj=kwargs)
 
-        def report_error(**kwargs):
+        def report_failure(**kwargs):
             """Report failure of the task."""
             nonlocal result
             result = error_response_model.model_validate(obj=kwargs)
 
-        success_tool = FunctionTool(fn=report_success, name="report_success", parameters=success_response_model.model_json_schema())
-        error_tool = FunctionTool(fn=report_error, name="report_error", parameters=error_response_model.model_json_schema())
+        success_tool = FunctionTool(
+            fn=report_success,
+            name="report_success",
+            description="Report successful completion of the task.",
+            parameters=success_response_model.model_json_schema(),
+        )
+        error_tool = FunctionTool(
+            fn=report_failure,
+            name="report_failure",
+            description="Report failure of the task.",
+            parameters=error_response_model.model_json_schema(),
+        )
 
         # Add our callback functions to the tools.
-        available_tools = [*tools, success_tool, error_tool]
+        available_tools = [*list(tools or self.default_tools), success_tool, error_tool]
 
-        for i in range(1, step_limit):
-            self._logger.info(f"Running step {i} / {step_limit}")
+        step_count = 0
 
-            assistant_conversation_entry, tool_conversation_entries = await self.run_step(
+        while step_count < step_limit:
+            step_count += 1
+            self.logger.info(f"Running step {step_count} / {step_limit}")
+
+            new_conversation = await self.run_step(
                 ctx=ctx,
-                prompt=conversation,
+                conversation=new_conversation,
                 tools=available_tools,
-                step_number=i,
+                step_number=step_count,
                 step_limit=step_limit,
             )
 
-            # Add the assistant and tool conversation entries to the conversation.
-            conversation = conversation.extend(
-                entries=[assistant_conversation_entry, *tool_conversation_entries],
-            )
+            if result is not None:
+                break
 
             # If the result is set, return the conversation and the result.
-            if result is not None:
-                if raise_on_error_response and isinstance(result, error_response_model):
-                    raise TaskFailureError(self.name, result)
 
-                return conversation, result
+        # Summarize the Agent's Tool Calls
+        tool_calls = get_tool_calls_from_conversation(new_conversation)
+        successful_calls = Counter(tool_call.name for tool_call in tool_calls if tool_call.success)
+        failed_calls = Counter(tool_call.name for tool_call in tool_calls if not tool_call.success)
+
+        tokens_used = new_conversation.count_tokens()
+        self._tool_logger.info(
+            f"""
+            Performed {step_count} steps (Tokens {tokens_used}). 
+            Tool calls succeeded: {successful_calls.most_common()}, 
+            Tool calls failed: {failed_calls.most_common()}
+            """
+        )
+
+        if result is not None:
+            return new_conversation, result
 
         # Agent failed to record a success or failure response within the step limit.
         raise NoResponseError(agent_name=self.name)
-
-    async def run(
-        self,
-        ctx: Context,
-        task: str | Conversation,
-        tools: Sequence[FastMCPTool],
-        step_limit: int,
-        success_response_model: type[SUCCESS_RESPONSE_MODEL],
-        error_response_model: type[ERROR_RESPONSE_MODEL],
-        raise_on_error_response: bool,
-    ) -> tuple[Conversation, SUCCESS_RESPONSE_MODEL | ERROR_RESPONSE_MODEL]:
-        """Run the agent.
-
-        Args:
-            ctx: The context of the FastMCP Request.
-            instructions: The instructions to send to the LLM.
-            tools: The tools to use. If None, the default tools will be used.
-            step_limit: The maximum number of steps to perform.
-            success_response_model: The model to use for the success response.
-            error_response_model: The model to use for the error response.
-            raise_on_error_response: Whether to raise an error if the agent fails.
-
-        Returns:
-            A tuple of the final conversation and the requested success or error response model.
-        """
-
-        memory: MemoryProtocol = self.memory_factory()
-
-        conversation = self._prepare_conversation(memory, task)
-
-        available_tools: Sequence[FastMCPTool] = tools or self.default_tools
-
-        conversation, completion_result = await self.run_steps(
-            ctx=ctx,
-            conversation=conversation,
-            tools=available_tools,
-            step_limit=step_limit or self.step_limit,
-            success_response_model=success_response_model,
-            error_response_model=error_response_model,
-            raise_on_error_response=raise_on_error_response,
-        )
-
-        memory.set(conversation)
-
-        return conversation, completion_result
-
-    def _log_total_token_usage(self, conversation: Conversation):
-        """Log the total token usage for the conversation."""
-        total_tokens = sum(entry.token_usage or 0 for entry in conversation.entries if isinstance(entry, AssistantConversationEntry))
-        self._logger.info(f"Total token usage: {total_tokens}")
-
-    def _prepare_conversation(self, memory: MemoryProtocol, task: str | Conversation) -> Conversation:
-        """Prepare the conversation for the agent. Either by using the conversation history or the instructions."""
-
-        conversation: Conversation = memory.get()
-
-        # If there is no conversation history, use the system prompt.
-        if len(conversation.entries) == 0:
-            conversation = self._system_prompt
-
-        # If the task is a string, convert it to a conversation entry.
-        if isinstance(task, str):
-            task = Conversation(entries=[UserConversationEntry(content=task)])
-
-        # Merge the instructions with the conversation history.
-        return conversation.merge(task)

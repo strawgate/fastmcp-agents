@@ -1,7 +1,7 @@
 import contextlib
 import os
 import tempfile
-from collections.abc import AsyncGenerator, Callable, Coroutine
+from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
 from functools import wraps
 from pathlib import Path
 from typing import Any
@@ -10,16 +10,14 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.server.proxy import FastMCPProxy
-from fastmcp.tools import Tool as FastMCPTool
 from mcp.types import EmbeddedResource, ImageContent, TextContent
 
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
-from fastmcp_agents.bundled.evaluator_optimizer import EvaluationResult, evaluate_conversation_factory, evaluate_result_factory
+from fastmcp_agents.agent.extended.evaluator import EvaluationResult, EvaluatorAgent
+from fastmcp_agents.agent.multi_step import MultiStepAgent
 from fastmcp_agents.cli.loader import get_config_for_bundled
-from fastmcp_agents.cli.models import AugmentedServerModel, OverriddenStdioMCPServer, ServerSettings
-from fastmcp_agents.conversation.types import (
-    CallToolResponse,
-)
+from fastmcp_agents.cli.models import AugmentedServerModel, ServerSettings
+from fastmcp_agents.conversation.types import ToolConversationEntry
+from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 
 
 class ReturnTrackingAsyncMock(AsyncMock):
@@ -55,7 +53,7 @@ def cli_server_config(server_config_name):
 @pytest.fixture
 async def compiled_configuration(
     cli_server_config: AugmentedServerModel, server_settings: ServerSettings
-) -> AsyncGenerator[tuple[list[FastMCPAgent], list[Client], FastMCP], None]:
+) -> AsyncGenerator[tuple[Sequence[MultiStepAgent], list[Client], FastMCP], None]:
     """Compile the server configuration with the given settings."""
     agents, mcp_clients, server = await cli_server_config.to_fastmcp_server(server_settings=server_settings)
 
@@ -67,19 +65,19 @@ async def compiled_configuration(
 
 
 @pytest.fixture
-def fastmcp_server(compiled_configuration: tuple[list[FastMCPAgent], list[Client], FastMCP]) -> FastMCP:
+def fastmcp_server(compiled_configuration: tuple[Sequence[MultiStepAgent], list[Client], FastMCP]) -> FastMCP:
     """Get the FastMCP server instance."""
     return compiled_configuration[2]
 
 
 @pytest.fixture
-def mcp_clients(compiled_configuration: tuple[list[FastMCPAgent], list[Client], FastMCP]) -> list[Client]:
+def mcp_clients(compiled_configuration: tuple[Sequence[MultiStepAgent], list[Client], FastMCP]) -> list[Client]:
     """Get the list of MCP clients."""
     return compiled_configuration[1]
 
 
 @pytest.fixture
-def agents(compiled_configuration: tuple[list[FastMCPAgent], list[Client], FastMCP]) -> list[FastMCPAgent]:
+def agents(compiled_configuration: tuple[Sequence[MultiStepAgent], list[Client], FastMCP]) -> Sequence[MultiStepAgent]:
     """Get the list of FastMCP agents."""
     return compiled_configuration[0]
 
@@ -91,15 +89,12 @@ def agent_name():
 
 
 @pytest.fixture
-def agent(agent_name: str, agents: list[FastMCPAgent]) -> FastMCPAgent:
-    agent = next(agent for agent in agents if agent.name == agent_name)
-    agent.run = ReturnTrackingAsyncMock(wraps=agent.run)
-    agent.call_tool = ReturnTrackingAsyncMock(wraps=agent.call_tool)
-    return agent
+def agent(agent_name: str, agents: Sequence[MultiStepAgent]) -> MultiStepAgent:
+    return next(agent for agent in agents if agent.name == agent_name)
 
 
 @pytest.fixture
-def agent_tool_calls(agent: FastMCPAgent) -> list[CallToolResponse]:
+def agent_tool_calls(agent: MultiStepAgent) -> list[ToolConversationEntry]:
     assert isinstance(agent.call_tool, ReturnTrackingAsyncMock)
 
     return agent.call_tool.call_return_value_list
@@ -162,32 +157,6 @@ async def evaluation_criteria() -> str | None:
     return None
 
 
-@pytest.fixture
-async def evaluator_agent(evaluation_criteria: str | None, server_settings: ServerSettings) -> FastMCPTool:
-    config = get_config_for_bundled("evaluator_optimizer")
-
-    optimizer = config.mcpServers["evaluator_optimizer"]
-    assert isinstance(optimizer, OverriddenStdioMCPServer)
-    if evaluation_criteria:
-        optimizer.env = {**optimizer.env, "EVALUATION_CRITERIA": evaluation_criteria}
-
-    _, _, server = await config.to_fastmcp_server(server_settings=server_settings)
-
-    server_tools = await server.get_tools()
-
-    return server_tools["evaluate_result"]
-
-
-@pytest.fixture
-def evaluator() -> Callable[..., Coroutine[Any, Any, EvaluationResult]]:
-    async def evaluate(criteria: str, goal: str, proposed_solution: str) -> EvaluationResult:
-        evaluate_function = evaluate_result_factory(criteria=criteria)
-
-        return await evaluate_function(ctx=MagicMock(), goal=goal, proposed_solution=proposed_solution)
-
-    return evaluate
-
-
 def evaluate_with_criteria(criteria: str, minimum_grade: float = 0.9):
     """Decorator to evaluate test results against specified criteria.
 
@@ -200,25 +169,32 @@ def evaluate_with_criteria(criteria: str, minimum_grade: float = 0.9):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Run the original test function
-            agent, goal, solution = await func(*args, **kwargs)
-
-            # Extract the conversation from the return value
-            conversation = agent.run.call_return_value_list[0][0]
+            agent, task, solution, conversation = await func(*args, **kwargs)
 
             # Create evaluator directly
-            evaluate_function = evaluate_conversation_factory(criteria=criteria)
+            agent = EvaluatorAgent(
+                name="evaluator",
+                description="An agent that evaluates the result of a task.",
+                instructions="You are a helpful assistant that evaluates the result of a task.",
+                criteria=criteria,
+                llm_link=LitellmLLMLink(),
+            )
 
             # Run the evaluation
-            evaluation = await evaluate_function(ctx=MagicMock(), goal=goal, proposed_solution=solution, conversation=conversation)
+            evaluation = await agent.evaluate_result(ctx=MagicMock(), task=task, proposed_solution=solution, conversation=conversation)
 
-            evaluation_grade: float = evaluation.grade  # type: ignore
+            if not isinstance(evaluation, EvaluationResult):
+                msg = f"Evaluation failed: {evaluation}"
+                raise TypeError(msg)
+
+            evaluation_grade: float = evaluation._grade()
 
             # Assert the grade matches expectations
             assert evaluation_grade >= minimum_grade, (
                 f"Expected grade {minimum_grade}, got {evaluation_grade}. Feedback: {evaluation.feedback}"
             )
 
-            return goal, solution, evaluation
+            return task, solution, evaluation
 
         return wrapper
 

@@ -1,5 +1,5 @@
 agents:
-- name: duckduckgo-agent
+- name: ask_duckduckgo_agent
   description: "Assist with searching the web with the DuckDuckGo search engine."
   instructions: |
     You are a helpful assistant that searches the web and fetches content upon request
