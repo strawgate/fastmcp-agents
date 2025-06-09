@@ -32,6 +32,3 @@ To integrate FastMCP Agents with Open WebUI, follow these steps:
     *   Click the `(+) add connection` button.
     *   Set the `base url` to `http://localhost:8000`.
     *   Click `save`.
-
-5.  **Explore Other Bundled Servers:**
-    For instructions on how to use other bundled servers with Open WebUI, refer to the [Bundled Servers](../../bundled/servers.md) documentation.

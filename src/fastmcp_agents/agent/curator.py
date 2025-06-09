@@ -63,11 +63,7 @@ class CuratorAgent(MultiStepAgent):
         self.instructions = instructions
 
     async def get_instructions(self) -> str:
-        """Gets the Agent's instructions.
-
-        Args:
-            instructions: The instructions to use.
-        """
+        """Gets the Agent's instructions."""
         if isinstance(self.instructions, str):
             return self.instructions
 
