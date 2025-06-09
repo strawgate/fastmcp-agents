@@ -85,12 +85,55 @@ async def _wrap_client_tools(client: Client, tool_overrides: dict[str, ToolOverr
 
     proxied_client_tools = [await ProxyTool.from_client(client, client_tool) for client_tool in client_tools]
 
-    return [
-        tool_overrides[proxied_client_tool.name].apply_to_tool(proxied_client_tool)
-        if proxied_client_tool.name in tool_overrides
-        else proxied_client_tool
-        for proxied_client_tool in proxied_client_tools
-    ]
+    new_tools = []
+
+    for tool in proxied_client_tools:
+        if tool.name not in tool_overrides:
+            new_tools.append(tool)
+            continue
+
+        tool_override = tool_overrides[tool.name]
+
+        transform_args = {}
+        transform_fn = None
+        for parameter_override in tool_override.parameter_overrides:
+            if parameter_override.constant is not None:
+                def constant_factory(parameter: str, constant: Any):
+
+                    async def constant_fn(**kwargs: dict[str, Any]):
+                        kwargs.pop(parameter, None)
+                        kwargs[parameter] = constant
+                        return await forward_raw(**kwargs)
+
+                    return constant_fn
+
+                transform_fn = constant_factory(parameter_override.name, parameter_override.constant)
+
+
+            transform_args[parameter_override.name] = ArgTransform(
+                description=parameter_override.description,
+                default=parameter_override.default,
+                drop=parameter_override.constant is not None,
+            )
+
+        new_tool = Tool.from_tool(
+            tool=tool,
+            name=tool_override.name or tool.name,
+            description=tool_override.description or tool.description,
+            transform_args=transform_args,
+            transform_fn=transform_fn,
+        )
+
+        new_tools.append(new_tool)
+
+    return new_tools
+
+    # return [
+    #     tool_overrides[proxied_client_tool.name].apply_to_tool(proxied_client_tool)
+    #     if proxied_client_tool.name in tool_overrides
+    #     else proxied_client_tool
+    #     for proxied_client_tool in proxied_client_tools
+    # ]
 
 
 class FastMCPAgentServer(BaseModel):

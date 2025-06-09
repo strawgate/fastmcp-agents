@@ -445,8 +445,8 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-version = "2.7.0"
-source = { registry = "https://pypi.org/simple" }
+version = "2.7.1.dev9+642f914"
+source = { git = "https://github.com/jlowin/fastmcp?branch=transform-tools-2#642f9149d436b2571dc7bcd4b7bb359d4c0eb287" }
 dependencies = [
     { name = "authlib" },
     { name = "exceptiongroup" },
@@ -457,14 +457,10 @@ dependencies = [
     { name = "rich" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/a5/d156051c08915c2ca7c97583dac4547f17fcbf09918727c36ca0e6cd6ea7/fastmcp-2.7.0.tar.gz", hash = "sha256:6a081400ed46e1b74fbda3f5b7f806180f4091b7bf36bd4c52d7074934767004", size = 1590831, upload_time = "2025-06-05T19:03:51.778Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/3f/88fd54bbec9a3c619f94c61b84473a49c3af24582a9cc64059fdefeef98b/fastmcp-2.7.0-py3-none-any.whl", hash = "sha256:5e0827a37bc71656edebb5f217423ce6f838d8f0e42f79c9f803349c0366fc80", size = 127452, upload_time = "2025-06-05T19:03:50.129Z" },
-]
 
 [[package]]
 name = "fastmcp-agents"
-version = "0.2.5"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "asyncclick" },
@@ -497,7 +493,7 @@ lint = [
 [package.metadata]
 requires-dist = [
     { name = "asyncclick", specifier = ">=8.1.8" },
-    { name = "fastmcp", specifier = ">=2.5.2" },
+    { name = "fastmcp", git = "https://github.com/jlowin/fastmcp?branch=transform-tools-2" },
     { name = "frozenlist", specifier = "==1.6.0" },
     { name = "google-cloud-aiplatform", specifier = ">=1.94.0" },
     { name = "google-genai", specifier = ">=1.16.1" },

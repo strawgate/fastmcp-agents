@@ -28,6 +28,9 @@ packages = [
 [tool.hatch.metadata]
 allow-direct-references=true
 
+[tool.uv.sources]
+fastmcp = { git = "https://github.com/jlowin/fastmcp", branch = "transform-tools-2" }
+
 [project.scripts]
 fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
 
