@@ -43,9 +43,9 @@ class AsyncLLMLink(Protocol):
 
 Any class implementing this protocol must provide an `async_completion` method that takes a `Conversation` object and a list of `FastMCPTool` objects and returns an `AssistantConversationEntry`. It should also manage `completion_kwargs`, `token_usage`, and a `logger`.
 
-## `AsyncLitellmLLMLink` Implementation
+## `LitellmLLMLink` Implementation
 
-`AsyncLitellmLLMLink` is a concrete implementation of the `AsyncLLMLink` protocol that uses the LiteLLM library to interact with various LLM providers. LiteLLM provides a unified API for many different models.
+`LitellmLLMLink` is a concrete implementation of the `AsyncLLMLink` protocol that uses the LiteLLM library to interact with various LLM providers. LiteLLM provides a unified API for many different models.
 
 *   **Key Features:**
     *   Uses LiteLLM for broad model support.

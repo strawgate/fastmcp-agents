@@ -28,14 +28,16 @@ FastMCP-Agents comes bundled with some great MCP Servers. These bundled servers 
 
 The following bundled servers are available:
 
-- [DuckDuckGo (from nickclyde)](./bundled/servers.md#6-duckduckgo)
-- [Git (from Cyanheads)](./bundled/servers.md#1-git-from-cyanheads)
-- [Git (from MCP)](./bundled/servers.md#5-git-official-mcp-server)
-- [Github](./bundled/servers.md#2-github)
-- [MotherDuckDB](./bundled/servers.md#4-motherduckdb)
-- [Tree Sitter](./bundled/servers.md#3-tree-sitter)
+- [Aider](../src/fastmcp_agents/bundled/servers/strawgate_aider-wrapper-mcp/README.md)
+- [Claude Code](../src/fastmcp_agents/bundled/servers/claude_claude-code-mcp/README.md)
+- [DuckDB](../src/fastmcp_agents/bundled/servers/motherduckdb_mcp-server-motherduck/README.md)
+- [DuckDuckGo (from nickclyde)](../src/fastmcp_agents/bundled/servers/nickclyde_duckduckgo-mcp-server/README.md)
+- [Git (from Cyanheads)](../src/fastmcp_agents/bundled/servers/cyanheads_git-mcp-server/README.md)
+- [Git (from MCP)](../src/fastmcp_agents/bundled/servers/mcp_git/README.md)
+- [Github](../src/fastmcp_agents/bundled/servers/github_github-mcp-server/README.md)
+- [Tree Sitter](../src/fastmcp_agents/bundled/servers/wrale_mcp-server-tree-sitter/README.md)
 
-For the full list, and instructions on how to use the bundled MCP servers, see [Bundled MCP Servers](./bundled/servers.md).
+In each doc we include how to run the server with 🔎 MCP Inspector, how to call the tools via the CLI, how to use the server in an MCP Server configuration, and how to use the server in Open WebUI.
 
 ## Advanced Topics
 

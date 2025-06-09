@@ -6,7 +6,13 @@
         {
             "label": "Run MCP Inspector",
             "type": "shell",
-            "command": "npx @modelcontextprotocol/inspector"
+            "command": "npx -y @modelcontextprotocol/inspector@latest"
+        }, 
+        {
+            "label": "Run MCPJam Inspector",
+            "type": "shell",
+            "command": "npx -y @mcpjam/inspector@latest"
         }
+
     ]
 }

@@ -1,8 +1,9 @@
 agents:
   - name: ask_filesystem_operations_agent
     description: >-
-      Assists with performing Filesystem read and write operations as requested
-      by the user.
+      Ask the Filesystem Operations Agent to perform Filesystem read and write
+      operations on your behalf. Can take plain language requests and perform
+      the necessary operations to complete the task.
     instructions: >-
       When you are asked to perform a task that requires you to interact with
       local files, you should leverage the tools available to you to perform the
@@ -10,9 +11,10 @@ agents:
       to you to answer the question.
   - name: request_filesystem_search
     description: >-
-      Assists with locating file names, paths, sizes, and other metadata in a
-      filesystem. Can summarize file contents and provide a list of files whose
-      names match or contents contain a given search term.
+      Ask the Filesystem Search Agent to locate files that contain symbols, words, etc.
+      Can summarize file contents and provide a list of files whose names match or
+      contents contain a given search term. Can take plain language requests and
+      perform the necessary operations to complete the task.
     instructions: >-
       When you are asked to perform a task that requires you to search the
       filesystem, you should leverage the tools available to you to perform the
@@ -23,4 +25,4 @@ mcpServers:
   filesystem-operations:
     command: uvx
     args:
-      - "git+https://github.com/strawgate/py-mcp-collection.git#subdirectory=filesystem-operations-mcp"
+      - filesystem-operations-mcp

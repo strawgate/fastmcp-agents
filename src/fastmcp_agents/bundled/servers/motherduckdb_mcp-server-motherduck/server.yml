@@ -398,14 +398,23 @@ tools:
   - name: tips_using_query_tool
     description: "Get tips for using the `query` tool."
     returns: >-
-      Remember:
-      - Use artifacts for visualizations
-      - Provide clear explanations
-      - Handle errors gracefully
 
       Don't:
       - Make assumptions about database structure. Perform a `DESCRIBE` or `EXPLAIN` to get the schema of the table.
       - Execute queries without context
+
+      Remember:
+      
+      DuckDB executes clauses in the following order:
+      - FROM
+      - WHERE
+      - GROUP BY
+      - HAVING
+      - SELECT
+      - ORDER BY
+      - LIMIT
+
+      This means it's important to perform operations before referencing them in further execution phases.
 
       Here are some DuckDB SQL syntax specifics you should be aware of:
       - MotherDuck is compatible with DuckDB Syntax, Functions, Statements, Keywords

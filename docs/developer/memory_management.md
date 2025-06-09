@@ -16,8 +16,8 @@ The `MemoryProtocol` defines the standard interface for any memory implementatio
 
 FastMCP-Agents provides factory patterns to control how memory instances are created and shared:
 
-*   **`SharedMemoryFactory`:** This factory provides a single instance of a memory implementation to all agents that share the factory. Typically each Agent would have its own SharedMemoryFactory and that way all requests to the same Agent would share a conversation history.
-*   **`PrivateMemoryFactory`:** This factory creates a new, independent instance of a memory implementation for each request. This ensures that every request is stateless and does not share conversation history with other requests even if they are to the same Agent.
+*   **`SharedMemoryFactory`:** This factory provides a single instance of a memory implementation to all agents that share the factory. Typically, each Agent would have its own SharedMemoryFactory, ensuring that all requests to the same Agent share a conversation history.
+*   **`PrivateMemoryFactory`:** This factory creates a new, independent instance of a memory implementation for each request. This ensures that every request is stateless and does not share conversation history with other requests, even if they are directed to the same Agent.
 
 ## Memory Implementations
 

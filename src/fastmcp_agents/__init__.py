@@ -1,3 +1,3 @@
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
+from fastmcp_agents.agent.curator import CuratorAgent
 
-__all__ = ["FastMCPAgent"]
+__all__ = ["CuratorAgent"]

@@ -1,12 +1,14 @@
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 
 import pytest
 from fastmcp import FastMCP
 
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
-from fastmcp_agents.conversation.types import TextContent
+from fastmcp_agents.agent.curator import CuratorAgent
+from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
+from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
 from tests.conftest import evaluate_with_criteria
 
 if TYPE_CHECKING:
@@ -68,24 +70,20 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_database_inspection(
-        self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, call_curator, agent_tool_calls
-    ):
+    async def test_database_inspection(self, temp_working_dir: Path, populate_database, agent: CuratorAgent):
         task = """
         Show me the current tables in the database, their schemas, and a sample of data from each table.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify database inspection was performed
-        assert "table" in text_result.lower()
-        assert "schema" in text_result.lower()
-        assert "sample" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "table" in task_success.result.lower()
+        assert "schema" in task_success.result.lower()
+        assert "sample" in task_success.result.lower()
 
         # Verify tool calls
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -94,7 +92,7 @@ class TestDuckDBAgent:
         assert "tips_using_query_tool" in tool_call_names
         assert "query" in tool_call_names
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -108,7 +106,7 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_json_loading(self, temp_working_dir: Path, agent: FastMCPAgent, fastmcp_server: FastMCP, call_curator, agent_tool_calls):
+    async def test_json_loading(self, temp_working_dir: Path, agent: CuratorAgent, fastmcp_server: FastMCP):
         task = """
         Load the JSON data from the file 'people.json' into a table called 'people'.
         Load the JSON data from the file 'dogs.json' into a table called 'dogs'.
@@ -134,15 +132,13 @@ class TestDuckDBAgent:
         with Path("dogs.json").open("w", encoding="utf-8") as f:
             json.dump(dogs_json, f)
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify JSON was loaded
-        assert "json" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "json" in task_success.result.lower()
 
         # Verify tool calls
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -150,7 +146,7 @@ class TestDuckDBAgent:
         assert "query" in tool_call_names
         assert "tips_load_json" in tool_call_names or "tips_load_json_file" in tool_call_names
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -164,9 +160,7 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_query_execution(
-        self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, fastmcp_server: FastMCP, call_curator, agent_tool_calls
-    ):
+    async def test_query_execution(self, temp_working_dir: Path, populate_database, agent: CuratorAgent, fastmcp_server: FastMCP):
         task = """
         Execute the following query and explain the results:
         SELECT * FROM my_data WHERE age > 100 ORDER BY birthyear DESC LIMIT 5;
@@ -187,16 +181,14 @@ class TestDuckDBAgent:
             """
             }
         )
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify query was executed
-        assert "query" in text_result.lower()
-        assert "results" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "query" in task_success.result.lower()
+        assert "results" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 1
@@ -204,7 +196,7 @@ class TestDuckDBAgent:
 
         assert "query" in tool_call_names
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -218,22 +210,20 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_data_visualization(self, temp_working_dir: Path, populate_database, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_data_visualization(self, temp_working_dir: Path, populate_database, agent: CuratorAgent):
         task = """
         Create an ascii visualization of the data in dogs table.
         Show the distribution of values in sibling ages.
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify visualization was created
-        assert "distribution" in text_result.lower()
-        assert "age" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "distribution" in task_success.result.lower()
+        assert "age" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 1
@@ -241,4 +231,4 @@ class TestDuckDBAgent:
         assert "tips_using_query_tool" in tool_call_names
         assert "query" in tool_call_names
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation

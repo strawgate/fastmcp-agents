@@ -1,4 +1,4 @@
-from fastmcp_agents.llm_link.base import AsyncLLMLink
-from fastmcp_agents.llm_link.litellm import AsyncLitellmLLMLink
+from fastmcp_agents.llm_link.base import LLMLink
+from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 
-__all__ = ["AsyncLLMLink", "AsyncLitellmLLMLink"]
+__all__ = ["LLMLink", "LitellmLLMLink"]

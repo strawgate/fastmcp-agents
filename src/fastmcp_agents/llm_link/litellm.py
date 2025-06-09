@@ -9,17 +9,17 @@ from litellm import CustomStreamWrapper, LiteLLM, acompletion
 from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message, ModelResponse, StreamingChoices
 from litellm.utils import supports_function_calling
 
-from fastmcp_agents.conversation.types import AssistantConversationEntry, CallToolRequest, Conversation
+from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation, ToolRequestPart
 from fastmcp_agents.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError, ModelNotSetError
 from fastmcp_agents.llm_link.base import (
-    AsyncLLMLink,
     CompletionMetadata,
+    LLMLink,
 )
 from fastmcp_agents.llm_link.utils import transform_fastmcp_tool_to_openai_tool
 
 
-class AsyncLitellmLLMLink(AsyncLLMLink):
+class LitellmLLMLink(LLMLink):
     model: str
 
     def __init__(self, model: str | None = None, completion_kwargs: dict | None = None, client: LiteLLM | None = None) -> None:
@@ -51,7 +51,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         if not supports_function_calling(model=model):
             raise ModelDoesNotSupportFunctionCallingError(model=model)
 
-    def _extract_tool_calls(self, message: Message) -> list[CallToolRequest]:
+    def _extract_tool_calls(self, message: Message) -> list[ToolRequestPart]:
         """Extract the tool calls from the message.
 
         Args:
@@ -65,7 +65,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
 
         self.logger.debug(f"Response contains {len(tool_calls)} tool requests: {tool_calls}")
 
-        tool_call_requests: list[CallToolRequest] = []
+        tool_call_requests: list[ToolRequestPart] = []
 
         for tool_call in tool_calls:
             if not isinstance(tool_call, ChatCompletionMessageToolCall):
@@ -81,7 +81,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
             cast_arguments = json.loads(tool_call_function.arguments) or {}
 
             tool_call_requests.append(
-                CallToolRequest(
+                ToolRequestPart(
                     id=tool_call.id,
                     name=tool_call_function.name,
                     arguments=cast_arguments,
@@ -106,7 +106,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
 
         return chosen_message
 
-    async def _extract_tool_call_requests(self, response: ModelResponse) -> list[CallToolRequest]:
+    async def _extract_tool_call_requests(self, response: ModelResponse) -> list[ToolRequestPart]:
         """Extract the tool calls from the response.
 
         Returns:
@@ -125,7 +125,7 @@ class AsyncLitellmLLMLink(AsyncLLMLink):
         """Call the LLM with the given messages and tools.
 
         Args:
-            messages: The messages to send to the LLM.
+            conversation: The conversation to send to the LLM.
             tools: The tools to use.
 
         Returns:

@@ -1,9 +1,11 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
-from fastmcp_agents.agent.fastmcp import FastMCPAgent
-from fastmcp_agents.conversation.types import TextContent
+from fastmcp_agents.agent.curator import CuratorAgent
+from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
+from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
 from tests.conftest import evaluate_with_criteria
 
 
@@ -28,15 +30,12 @@ class TestGitAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_ask_git_for_clone(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_ask_git_for_clone(self, temp_working_dir: Path, agent: CuratorAgent):
         task = "Do a depth 1 clone of the repository https://github.com/modelcontextprotocol/servers"
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Check if there is now a servers directory
         assert (temp_working_dir / "servers").exists()
@@ -44,8 +43,9 @@ class TestGitAgent:
         # Ensure it has a README.md file
         assert (temp_working_dir / "servers" / "README.md").exists()
 
-        assert "success" in text_result.lower()
-        assert "servers" in text_result.lower()
+        assert isinstance(result, DefaultSuccessResponseModel)
+        assert "success" in result.result.lower()
+        assert "servers" in result.result.lower()
 
         assert len(agent_tool_calls) < 4
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -60,7 +60,7 @@ class TestGitAgent:
             "depth": 1,
         }
 
-        return agent, task, text_result
+        return agent, task, result, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -75,19 +75,16 @@ class TestGitAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_branch_management(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_branch_management(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         1. Clone the repository https://github.com/modelcontextprotocol/servers
         2. Create a new feature branch for issue #1234 from main
         3. Switch to the new branch
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify the branch was created
         assert (temp_working_dir / "servers").exists()
@@ -117,7 +114,7 @@ class TestGitAgent:
         assert checkout_tool_call.arguments.get("branchOrPath") in valid_branch_names
         assert checkout_tool_call.arguments.get("path", "servers") == "servers"
 
-        return agent, task, text_result
+        return agent, task, result, conversation
 
     @evaluate_with_criteria(
         criteria="""
@@ -132,7 +129,7 @@ class TestGitAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_remote_management(self, temp_working_dir: Path, agent: FastMCPAgent, call_curator, agent_tool_calls):
+    async def test_remote_management(self, temp_working_dir: Path, agent: CuratorAgent):
         task = """
         1. Clone the repository https://github.com/modelcontextprotocol/servers
         2. Add a new remote called 'upstream' pointing to https://github.com/modelcontextprotocol/servers.git
@@ -140,15 +137,13 @@ class TestGitAgent:
         4. List all remotes to confirm
         """
 
-        result = await call_curator(name=agent.name, task=task)
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        assert isinstance(result, list)
-        assert len(result) == 1
-        assert isinstance(result[0], TextContent)
-        text_result = result[0].text
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify remote was added
-        assert "upstream" in text_result.lower()
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "upstream" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 3
@@ -202,4 +197,4 @@ class TestGitAgent:
             },
         ]
 
-        return agent, task, text_result
+        return agent, task, task_success, conversation
