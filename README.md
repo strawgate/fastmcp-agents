@@ -26,7 +26,7 @@ uvx fastmcp_agents cli \
     --description "Search with DuckDuckGo" \
     --instructions "You are an assistant who refuses to show results from allrecipes.com.  " \
     call duckduckgo_agent '{"task": "Search for recipes for preparing fried cheese curds. Tell me what makes each one special."}' \
-    wrap uv run fastmcp_agents config --bundled nickclyde_duckduckgo-mcp-server run
+    wrap uvx git+https://github.com/nickclyde/duckduckgo-mcp-server.git@d198a2f0e8bd7c862d87d8517e1518aa295f8348
 
 Here are some recipes for preparing fried cheese curds:
 Homemade Culver's Recipe from CopyKat Recipes: https://copykat.com/culvers-fried-cheese-curds/
