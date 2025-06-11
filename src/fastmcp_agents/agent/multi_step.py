@@ -2,6 +2,7 @@
 
 from collections import Counter
 from collections.abc import Sequence
+from textwrap import dedent
 from typing import ParamSpec, TypeAlias, TypeVar, overload
 
 from fastmcp import Context
@@ -187,11 +188,13 @@ class MultiStepAgent(SingleStepAgent):
 
         tokens_used = new_conversation.count_tokens()
         self._tool_logger.info(
-            f"""
-            Performed {step_count} steps (Tokens {tokens_used}). 
-            Tool calls succeeded: {successful_calls.most_common()}, 
-            Tool calls failed: {failed_calls.most_common()}
-            """
+            dedent(
+                f"""
+                Performed {step_count} steps (Tokens {tokens_used}).
+                Tool calls succeeded: {successful_calls.most_common()},
+                Tool calls failed: {failed_calls.most_common()}
+                """
+            )
         )
 
         if result is not None:

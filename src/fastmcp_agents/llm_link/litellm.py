@@ -140,6 +140,7 @@ class LitellmLLMLink(LLMLink):
             messages=messages,
             model=self.model,
             **self.completion_kwargs,
+            timeout=120,
             tools=litellm_tools,
             tool_choice="required",
             num_retries=3,

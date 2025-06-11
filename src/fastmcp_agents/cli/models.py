@@ -172,9 +172,7 @@ class OverriddenStdioMCPServer(StdioMCPServer):
         transport = self.to_transport()
 
         if self.command in {"uv", "uvx", "python"} and "fastmcp_agents" in self.args:
-            transport = FastMCPAgentsStdioTransport(
-                args=strip_uv_uvx_python_args(self.command, self.args), env=new_envs, cwd=self.cwd
-            )
+            transport = FastMCPAgentsStdioTransport(args=strip_uv_uvx_python_args(self.command, self.args), env=new_envs, cwd=self.cwd)
         transport.keep_alive = True
         return Client(transport=transport, init_timeout=init_timeout)
 
@@ -210,8 +208,8 @@ class AgentModel(BaseModel):
 
     type: Literal["fastmcp"] = Field(default="fastmcp", description="The type of agent.")
     name: str = Field(..., description="The name of the agent.")
-    description: str = Field(..., description="The description of the agent.")
-    instructions: str = Field(..., description="The default instructions to provide to the agent.")
+    description: list[str] | str = Field(..., description="The description of the agent.")
+    instructions: list[str] | str = Field(..., description="The default instructions to provide to the agent.")
     model: str | None = Field(default=None, description="The GenAI model to use for the agent.")
     allowed_tools: list[str] | None = Field(None, description="An optional list of the tools to provide to the agent.")
     blocked_tools: list[str] | None = Field(None, description="An optional list of the tools to block from the agent.")
@@ -229,10 +227,13 @@ class AgentModel(BaseModel):
 
         logger.debug(f"Agent {agent_model.name} will have access to the following tools: {agent_tools}")
 
+        agent_description = agent_model.description if isinstance(agent_model.description, str) else "\n".join(agent_model.description)
+        agent_instructions = agent_model.instructions if isinstance(agent_model.instructions, str) else "\n".join(agent_model.instructions)
+
         return CuratorAgent(
             name=agent_model.name,
-            description=agent_model.description,
-            instructions=agent_model.instructions,
+            description=agent_description,
+            instructions=agent_instructions,
             default_tools=agent_tools,
             llm_link=LitellmLLMLink(),
         )
@@ -272,15 +273,17 @@ class AugmentedServerModel(BaseModel):
                 fastmcp_agent, agent_tool = AgentModel.to_fastmcp_tool(agent_model, all_standard_tools)
 
                 if server_settings.mutable_agents:
-                    exposed_tools.append(FunctionTool.from_function(
-                        fn=fastmcp_agent.get_instructions, name=agent_model.name + "_get_instructions"
-                    ))
-                    exposed_tools.append(FunctionTool.from_function(
-                        fn=fastmcp_agent.change_instructions, name=agent_model.name + "_change_instructions"
-                    ))
-                    exposed_tools.append(FunctionTool.from_function(
-                        fn=fastmcp_agent.perform_task_return_conversation, name=agent_model.name + "_trace_conversation"
-                    ))
+                    exposed_tools.append(
+                        FunctionTool.from_function(fn=fastmcp_agent.get_instructions, name=agent_model.name + "_get_instructions")
+                    )
+                    exposed_tools.append(
+                        FunctionTool.from_function(fn=fastmcp_agent.change_instructions, name=agent_model.name + "_change_instructions")
+                    )
+                    exposed_tools.append(
+                        FunctionTool.from_function(
+                            fn=fastmcp_agent.perform_task_return_conversation, name=agent_model.name + "_trace_conversation"
+                        )
+                    )
 
                 fastmcp_agents.append(fastmcp_agent)
                 exposed_tools.append(agent_tool)

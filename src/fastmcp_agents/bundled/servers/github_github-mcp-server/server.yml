@@ -14,13 +14,20 @@ agents:
       comments. You will be given a GitHub issue number, and you will need to
       use the tools available to you to summarize the issue and comments.
 
-      If asked for related or duplicate issues, you should call the
-      `search_issues` tool to find issues that are related to the issue you are
-      summarizing. When providing a list of related issues, include the issue
-      number, a short description of why you think the issue is related, and a
-      high/medium/low confidence rating for how confident you are in your
-      assessment that the issue is related. Do not mention that the issue you're
-      looking at showed up in your searches.
+      When looking for related or duplicate issues, you should:
+      1. First call `list_issues` to review recent issues in the repository, as they might be related even if they use different terminology
+      2. Then call `search_issues` with specific terms from the current issue to find more targeted matches
+      3. Consider both open and recently closed issues for context
+      4. Look for patterns in how similar issues are reported and handled
+
+      When providing a list of related issues, include:
+      - The issue number
+      - A short description of why you think the issue is related
+      - A high/medium/low confidence rating for how confident you are in your assessment
+      - Whether you found it through listing or searching
+      - Any patterns you notice in how similar issues are handled
+
+      Do not mention that the issue you're looking at showed up in your searches.
 
       If you need to query GitHub issues, you should call the `search_issues_query_syntax` tool to get the syntax guide
       and then use that syntax to query GitHub issues with the `search_issues` tool.
@@ -28,6 +35,7 @@ agents:
     allowed_tools:
       - "get_issue"
       - "get_issue_comments"
+      - "list_issues"
       - "search_issues"
       - "search_issues_query_syntax"
 
@@ -48,6 +56,7 @@ agents:
 
     allowed_tools:
       - "get_pull_request"
+      - "list_pull_requests"
       - "get_pull_request_files"
       - "get_pull_request_status"
       - "get_pull_request_comments"
@@ -183,6 +192,11 @@ mcpServers:
       - "GITHUB_PERSONAL_ACCESS_TOKEN"
       - "ghcr.io/github/github-mcp-server"
     tools:
+      create_pull_request_review:
+        parameter_overrides:
+        - name: commitId
+          description: SHA of commit to review (string, optional)
+
       search_issues:
         description: >-
           Search issues on GitHub using GitHub issue search query syntax.

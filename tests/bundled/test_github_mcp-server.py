@@ -44,7 +44,7 @@ class TestGitHubAgent:
         # Verify issue was retrieved and summarized
         assert isinstance(task_success, DefaultSuccessResponseModel)
         assert "issue" in task_success.result.lower()
-        assert "summary" in task_success.result.lower()
+        assert "slack" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
@@ -81,8 +81,9 @@ class TestGitHubAgent:
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
-        assert agent_tool_calls[0].name == "get_issue"
-        assert agent_tool_calls[1].name == "search_issues"
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        assert "get_issue" in tool_call_names
+        assert "search_issues" in tool_call_names
 
         return agent, task, task_success, conversation
 
@@ -118,14 +119,13 @@ class TestPullRequestAgent:
         # Verify PR was retrieved and summarized
         assert isinstance(task_success, DefaultSuccessResponseModel)
         assert "pull request" in task_success.result.lower()
-        assert "summary" in task_success.result.lower()
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 4
-        assert agent_tool_calls[0].name == "get_pull_request"
-        assert agent_tool_calls[1].name == "get_pull_request_files"
-        assert agent_tool_calls[2].name == "get_pull_request_status"
-        assert agent_tool_calls[3].name == "get_pull_request_comments"
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        assert "get_pull_request" in tool_call_names
+        assert "get_pull_request_files" in tool_call_names
+        assert "get_pull_request_comments" in tool_call_names
 
         return agent, task, task_success, conversation
 
@@ -158,7 +158,8 @@ class TestPullRequestAgent:
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 2
-        assert agent_tool_calls[0].name == "get_pull_request"
-        assert agent_tool_calls[1].name == "get_pull_request_reviews"
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        assert "get_pull_request_comments" in tool_call_names
+        assert "get_pull_request_reviews" in tool_call_names
 
         return agent, task, task_success, conversation

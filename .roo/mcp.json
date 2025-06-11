@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "running-server": {
+      "url": "http://localhost:8000/sse",
+      "alwaysAllow": [
+        "ask_tree_sitter_agent_get_instructions",
+        "ask_tree_sitter_agent_trace_conversation"
+      ]
+    }
+  }
+}

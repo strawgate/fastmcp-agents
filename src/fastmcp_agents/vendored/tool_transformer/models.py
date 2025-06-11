@@ -379,5 +379,4 @@ def _transform_tool(
         tags=tool.tags,
         annotations=tool.annotations,
         serializer=tool.serializer,
-        exclude_args=tool.exclude_args,
     )

@@ -29,7 +29,7 @@ run
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_git": {
+        "augmented_git": {
             "command": "uvx",
             "args": [
                 "fastmcp_agents",

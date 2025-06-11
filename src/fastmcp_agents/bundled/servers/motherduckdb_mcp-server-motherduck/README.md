@@ -29,7 +29,7 @@ run
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_motherduckdb": {
+        "augmented_duckdb": {
             "command": "uvx",
             "args": [
                 "fastmcp_agents",

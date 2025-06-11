@@ -29,7 +29,7 @@ run
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_tree_sitter": {
+        "augmented_tree_sitter": {
             "command": "uvx",
             "args": [
                 "fastmcp_agents",

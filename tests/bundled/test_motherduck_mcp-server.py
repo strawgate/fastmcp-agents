@@ -169,7 +169,7 @@ class TestDuckDBAgent:
 
         query_tool: FastMCPTool = tools["query"]
 
-        result = await query_tool.run(
+        await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE my_data (id INTEGER, name TEXT, birthyear INTEGER, age INTEGER, color TEXT, sibling_ages INTEGER[]);

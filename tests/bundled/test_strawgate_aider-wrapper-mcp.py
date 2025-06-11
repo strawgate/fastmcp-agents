@@ -40,11 +40,11 @@ def test_hello_world():
     # This is a placeholder test
     assert True
     """)
-    
+
     # Add and commit the files
     subprocess.run(["git", "add", "."], cwd=project_dir, check=True)
     subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=project_dir, check=True)
-    
+
     return project_dir
 
 

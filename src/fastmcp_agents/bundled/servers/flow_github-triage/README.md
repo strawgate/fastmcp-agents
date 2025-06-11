@@ -1,10 +1,13 @@
-A version of the [Github MCP server](https://github.com/github/github-mcp-server) that is wrapped with an agent and has improved descriptions and parameter names for the Github tools.
+A GitHub Triage Agent that can be used to triage GitHub issues and pull requests.
 
 | Agent Name | Agent Description |
 |------------|-------------------|
-| `ask_github_agent` | Assists with performing GitHub operations as requested by the user. |
-| `summarize_github_issue` | Assists with summarizing a GitHub issue and comments. |
-| `summarize_pull_request` | Request a report on a GitHub pull request. |
+| `triage_github_feature_request` | Triage a GitHub feature request. |
+| `triage_github_bug_report` | Triage a GitHub bug report. |
+| `investigate_github_issue` | Investigate a GitHub issue. |
+| `propose_solution_for_github_issue` | Propose a solution for a GitHub issue. |
+| `perform_pr_code_review` | Perform a code review of a pull request. |
+| `update_pr_with_code_or_docs` | Update a pull request with code changes or documentation changes. |
 
 # Usage
 1. [Run with MCP Inspector](#run-with-mcp-inspector)
@@ -14,15 +17,15 @@ A version of the [Github MCP server](https://github.com/github/github-mcp-server
 
 ## Run with MCP Inspector
 
-`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled github_github-mcp-server run`
+`npx @modelcontextprotocol/inspector uvx fastmcp_agents config --bundled flow_github-triage run`
 
 When you setup the Inspector for the first time the timeout will default to 10s. Ensure you modify this to 120s or more under "Configuration" > "Request Timeout" in MCP Inspector.
 
 ## Directly call tools via the CLI
 
 ```bash
-uvx fastmcp_agents config --bundled github_github-mcp-server \
-call ask_github_agent '{"task": "Summarize issue #1 in the repository modelcontextprotocol/servers. Include any relevant comments and provide a clear overview of the issue's status and content."}' \
+uvx fastmcp_agents config --bundled flow_github-triage \
+call triage_github_feature_request '{"task": "Create a new file called 'test.txt' in the current directory."}' \
 run
 ```
 
@@ -35,7 +38,7 @@ run
             "command": "uvx",
             "args": [
                 "fastmcp_agents",
-                "config", "--bundled", "github_github-mcp-server",
+                "config", "--bundled", "flow_github-triage",
                 "run"
             ]
         }
@@ -49,5 +52,5 @@ Follow the instructions in [Open WebUI](../usage/web_ui.md) to run Open WebUI.
 
 You can expose the server via mcpo:
 ```bash
-uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled github_github-mcp-server run
+uvx mcpo --port 8000 -- uvx fastmcp_agents config --bundled flow_github-triage run
 ``` 

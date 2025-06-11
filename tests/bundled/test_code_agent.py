@@ -156,7 +156,7 @@ class TestCodeAgent:
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         # Verify that appropriate tools were called
-        potential_calls = ["register_project_tool", "get_structure", "" "ask_filesystem_operations_agent", "ask_tree_sitter_agent"]
+        potential_calls = ["register_project_tool", "get_structure", "ask_filesystem_operations_agent", "ask_tree_sitter_agent"]
         assert any(call in tool_call_names for call in potential_calls)
 
         return agent, task, result, conversation
@@ -188,7 +188,7 @@ class TestCodeAgent:
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         # Verify that appropriate tools were called
-        potential_calls = ["create_file","get_structure", "ask_filesystem_operations_agent", "ask_tree_sitter_agent"]
+        potential_calls = ["create_file", "get_structure", "ask_filesystem_operations_agent", "ask_tree_sitter_agent"]
         assert any(call in tool_call_names for call in potential_calls)
 
         return agent, task, result, conversation

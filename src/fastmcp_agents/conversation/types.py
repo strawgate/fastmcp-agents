@@ -104,7 +104,9 @@ class ToolConversationEntry(BaseConvoModel):
     """Whether the tool call was successful."""
 
     @classmethod
-    def from_tool_request_part(cls, tool_request_part: ToolRequestPart, result: list[MCPToolResponseTypes], success: bool) -> "ToolConversationEntry":
+    def from_tool_request_part(
+        cls, tool_request_part: ToolRequestPart, result: list[MCPToolResponseTypes], success: bool
+    ) -> "ToolConversationEntry":
         """Create a tool conversation entry from a tool request part."""
         return cls(
             tool_call_id=tool_request_part.id,
