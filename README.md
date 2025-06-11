@@ -19,6 +19,8 @@ Or if you're logged into Google Cloud (via `gcloud init`), you can use the follo
 export MODEL="vertex_ai/gemini-2.5-flash-preview-05-20"
 ```
 
+(Note Gemini is not required -- you can provide any litellm model here with the provider auth as long as the model supports mandatory tool calling.)
+
 ```bash
 uvx fastmcp_agents cli \
     agent \
