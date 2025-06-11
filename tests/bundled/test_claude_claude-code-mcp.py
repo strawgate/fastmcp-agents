@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -19,7 +18,7 @@ def project_in_dir(temp_working_dir: Path):
     # Create a simple Python project for testing
     project_dir = temp_working_dir / "test_project"
     project_dir.mkdir()
-    
+
     # Create a simple Python file
     (project_dir / "main.py").write_text("""
 def hello_world():
@@ -28,7 +27,7 @@ def hello_world():
 if __name__ == "__main__":
     hello_world()
     """)
-    
+
     # Create a test file
     (project_dir / "test_main.py").write_text("""
 def test_hello_world():
@@ -36,7 +35,7 @@ def test_hello_world():
     # This is a placeholder test
     assert True
     """)
-    
+
     return project_dir
 
 

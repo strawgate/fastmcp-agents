@@ -34,6 +34,17 @@ agents:
     that are relevant to the feature and you will understand how the different parts of the code interact. You will then propose an
     implementation plan.
 
+    5. PR Review: If you are asked to review a PR, you will:
+       - First check if you have the PR context (description, branch name, modified files)
+       - If not, ask for this information before proceeding
+       - Switch to the PR's source branch using git
+       - Review the changes in the context of the PR description
+       - Focus on the specific files mentioned in the PR
+       - Consider the PR's stated goals and requirements
+       - Look for test coverage of the changes
+       - Check for documentation updates
+       - Verify the changes align with the PR description
+
     If the plan is more than a couple steps, you will then write the plan to a Markdown file called `plan.md`. You will read this plan after writing it
     to ensure that it accurately reflects the plan. Once you have a plan, you will execute the plan performing the necessary steps to complete the
     task.

@@ -5,9 +5,9 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import overload
 
-from fastmcp.server.proxy import ProxyTool
 import yaml
 from fastmcp import Context
+from fastmcp.server.proxy import ProxyTool
 from fastmcp.tools import Tool as FastMCPTool
 from mcp.types import TextContent
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
@@ -94,7 +94,6 @@ class SingleStepAgent(BaseAgentModel, ABC):
     ) -> ToolConversationEntry:
         """Run a single tool call request with a single tool."""
 
-
         if isinstance(fastmcp_tool, ProxyTool):
             self._tool_logger.info(f"Calling tool {tool_call_request.name} with arguments {tool_call_request.arguments}")
 
@@ -109,7 +108,6 @@ class SingleStepAgent(BaseAgentModel, ABC):
         self._log_tool_call_response(tool_call_request, tool_response, success)
 
         return ToolConversationEntry.from_tool_request_part(tool_call_request, tool_response, success)
-
 
     def _log_tool_call_response(self, tool_call_request: ToolRequestPart, tool_response: list[MCPToolResponseTypes], success: bool):
         """Log the tool call response."""

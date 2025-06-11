@@ -29,7 +29,7 @@ run
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_duckduckgo": {
+        "augmented_filesystem": {
             "command": "uvx",
             "args": [
                 "fastmcp_agents",

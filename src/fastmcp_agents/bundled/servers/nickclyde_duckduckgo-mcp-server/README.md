@@ -53,7 +53,7 @@ to:
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_duckduckgo": {
+        "augmented_duckduckgo": {
             "command": "uv",
             "args": [
                 "run",

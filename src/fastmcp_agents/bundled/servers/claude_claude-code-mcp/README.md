@@ -43,7 +43,7 @@ run
 ```json
 {
     "mcpServers": {
-        "fastmcp_agents_git": {
+        "augmented_claude-code": {
             "command": "uvx",
             "args": [
                 "fastmcp_agents",
