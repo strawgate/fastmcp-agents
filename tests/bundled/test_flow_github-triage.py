@@ -401,6 +401,56 @@ class TestGitHubTriageAgent:
         return agent, task, result, conversation
 
 
+class TestGitHubFeatureRequestAgent:
+    @pytest.fixture
+    def agent_name(self):
+        return "triage_github_feature_request"
+
+    @evaluate_with_criteria(
+        criteria="""
+        The result and the conversation history must indicate:
+        1. that the feature request was properly analyzed
+        2. that potential duplicates were identified
+        3. that related issues were found
+        4. that relevant code sections were identified
+        5. that a clear triage comment was posted on the github issue
+
+        Any other response is a failure.
+        """,
+        minimum_grade=0.9,
+    )
+    async def test_feature_request_triage(self, project_in_dir: Path, agent: CuratorAgent, test_issues):
+        # Use the first issue (feature request) from the test issues
+        feature_request = test_issues[0]
+
+        task = f"""
+        You are a GitHub triage agent for the calculator project in repository strawgate/fastmcp-agents-tests-e2e.
+        The project is a Python calculator implementation with basic arithmetic operations and history tracking.
+        The repository has been cloned to {project_in_dir} for your use.
+
+        IMPORTANT: When asking for issues summarizes or other items from GitHub you must include instructions to
+        only search for OPEN issues.
+        Do not include closed issues in your analysis.
+
+        1. Analyze the feature request in issue #{feature_request.number} in repository strawgate/fastmcp-agents-tests-e2e
+        2. Identify any potential duplicates or related issues (ONLY consider currently OPEN issues)
+        3. Find relevant code sections that would need to be modified
+        4. Post a triage comment on the issue with your findings
+        """
+
+        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+
+        # Verify that the agent posted a comment
+        comments = get_issue_comments(feature_request)
+        assert len(comments) > 0, "Agent did not post any comments on the issue"
+
+        # Verify that appropriate tools were called
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+
+        return agent, task, result, conversation
+
+
 class TestGitHubBugReportAgent:
     @pytest.fixture
     def agent_name(self):
@@ -633,11 +683,12 @@ class TestGitHubPRUpdateAgent:
         The repository has been cloned to {project_in_dir} for your use.
 
         1. Update PR #{feature_pr.number} in repository strawgate/fastmcp-agents-tests-e2e with requested changes
-        2. Check for any related open issues that this PR update might affect
-        3. Update documentation for the calculator implementation
-        4. Add tests if needed
-        5. Commit and push changes
-        6. Post a comment on the GitHub PR with the changes you made
+        2. Use the existing branch of the PR to make the changes
+        3. Check for any related open issues that this PR update might affect
+        4. Update documentation for the calculator implementation
+        5. Add tests if needed
+        6. Commit and push changes
+        7. Post a comment on the GitHub PR with the changes you made
         """
 
         conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
@@ -646,7 +697,7 @@ class TestGitHubPRUpdateAgent:
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         # Verify that the agent posted a comment
-        comments = get_issue_comments(feature_pr)
+        comments = get_pr_comments(feature_pr)
         assert len(comments) > 0, "Agent did not post any comments on the PR"
 
         # Verify that appropriate tools were called
