@@ -23,6 +23,7 @@ mcpServers:
   claude_code:
     command: npx
     args:
+      - "-y"
       - "@anthropic-ai/claude-code"
       - --verbose
       - --print

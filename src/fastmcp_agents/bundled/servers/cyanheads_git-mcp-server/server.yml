@@ -28,6 +28,7 @@ mcpServers:
   git:
     command: npx
     args:
+      - "-y"
       - "@cyanheads/git-mcp-server"
     tools:
       git_add:
