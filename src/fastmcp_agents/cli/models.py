@@ -195,6 +195,7 @@ class OverriddenRemoteMCPServer(RemoteMCPServer):
     async def to_wrapped_client(self, name: str) -> tuple[Client, Sequence[FastMCPTool]]:
         """Convert the server to a wrapped FastMCP client."""
         client = self.to_fastmcp_client()
+        logger.info(f"Running {name} with cli: {self.url}")
         return client, await _wrap_client_tools(client, self.tools, name)
 
 
