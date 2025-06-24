@@ -13,8 +13,65 @@ from tests.conftest import evaluate_with_criteria
 def server_config_name():
     return "github_github-mcp-server"
 
+class TestAskGitHubAgent:
+    @pytest.fixture
+    def agent_name(self):
+        return "ask_github_agent"
 
-class TestGitHubAgent:
+    @evaluate_with_criteria(
+        criteria="""
+        The result and the conversation history must indicate:
+        1. that the issue was successfully retrieved
+        2. that the issue comments were retrieved
+        3. that a clear summary of the issue and comments was provided
+        4. that the agent used the correct sequence of tools
+        """,
+        minimum_grade=0.9,
+    )
+    async def test_ask_github_agent_to_summarize_issue(self, temp_working_dir: Path, agent: CuratorAgent):
+        task = """
+        Summarize issue #64 in the repository modelcontextprotocol/servers.
+        """
+
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
+
+        # Verify issue was retrieved and summarized
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "issue" in task_success.result.lower()
+
+        return agent, task, task_success, conversation
+
+    @evaluate_with_criteria(
+        criteria="""
+        The result and the conversation history must indicate:
+        1. that the issue was successfully retrieved
+        2. that the issue comments were retrieved
+        3. that a clear summary of the issue and comments was provided
+        4. that the agent used the correct sequence of tools
+        """,
+        minimum_grade=0.9,
+    )
+    async def test_ask_github_agent_clone_repo(self, temp_working_dir: Path, agent: CuratorAgent):
+        task = """
+        Clone the repository modelcontextprotocol/servers.
+        """
+
+        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+
+        agent_tool_calls = get_tool_calls_from_conversation(conversation)
+
+        # Verify repo was cloned
+        assert isinstance(task_success, DefaultSuccessResponseModel)
+        assert "clone" in task_success.result.lower()
+
+        return agent, task, task_success, conversation
+
+        
+        
+
+class TestSummarizeGitHubIssueAgent:
     @pytest.fixture
     def agent_name(self):
         return "summarize_github_issue"
