@@ -13,10 +13,7 @@ BASE_LOGGER = get_logger("agents")
 def setup_logging(
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | int = "INFO",
 ):
-    handler = RichHandler(
-        console=Console(stderr=True),
-        rich_tracebacks=False,
-    )
+    handler = RichHandler(console=Console(stderr=True), rich_tracebacks=False, show_path=False, tracebacks_suppress=["asyncclick", "mcp"])
     formatter = logging.Formatter("%(name)s : %(message)s")
     handler.setFormatter(formatter)
 

@@ -6,6 +6,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from fastmcp.tools import Tool as FastMCPTool
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation
 from fastmcp_agents.observability.logging import BASE_LOGGER
@@ -20,12 +21,27 @@ class CompletionMetadata(BaseModel):
     """The number of tokens used by the LLM."""
 
 
+class LLMLinkSettings(BaseSettings):
+    """Settings for LLM links."""
+
+    model_config = SettingsConfigDict(use_attribute_docstrings=True)
+
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+    """The temperature to use."""
+
+    model: str = Field(default=...)
+    """The model to use."""
+
+
 @runtime_checkable
 class LLMLink(Protocol):
     """Base class for all LLM links.
 
     This class is used to abstract the LLM link implementation from the agent.
     """
+
+    llm_link_settings: LLMLinkSettings
+    """The settings to use for the LLM link."""
 
     completion_kwargs: dict[str, Any]
     """The kwargs to pass to the underlying LLM SDK when asking for a completion."""
@@ -35,6 +51,10 @@ class LLMLink(Protocol):
 
     logger: logging.Logger = logger
     """The logger to use for the LLM link."""
+
+    def __init__(self) -> None:
+        """Initialize the LLM link."""
+        self.llm_link_settings = LLMLinkSettings()
 
     async def async_completion(
         self,

@@ -1,17 +1,19 @@
 """LiteLLM integration for FastMCP Agents."""
 
 import json
-import os
 from collections.abc import Sequence
+from typing import Any, Literal
 
 from fastmcp.tools import Tool as FastMCPTool
 from litellm import CustomStreamWrapper, LiteLLM, acompletion
 from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message, ModelResponse, StreamingChoices
 from litellm.utils import supports_function_calling
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation, ToolRequestPart
 from fastmcp_agents.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
-from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError, ModelNotSetError
+from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
 from fastmcp_agents.llm_link.base import (
     CompletionMetadata,
     LLMLink,
@@ -19,27 +21,38 @@ from fastmcp_agents.llm_link.base import (
 from fastmcp_agents.llm_link.utils import transform_fastmcp_tool_to_openai_tool
 
 
-class LitellmLLMLink(LLMLink):
-    model: str
+class LiteLLMSettings(BaseSettings):
+    """Settings for LLM links."""
 
-    def __init__(self, model: str | None = None, completion_kwargs: dict | None = None, client: LiteLLM | None = None) -> None:
+    model_config = SettingsConfigDict(
+        env_prefix="LITELLM_", env_nested_delimiter="_", env_nested_max_split=1, use_attribute_docstrings=True
+    )
+
+    reasoning_effort: Literal["low", "medium", "high"] | None = Field(default=None)
+    """The reasoning effort to use."""
+
+    presence_penalty: float | None = Field(default=None, ge=-2.0, le=2.0)
+    """The presence penalty to use."""
+
+    completion_kwargs: dict[str, Any] = Field(default_factory=dict)
+    """Extra kwargs to pass to the Litellm client. Provided in the format of LITELLM_COMPLETION_KWARGS_<KEY>=<VALUE>."""
+
+
+class LitellmLLMLink(LLMLink):
+    litellm_settings: LiteLLMSettings
+
+    def __init__(self, client: LiteLLM | None = None) -> None:
         """Create a new Litellm LLM link.
 
         Args:
-            model: The model to use.
-            completion_kwargs: The completion kwargs to use.
             client: The Litellm client to use.
         """
+        super().__init__()
+
         self.client = client or LiteLLM()
+        self.litellm_settings = LiteLLMSettings()
 
-        if model := (model or os.getenv("MODEL")):
-            self.model = model
-        else:
-            raise ModelNotSetError
-
-        self.completion_kwargs = completion_kwargs or {}
-
-        self.validate_model(model)
+        self.validate_model(self.llm_link_settings.model)
 
     @classmethod
     def validate_model(cls, model: str):
@@ -61,7 +74,7 @@ class LitellmLLMLink(LLMLink):
             A list of tool calls.
         """
         if not (tool_calls := message.tool_calls):
-            raise NoResponseError(missing_item="tool calls", model=self.model)
+            raise NoResponseError(missing_item="tool calls", model=self.llm_link_settings.model)
 
         self.logger.debug(f"Response contains {len(tool_calls)} tool requests: {tool_calls}")
 
@@ -93,16 +106,16 @@ class LitellmLLMLink(LLMLink):
     def _extract_message(self, response: ModelResponse) -> Message:
         """Extract the response message from the response. This contains the tool_calls and content."""
         if not (choices := response.choices) or len(choices) == 0:
-            raise NoResponseError(missing_item="choices", model=self.model)
+            raise NoResponseError(missing_item="choices", model=self.llm_link_settings.model)
 
         if not (choice := choices[0]):
-            raise NoResponseError(missing_item="choice", model=self.model)
+            raise NoResponseError(missing_item="choice", model=self.llm_link_settings.model)
 
         if isinstance(choice, StreamingChoices):
             raise UnsupportedFeatureError(feature="streaming completions")
 
         if not (chosen_message := choice.message):
-            raise NoResponseError(missing_item="response message", model=self.model)
+            raise NoResponseError(missing_item="response message", model=self.llm_link_settings.model)
 
         return chosen_message
 
@@ -138,11 +151,14 @@ class LitellmLLMLink(LLMLink):
 
         model_response = await acompletion(
             messages=messages,
-            model=self.model,
-            **self.completion_kwargs,
+            model=self.llm_link_settings.model,
+            temperature=self.llm_link_settings.temperature,
+            reasoning_effort=self.litellm_settings.reasoning_effort,
+            presence_penalty=self.litellm_settings.presence_penalty,
+            **self.litellm_settings.completion_kwargs,
+            tool_choice="required",
             timeout=120,
             tools=litellm_tools,
-            tool_choice="required",
             num_retries=3,
         )
 
