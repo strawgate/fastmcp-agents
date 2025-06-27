@@ -4,14 +4,15 @@ import asyncio
 import json
 import os
 import sys
+import warnings
 from collections.abc import Sequence
-from typing import Any, Literal
+from pathlib import Path
+from typing import Literal
 
 import asyncclick as click
+import fastmcp
 from fastmcp import Client, FastMCP
 from fastmcp.exceptions import ToolError
-from fastmcp.utilities.logging import configure_logging
-from mcp.types import EmbeddedResource, ImageContent, TextContent
 from pydantic import BaseModel, Field
 from rich.console import Console
 from rich.markdown import Markdown
@@ -22,38 +23,17 @@ from fastmcp_agents.cli.models import (
     AgentModel,
     AugmentedServerModel,
     OverriddenStdioMCPServer,
+    PendingToolCall,
     ServerSettings,
+    ToolCallResult,
 )
 from fastmcp_agents.conversation.utils import join_content
 from fastmcp_agents.errors.base import ContributionsWelcomeError
 from fastmcp_agents.errors.cli import FastMCPAgentsError, NoConfigError
 from fastmcp_agents.observability.logging import get_logger, setup_logging
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 logger = get_logger("cli")
-
-if os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None:
-    from fastmcp_agents.observability.otel import setup_otel
-
-    setup_otel()
-
-
-class PendingToolCall(BaseModel):
-    """A pending tool call. Only used in the CLI class."""
-
-    name: str
-    arguments: dict[str, Any]
-    print_format: Literal["markdown", "text", "none"] = "text"
-    file: str | None = None
-
-
-class ToolCallResult(PendingToolCall):
-    """A result of a tool call. Only used in the CLI class."""
-
-    name: str
-    arguments: dict[str, Any]
-    result: list[TextContent | ImageContent | EmbeddedResource]
-    print_format: Literal["markdown", "text", "none"] = "text"
-    file: str | None = None
 
 
 class CliContext(BaseModel):
@@ -77,6 +57,8 @@ class CliContext(BaseModel):
     default="INFO",
     help="The logging level to use for the agent.",
 )
+@click.option("--py-warnings", is_flag=True, help="Show built-in Python warnings.")
+@click.option("--show-tracebacks", is_flag=True, help="Show tracebacks for errors.")
 @click.option("--mutable-agents", is_flag=True, help="Publish a tool to mutate the Agent's Instructions.")
 @click.option("--agent-only", is_flag=True, help="Only run the agents, don't expose the tools to the client.")
 @click.option("--tool-only", is_flag=True, help="Only run the tools, don't expose the agents to the client.")
@@ -88,14 +70,19 @@ def cli_base(
     agent_only: bool = False,
     tool_only: bool = False,
     mutable_agents: bool = False,
+    py_warnings: bool = False,
+    show_tracebacks: bool = False,
 ):
     """The base CLI for the FastMCP Agents. Configure logging, transport, and filtering."""
 
-    # Setup FastMCP Agents Logging
-    setup_logging(level=log_level)
+    if py_warnings:
+        warnings.resetwarnings()
 
-    # Setup FastMCP Logging
-    configure_logging(level=log_level, enable_rich_tracebacks=False)
+    # Setup FastMCP Agents Logging
+    setup_logging(level=log_level, show_tracebacks=show_tracebacks)
+
+    fastmcp.settings.enable_rich_tracebacks = False
+    # configure_logging(level=log_level, enable_rich_tracebacks=False)
 
     ctx.obj = CliContext(
         server_settings=ServerSettings(
@@ -196,13 +183,17 @@ async def handle_pending_tool_calls(
                 )
                 results.append(tool_call_result)
             except ToolError:  # noqa: PERF203
-                logger.error(f"Tool {pending_tool_call.name} with arguments {pending_tool_call.arguments} returned an error.")  # noqa: TRY400
+                logger.exception(f"Tool {pending_tool_call.name} with arguments {pending_tool_call.arguments} returned an error.")
 
     for mcp_client in mcp_clients:
         await mcp_client._disconnect(force=False)
         await mcp_client.close()
 
     for result in results:
+        if result.file is not None:
+            content = join_content(result.result)
+            result.file.write_text(content, encoding="utf-8")
+
         if result.print_format == "none":
             continue
 
@@ -232,7 +223,7 @@ async def run_server_or_call_tools(
     else:
         await server.run_async(transport=transport)
 
-    total_token_usage = sum(agent.llm_link.token_usage for agent in agents)
+    total_token_usage = sum(agent.llm_link.get_token_usage() for agent in agents)
     logger.info(f"Total token usage: {total_token_usage}")
 
 
@@ -283,14 +274,14 @@ async def list_tools(
     default="markdown",
     help="The format to use when printing the result.",
 )
-@click.option("--file", type=str, help="The file to write the result to.")
+@click.option("--file", type=click.Path(path_type=Path),  help="The file to write the result to.")
 @click.pass_context
 def call_tool(
     ctx: click.Context,
     name: str,
     parameters: str,
     print_format: Literal["markdown", "text", "none"],
-    file: str | None = None,
+    file: Path | None = None,
 ):
     """Add a tool call to the pending tool calls list."""
     cli_context: CliContext = ctx.obj

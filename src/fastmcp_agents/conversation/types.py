@@ -4,11 +4,9 @@ import json
 from collections.abc import Sequence
 from typing import Any, Literal, TypeAlias
 
-from mcp.types import EmbeddedResource, ImageContent, TextContent
+from fastmcp.utilities.types import MCPContent
 from openai.types.chat.chat_completion_message_tool_call_param import ChatCompletionMessageToolCallParam
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
-
-MCPToolResponseTypes = TextContent | ImageContent | EmbeddedResource
 
 
 class BaseConvoModel(BaseModel):
@@ -46,22 +44,6 @@ class ToolRequestPart(BaseConvoModel):
         }
 
 
-# class ToolResponsePart(BaseConvoModel):
-#     """A helper class for a tool call response."""
-
-#     tool_request_id: str = Field(..., alias="tool_call_id")
-#     """The id of the tool call request. This is used to match the tool call request to the tool call response."""
-
-#     name: str = Field(...)
-#     """The name of the tool to call."""
-
-#     arguments: dict[str, Any] = Field(..., exclude=True)
-#     """The arguments that were passed to the tool."""
-
-#     content: list[MCPToolResponseTypes] = Field(...)
-#     """The content of the tool call response."""
-
-
 class SystemConversationEntry(BaseConvoModel):
     """A chat entry is a message in the chat history."""
 
@@ -97,16 +79,32 @@ class ToolConversationEntry(BaseConvoModel):
     arguments: dict[str, Any] = Field(..., exclude=True)
     """The arguments that were passed to the tool."""
 
-    content: list[MCPToolResponseTypes] = Field(...)
+    content: list[MCPContent] = Field(...)
     """The content of the tool call response."""
 
     success: bool = Field(..., exclude=True)
     """Whether the tool call was successful."""
 
+    @property
+    def estimated_tokens(self) -> int:
+        """The estimated number of tokens used by the tool call."""
+        return len(self.content) // 4
+
+    def to_loggable(self) -> dict[str, Any]:
+        """Convert the tool conversation entry to a loggable dictionary."""
+        loggable = {
+            "name": self.name,
+            "completed": self.success,
+            "response_tokens": self.estimated_tokens,
+        }
+
+        if len(self.content) != 0:
+            loggable["content"] = f"{str(self.content)[:100]}..."
+
+        return loggable
+
     @classmethod
-    def from_tool_request_part(
-        cls, tool_request_part: ToolRequestPart, result: list[MCPToolResponseTypes], success: bool
-    ) -> "ToolConversationEntry":
+    def from_tool_request_part(cls, tool_request_part: ToolRequestPart, result: list[MCPContent], success: bool) -> "ToolConversationEntry":
         """Create a tool conversation entry from a tool request part."""
         return cls(
             tool_call_id=tool_request_part.id,

@@ -6,14 +6,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "asyncclick>=8.1.8",
-    "fastmcp<=2.8.1",
+    "fastmcp>=2.8.1",
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
     "jsonref>=1.1.0",
     "litellm>=1.71.0",
     "mcp>=1.9.0",
-    "frozenlist==1.6.0", # 1.6.2 not friendly with deepcopy
-    "numpydoc>=1.8.0",
     "opentelemetry-api>=1.33.1",
     "opentelemetry-exporter-otlp>=1.33.1",
     "opentelemetry-sdk>=1.33.1",
@@ -29,7 +27,7 @@ packages = [
 allow-direct-references=true
 
 [project.scripts]
-fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
+fastmcp_agents = "fastmcp_agents.cli:run_mcp"
 
 [dependency-groups]
 dev = [

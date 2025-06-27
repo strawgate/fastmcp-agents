@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Any, Protocol, runtime_checkable
 
 from fastmcp.tools import Tool as FastMCPTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation
@@ -13,6 +13,8 @@ from fastmcp_agents.observability.logging import BASE_LOGGER
 
 logger = BASE_LOGGER.getChild("llm_link")
 
+class ModelProtocolMeta(type(BaseModel), type(Protocol)):
+     pass
 
 class CompletionMetadata(BaseModel):
     """Metadata about the completion."""
@@ -34,27 +36,8 @@ class LLMLinkSettings(BaseSettings):
 
 
 @runtime_checkable
-class LLMLink(Protocol):
-    """Base class for all LLM links.
-
-    This class is used to abstract the LLM link implementation from the agent.
-    """
-
-    llm_link_settings: LLMLinkSettings
-    """The settings to use for the LLM link."""
-
-    completion_kwargs: dict[str, Any]
-    """The kwargs to pass to the underlying LLM SDK when asking for a completion."""
-
-    token_usage: int = 0
-    """The number of tokens used by the LLM."""
-
-    logger: logging.Logger = logger
-    """The logger to use for the LLM link."""
-
-    def __init__(self) -> None:
-        """Initialize the LLM link."""
-        self.llm_link_settings = LLMLinkSettings()
+class LLMLinkProtocol(Protocol):
+    """Protocol for LLM links."""
 
     async def async_completion(
         self,
@@ -71,3 +54,30 @@ class LLMLink(Protocol):
     Returns:
         The assistant conversation entry.
     """
+
+    def get_token_usage(self) -> int: ...
+    """Get the number of tokens used by the LLM."""
+
+
+class BaseLLMLink(BaseModel, metaclass=ModelProtocolMeta):
+    """Base class for all LLM links.
+
+    This class is used to abstract the LLM link implementation from the agent.
+    """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    llm_link_settings: LLMLinkSettings = Field(default_factory=lambda: LLMLinkSettings())
+    """The settings to use for the LLM link."""
+
+    completion_kwargs: dict[str, Any] = Field(default_factory=dict)
+    """The kwargs to pass to the underlying LLM SDK when asking for a completion."""
+
+    token_usage: int = Field(default=0)
+    """The number of tokens used by the LLM."""
+
+    logger: logging.Logger = Field(default_factory=lambda: logger)
+    """The logger to use for the LLM link."""
+
+    def get_token_usage(self) -> int:
+        """Get the number of tokens used by the LLM."""
+        return self.token_usage

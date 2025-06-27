@@ -1,10 +1,10 @@
 import pytest
+from mcp.types import TextContent
 
 from fastmcp_agents.conversation.types import (
     AssistantConversationEntry,
     Conversation,
     SystemConversationEntry,
-    TextContent,
     ToolConversationEntry,
     ToolRequestPart,
     UserConversationEntry,

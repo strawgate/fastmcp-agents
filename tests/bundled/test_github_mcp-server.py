@@ -13,6 +13,7 @@ from tests.conftest import evaluate_with_criteria
 def server_config_name():
     return "github_github-mcp-server"
 
+
 class TestAskGitHubAgent:
     @pytest.fixture
     def agent_name(self):
@@ -35,7 +36,7 @@ class TestAskGitHubAgent:
 
         conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify issue was retrieved and summarized
         assert isinstance(task_success, DefaultSuccessResponseModel)
@@ -60,7 +61,7 @@ class TestAskGitHubAgent:
 
         conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
 
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify repo was cloned
         assert isinstance(task_success, DefaultSuccessResponseModel)
@@ -68,8 +69,6 @@ class TestAskGitHubAgent:
 
         return agent, task, task_success, conversation
 
-        
-        
 
 class TestSummarizeGitHubIssueAgent:
     @pytest.fixture

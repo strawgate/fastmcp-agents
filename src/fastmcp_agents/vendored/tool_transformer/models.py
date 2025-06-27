@@ -8,9 +8,9 @@ from fastmcp.exceptions import ToolError
 from fastmcp.tools import FunctionTool
 from fastmcp.tools import Tool as FastMCPTool
 from jsonschema import ValidationError, validate
-from mcp.types import EmbeddedResource, ImageContent, TextContent
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from fastmcp_agents.conversation.types import MCPContent
 from fastmcp_agents.vendored.tool_transformer.errors import (
     ToolParameterAlreadyExistsError,
     ToolParameterNotFoundError,
@@ -22,6 +22,8 @@ T = TypeVar("T", bound=bool | int | float | str)  # | dict[str, Any] | BaseModel
 
 class ToolParameter(BaseModel, Generic[T]):
     """A base class for a tool parameter."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     name: str = Field(description="The name of the parameter.")
     description: str | None = Field(default=None, description="The description of the parameter.")
@@ -213,7 +215,7 @@ ToolParameterTypes = (
 class PostToolCallHookProtocol(Protocol):
     async def __call__(
         self,
-        response: list[TextContent | ImageContent | EmbeddedResource],
+        response: list[MCPContent],
         tool_args: dict[str, Any],
         hook_args: dict[str, Any],
     ) -> None: ...
@@ -235,6 +237,9 @@ class ToolOverride(BaseModel):
     """A base class for a tool override that can be used to override a tool."""
 
     name: str | None = Field(default=None, description="The name of the tool to override.")
+    allowed: bool = Field(
+        default=True, description="Whether the tool is allowed to be called. If False, the tool will be removed from the server."
+    )
     description: str | None = Field(default=None, description="The description of the tool to override.")
     append_description: str | None = Field(default=None, description="A description to append to the tool's description.")
     parameter_overrides: list[ToolParameterTypes] = Field(
@@ -313,17 +318,17 @@ def _apply_parameter_overrides(
 
 
 def _create_transformed_function(
-    original_tool_run_method: Callable[..., Awaitable[list[TextContent | ImageContent | EmbeddedResource]]],
+    original_tool_run_method: Callable[..., Awaitable[list[MCPContent]]],
     fn_transformed_parameters_schema: dict[str, Any],
     fn_hook_parameters_list: list[ToolParameterTypes],
     fn_pre_call_hook: PreToolCallHookProtocol | None,
     fn_post_call_hook: PostToolCallHookProtocol | None,
-) -> Callable[..., Awaitable[list[TextContent | ImageContent | EmbeddedResource]]]:
+) -> Callable[..., Awaitable[list[MCPContent]]]:
     """Factory function to create the transformed tool's core async callable."""
 
     async def transformed_fn(
         **kwargs: Any,
-    ) -> list[TextContent | ImageContent | EmbeddedResource]:
+    ) -> list[MCPContent]:
         try:
             validate(kwargs, fn_transformed_parameters_schema)
         except ValidationError as e:

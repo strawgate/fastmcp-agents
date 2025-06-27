@@ -10,13 +10,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.server.proxy import FastMCPProxy
-from mcp.types import EmbeddedResource, ImageContent, TextContent
 
 from fastmcp_agents.agent.extended.evaluator import EvaluationResult, EvaluatorAgent
 from fastmcp_agents.agent.multi_step import MultiStepAgent
 from fastmcp_agents.cli.loader import get_config_for_bundled
 from fastmcp_agents.cli.models import AugmentedServerModel, ServerSettings
-from fastmcp_agents.conversation.types import ToolConversationEntry
+from fastmcp_agents.conversation.types import MCPContent, ToolConversationEntry
 from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 
 
@@ -121,8 +120,8 @@ async def initialized_client(fastmcp_server_client: Client) -> AsyncGenerator[Cl
 @pytest.fixture
 def call_curator(
     initialized_client: Client,
-) -> Callable[[str, str], Coroutine[Any, Any, list[TextContent | ImageContent | EmbeddedResource]]]:
-    async def call_curator(name: str, task: str) -> list[TextContent | ImageContent | EmbeddedResource]:
+) -> Callable[[str, str], Coroutine[Any, Any, list[MCPContent]]]:
+    async def call_curator(name: str, task: str) -> list[MCPContent]:
         return await initialized_client.call_tool(name=name, arguments={"task": task})
 
     return call_curator

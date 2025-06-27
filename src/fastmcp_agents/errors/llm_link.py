@@ -11,6 +11,14 @@ class ModelDoesNotSupportFunctionCallingError(FastMCPAgentsError):
         super().__init__(self.message)
 
 
+class ModelDoesNotSupportThinkingError(FastMCPAgentsError):
+    """Raised when a model does not support thinking."""
+
+    def __init__(self, model: str):
+        self.message = f"Model {model} does not support thinking"
+        super().__init__(self.message)
+
+
 class ModelDoesNotExistError(FastMCPAgentsError):
     """Raised when a model does not exist."""
 

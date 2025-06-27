@@ -4,6 +4,7 @@ import os
 import sys
 from collections.abc import Sequence
 from copy import deepcopy
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from fastmcp import Client, FastMCP
@@ -16,6 +17,7 @@ from pydantic import BaseModel, Field
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import MultiStepAgent
+from fastmcp_agents.conversation.types import MCPContent
 from fastmcp_agents.errors.cli import MCPServerStartupError
 from fastmcp_agents.llm_link.litellm import LitellmLLMLink
 from fastmcp_agents.observability.logging import BASE_LOGGER
@@ -35,6 +37,21 @@ class ServerSettings(BaseModel):
     agent_only: bool = Field(default=False, description="Whether to only run the agents.")
     tool_only: bool = Field(default=False, description="Whether to only run the tools.")
     mutable_agents: bool = Field(default=False, description="Whether to publish a tool to mutate the Agent's System Prompt.")
+
+
+class PendingToolCall(BaseModel):
+    """A pending tool call. Only used in the CLI class."""
+
+    name: str
+    arguments: dict[str, Any]
+    print_format: Literal["markdown", "text", "none"] = "text"
+    file: Path | None = None
+
+
+class ToolCallResult(PendingToolCall):
+    """A result of a tool call. Only used in the CLI class."""
+
+    result: list[MCPContent]
 
 
 class BaseExtraTool(BaseModel):
@@ -83,11 +100,11 @@ async def _wrap_client_tools(client: Client, tool_overrides: dict[str, ToolOverr
 
         client_tools = await client.list_tools()
 
-    proxied_client_tools = [await ProxyTool.from_client(client, client_tool) for client_tool in client_tools]
+    proxied_client_tools = [ProxyTool.from_mcp_tool(client=client, mcp_tool=client_tool) for client_tool in client_tools]
 
     return [
         tool_overrides[proxied_client_tool.name].apply_to_tool(proxied_client_tool)
-        if proxied_client_tool.name in tool_overrides
+        if proxied_client_tool.name in tool_overrides and tool_overrides[proxied_client_tool.name].allowed
         else proxied_client_tool
         for proxied_client_tool in proxied_client_tools
     ]
@@ -293,4 +310,12 @@ class AugmentedServerModel(BaseModel):
         if not server_settings.agent_only:
             exposed_tools.extend(all_standard_tools)
 
-        return fastmcp_agents, [client for client, _ in wrapped_mcp_clients], FastMCP(name="augmented-server", tools=exposed_tools)
+        return (
+            fastmcp_agents,
+            [client for client, _ in wrapped_mcp_clients],
+            FastMCP(
+                name="augmented-server",
+                tools=exposed_tools,
+                mask_error_details=False,
+            ),
+        )

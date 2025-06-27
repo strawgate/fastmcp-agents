@@ -7,16 +7,17 @@ from typing import Any, Literal
 from fastmcp.tools import Tool as FastMCPTool
 from litellm import CustomStreamWrapper, LiteLLM, acompletion
 from litellm.types.utils import ChatCompletionMessageToolCall, Function, Message, ModelResponse, StreamingChoices
-from litellm.utils import supports_function_calling
+from litellm.utils import supports_function_calling, supports_reasoning
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fastmcp_agents.conversation.types import AssistantConversationEntry, Conversation, ToolRequestPart
 from fastmcp_agents.errors.base import NoResponseError, UnknownToolCallError, UnsupportedFeatureError
-from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
+from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError, ModelDoesNotSupportThinkingError
 from fastmcp_agents.llm_link.base import (
+    BaseLLMLink,
     CompletionMetadata,
-    LLMLink,
+    LLMLinkProtocol,
 )
 from fastmcp_agents.llm_link.utils import transform_fastmcp_tool_to_openai_tool
 
@@ -38,31 +39,33 @@ class LiteLLMSettings(BaseSettings):
     """Extra kwargs to pass to the Litellm client. Provided in the format of LITELLM_COMPLETION_KWARGS_<KEY>=<VALUE>."""
 
 
-class LitellmLLMLink(LLMLink):
-    litellm_settings: LiteLLMSettings
+class LitellmLLMLink(BaseLLMLink, LLMLinkProtocol):
+    """Litellm LLM link."""
 
-    def __init__(self, client: LiteLLM | None = None) -> None:
-        """Create a new Litellm LLM link.
+    client: LiteLLM = Field(default_factory=LiteLLM)
+    litellm_settings: LiteLLMSettings = Field(default_factory=LiteLLMSettings)
 
-        Args:
-            client: The Litellm client to use.
-        """
-        super().__init__()
+    def __init_subclass__(cls, **kwargs):
+        pass
 
-        self.client = client or LiteLLM()
-        self.litellm_settings = LiteLLMSettings()
+    def model_post_init(self, __context: Any) -> None:
+        """Post-initialize the Litellm LLM link."""
+        self.validate_function_calling()
+        self.validate_thinking()
 
-        self.validate_model(self.llm_link_settings.model)
+    def validate_function_calling(self):
+        """Validate that the model is a valid Litellm model and that it supports function calling"""
+        model = self.llm_link_settings.model
 
-    @classmethod
-    def validate_model(cls, model: str):
-        """Validate that the model is a valid Litellm model and that it supports function calling
-
-        Args:
-            model: The model to validate.
-        """
         if not supports_function_calling(model=model):
             raise ModelDoesNotSupportFunctionCallingError(model=model)
+
+    def validate_thinking(self):
+        """Validate that the model is a valid Litellm model and that it supports function calling"""
+        model = self.llm_link_settings.model
+
+        if not supports_reasoning(model=model):
+            raise ModelDoesNotSupportThinkingError(model=model)
 
     def _extract_tool_calls(self, message: Message) -> list[ToolRequestPart]:
         """Extract the tool calls from the message.

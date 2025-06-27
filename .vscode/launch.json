@@ -108,6 +108,7 @@
                 "cyanheads_git-mcp-server",
                 "evaluator_optimizer",
                 "flow_code-agent",
+                "flow_github-triage",
                 "github_github-mcp-server",
                 "mcp_git",
                 "motherduckdb_mcp-server-motherduck",
@@ -123,7 +124,7 @@
             "type": "promptString",
             "id": "agent",
             "description": "Name of the curator Agent to call.",
-            "default": "ask_git_agent"
+            "default": "ask_github_agent"
         },
         {
             "type": "promptString",

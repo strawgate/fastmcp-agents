@@ -7,13 +7,14 @@ from mcp.types import BlobResourceContents, EmbeddedResource, ImageContent, Text
 from fastmcp_agents.conversation.types import (
     AssistantConversationEntry,
     Conversation,
+    MCPContent,
     SystemConversationEntry,
     ToolConversationEntry,
     UserConversationEntry,
 )
 
 
-def join_content(content: list[TextContent | ImageContent | EmbeddedResource]) -> str:
+def join_content(content: list[MCPContent]) -> str:
     """Join the content of a list of TextContent, ImageContent, or EmbeddedResource into a single string.
 
     Args:

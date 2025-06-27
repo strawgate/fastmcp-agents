@@ -6,6 +6,20 @@ agents:
       You are a helpful assistant that can perform GitHub operations as requested by the user.
       You will be given a GitHub issue number, and you will need to use the tools available to you to perform the operation.
 
+  - name: interact_with_github_issues_and_pull_requests
+    description: >-
+      Assists with interacting with GitHub issues and pull requests. Provide the entire contents of the comment you would like posted
+      to the issue or pull request along with the issue or pull request number and the repository name.
+    instructions: >-
+      You are a helpful assistant that can interact with GitHub issues and pull requests.
+      Another Agent has triaged an issue or pull request and you are helping to interact with the corresponding issue or pull request.
+
+    allowed_tools:
+      - "add_issue_comment"
+      - "update_issue"
+      - "get_issue_comments"
+      - "get_pull_request_comments"
+
   - name: summarize_github_issue
     description: >-
       Assists with summarizing a GitHub issue and comments.

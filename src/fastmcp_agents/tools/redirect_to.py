@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from fastmcp import Context
-from mcp.types import EmbeddedResource, ImageContent, TextContent
+
+from fastmcp_agents.conversation.types import MCPContent
 
 
 async def redirect_to_tool_call(
@@ -16,7 +17,7 @@ async def redirect_to_tool_call(
     second_tool_name: str,
     second_tool_arguments: dict[str, Any],
     second_tool_response_argument: str,
-) -> list[TextContent | ImageContent | EmbeddedResource]:
+) -> list[MCPContent]:
     """Redirect the result of any existing tool call to another tool call.
 
     Args:

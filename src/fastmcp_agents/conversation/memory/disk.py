@@ -41,8 +41,8 @@ class DiskBackedMemory(MemoryProtocol):
     def add(self, message: ConversationEntryTypes):
         self.conversation_history.append(message)
 
-    def get(self):
-        return self.conversation_history.get()
+    def get(self) -> Conversation:
+        return self.conversation_history
 
     def reset(self) -> None:
         pass

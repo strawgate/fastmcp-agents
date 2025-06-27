@@ -15,15 +15,15 @@ from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 from fastmcp_agents.conversation.types import (
     AssistantConversationEntry,
     Conversation,
-    MCPToolResponseTypes,
+    MCPContent,
     SystemConversationEntry,
     ToolConversationEntry,
     ToolRequestPart,
     UserConversationEntry,
 )
-from fastmcp_agents.conversation.utils import add_task_to_conversation, build_conversation, join_content
+from fastmcp_agents.conversation.utils import add_task_to_conversation, build_conversation
 from fastmcp_agents.errors.agent import ToolNotFoundError
-from fastmcp_agents.llm_link.base import LLMLink
+from fastmcp_agents.llm_link.base import LLMLinkProtocol
 from fastmcp_agents.observability.logging import BASE_LOGGER
 
 logger = BASE_LOGGER
@@ -68,7 +68,7 @@ class SingleStepAgent(BaseAgentModel, ABC):
     default_tools: list[FastMCPTool] = Field(default_factory=list, exclude=True)
     """The default tools to use."""
 
-    llm_link: LLMLink = Field(..., exclude=True)
+    llm_link: LLMLinkProtocol = Field(..., exclude=True)
     """The LLM link to use."""
 
     logger: logging.Logger = Field(default=BASE_LOGGER, exclude=True)
@@ -83,7 +83,6 @@ class SingleStepAgent(BaseAgentModel, ABC):
 
         self.logger = BASE_LOGGER.getChild(self.name)
         self._tool_logger = self.logger.getChild("tool")
-        self.llm_link.logger = self.logger.getChild("llm")
 
         return self
 
@@ -100,23 +99,12 @@ class SingleStepAgent(BaseAgentModel, ABC):
         success = True
 
         try:
-            tool_response: list[MCPToolResponseTypes] = await fastmcp_tool.run(arguments=tool_call_request.arguments)
+            tool_response: list[MCPContent] = await fastmcp_tool.run(arguments=tool_call_request.arguments)
         except Exception as e:
             tool_response = [TextContent(type="text", text=f"Error calling tool {tool_call_request.name}: {e!s}")]
             success = False
 
-        self._log_tool_call_response(tool_call_request, tool_response, success)
-
         return ToolConversationEntry.from_tool_request_part(tool_call_request, tool_response, success)
-
-    def _log_tool_call_response(self, tool_call_request: ToolRequestPart, tool_response: list[MCPToolResponseTypes], success: bool):
-        """Log the tool call response."""
-        full_response = join_content(tool_response)
-
-        if success:
-            self._tool_logger.info(f"Tool {tool_call_request.name} returned {len(full_response)} bytes: {str(full_response)[:200]}...")
-        else:
-            self._tool_logger.error(f"Tool {tool_call_request.name} returned an error: {str(full_response)[:400]}...")
 
     async def call_tools(
         self,
@@ -139,12 +127,24 @@ class SingleStepAgent(BaseAgentModel, ABC):
             if tool_call_request.name not in [tool.name for tool in available_tools]:
                 raise ToolNotFoundError(self.name, tool_call_request.name)
 
-        return [
+        self._tool_logger.info(f"Executing {len(tool_call_requests)} tool calls for agent.")
+
+        tool_call_responses = [
             await self.call_tool(tool_call_request, fastmcp_tool)
             for tool_call_request in tool_call_requests
             for fastmcp_tool in available_tools
             if tool_call_request.name == fastmcp_tool.name
         ]
+
+        self._log_call_tools(tool_call_requests, tool_call_responses)
+
+        return tool_call_responses
+
+    def _log_call_tools(self, tool_call_requests: list[ToolRequestPart], conversation_entries: list[ToolConversationEntry]):
+        """Log the call tools response."""
+
+        tool_call_yaml = yaml.safe_dump([entry.to_loggable() for entry in conversation_entries], indent=2, sort_keys=False)
+        self._tool_logger.info(f"Sharing {len(tool_call_requests)} tool call results:\n{tool_call_yaml}".strip())
 
     async def pick_tools(
         self,
@@ -170,11 +170,16 @@ class SingleStepAgent(BaseAgentModel, ABC):
     def _log_pick_tools(self, assistant_conversation_entry: AssistantConversationEntry):
         """Log the pick tools response."""
 
-        tool_calls = assistant_conversation_entry.tool_calls
+        tool_call_parts = [
+            {tool_call_part.name: tool_call_part.arguments} if len(tool_call_part.arguments) > 0 else tool_call_part.name
+            for tool_call_part in assistant_conversation_entry.tool_calls
+        ]
         tokens = assistant_conversation_entry.token_usage
 
-        tool_call_yaml = yaml.safe_dump(assistant_conversation_entry.model_dump(exclude_none=True), indent=2, sort_keys=True)
-        self.logger.info(f"Requested {len(tool_calls)} tool calls ({tokens} tokens): {tool_call_yaml}")
+        tool_call_yaml = yaml.safe_dump(tool_call_parts, indent=2, sort_keys=False)
+        self.logger.info(
+            f"Needs {len(tool_call_parts)} tool calls ({tokens} tokens):\n{tool_call_yaml}".strip(),
+        )
 
     @overload
     async def run_step(

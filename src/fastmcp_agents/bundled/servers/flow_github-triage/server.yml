@@ -311,3 +311,6 @@ mcpServers:
       - --bundled
       - "github_github-mcp-server"
       - run
+    tools:
+      ask_github_agent:
+        allowed: false

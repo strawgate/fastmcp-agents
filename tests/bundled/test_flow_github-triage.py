@@ -395,8 +395,8 @@ class TestGitHubTriageAgent:
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -445,8 +445,8 @@ class TestGitHubFeatureRequestAgent:
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -495,8 +495,8 @@ class TestGitHubBugReportAgent:
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -600,8 +600,8 @@ class TestGitHubSolutionProposalAgent:
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
