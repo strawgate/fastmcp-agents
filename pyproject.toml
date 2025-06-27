@@ -27,7 +27,7 @@ packages = [
 allow-direct-references=true
 
 [project.scripts]
-fastmcp_agents = "fastmcp_agents.cli:run_mcp"
+fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
 
 [dependency-groups]
 dev = [
