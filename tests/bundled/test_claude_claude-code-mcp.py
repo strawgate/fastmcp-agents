@@ -1,5 +1,4 @@
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -9,7 +8,7 @@ from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "claude_claude-code-mcp"
 
 
@@ -20,7 +19,7 @@ def project_in_dir(temp_working_dir: Path):
     project_dir.mkdir()
 
     # Create a simple Python file
-    (project_dir / "main.py").write_text("""
+    _ = (project_dir / "main.py").write_text("""
 def hello_world():
     print("Hello, World!")
 
@@ -29,7 +28,7 @@ if __name__ == "__main__":
     """)
 
     # Create a test file
-    (project_dir / "test_main.py").write_text("""
+    _ = (project_dir / "test_main.py").write_text("""
 def test_hello_world():
     from main import hello_world
     # This is a placeholder test
@@ -63,7 +62,7 @@ class TestClaudeCodeAgent:
         3. Identify any potential improvements
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -92,7 +91,7 @@ class TestClaudeCodeAgent:
         3. Make sure the test is well documented
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]

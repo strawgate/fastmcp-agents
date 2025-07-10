@@ -6,12 +6,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "asyncclick>=8.1.8",
-    "fastmcp>=2.8.1",
+    "fastmcp==2.10.1",
     "google-cloud-aiplatform>=1.94.0",
     "google-genai>=1.16.1",
     "jsonref>=1.1.0",
     "litellm>=1.71.0",
-    "mcp>=1.9.0",
+    "mcp==1.10.1",
     "opentelemetry-api>=1.33.1",
     "opentelemetry-exporter-otlp>=1.33.1",
     "opentelemetry-sdk>=1.33.1",
@@ -27,7 +27,7 @@ packages = [
 allow-direct-references=true
 
 [project.scripts]
-fastmcp_agents = "fastmcp_agents.cli.base:run_mcp"
+fastmcp_agents = "fastmcp_agents.cli.main:run"
 
 [dependency-groups]
 dev = [
@@ -52,6 +52,7 @@ lint.ignore = [
     "COM812", 
     "PLR0917", # Ignore too many positional arguments
     "PLR0913", # Ignore too many arguments
+    "ARG002", # Ignore unused arguments
 ]
 lint.extend-select = [
     "A",
@@ -91,6 +92,7 @@ line-length = 140
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+addopts = "-s -vvv"  # Disable Captures
 
 [tool.ruff.lint.extend-per-file-ignores]
 "**/tests/*.py" = [
@@ -106,3 +108,10 @@ asyncio_default_fixture_loop_scope = "function"
 ]
 "**/references/*" = ["ALL"]
 "**/example-*.py" = ["ALL"]
+
+[tool.pyright]
+include = ["tests", "src", "."]
+executionEnvironments = [ 
+    { root = "tests", extraPaths = ["src", "."], reportPrivateUsage = false, reportUnusedParameter = false, reportExplicitAny = false     },
+    { root = "src", reportExplicitAny = false, reportMissingTypeStubs = false },
+]

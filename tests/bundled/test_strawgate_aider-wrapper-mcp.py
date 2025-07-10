@@ -3,15 +3,15 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "strawgate_aider-wrapper-mcp"
 
 
@@ -22,10 +22,10 @@ def project_in_dir(temp_working_dir: Path):
     project_dir.mkdir()
 
     # Initialize git repository
-    subprocess.run(["git", "init"], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "init"], cwd=project_dir, check=True)
 
     # Create a simple Python file
-    (project_dir / "main.py").write_text("""
+    _ = (project_dir / "main.py").write_text("""
 def hello_world():
     print("Hello, World!")
 
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     """)
 
     # Create a test file
-    (project_dir / "test_main.py").write_text("""
+    _ = (project_dir / "test_main.py").write_text("""
 def test_hello_world():
     from main import hello_world
     # This is a placeholder test
@@ -42,8 +42,8 @@ def test_hello_world():
     """)
 
     # Add and commit the files
-    subprocess.run(["git", "add", "."], cwd=project_dir, check=True)
-    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "add", "."], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=project_dir, check=True)
 
     return project_dir
 
@@ -73,7 +73,7 @@ class TestAiderAgent:
         4. Identify any potential improvements
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -107,7 +107,7 @@ class TestAiderAgent:
         5. Commit the changes with a descriptive message
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]

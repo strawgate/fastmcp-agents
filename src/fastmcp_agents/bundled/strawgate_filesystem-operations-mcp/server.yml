@@ -1,0 +1,39 @@
+agents:
+  - name: ask_filesystem_operations_agent
+    description: >-
+      Ask the Filesystem Operations Agent to perform Filesystem read and write
+      operations on your behalf. Can take plain language requests and perform
+      the necessary operations to complete the task. You must be as specific as possible
+      if you intend to have the Agent perform tasks on your behalf.
+
+      The Filesystem Operations Agent is not equiped to troubleshoot issues or
+      perform coding tasks. Use this Agent to get a good understanding of the
+      filesystem and its contents.
+    instructions: >-
+      When you are asked to perform a task that requires you to interact with
+      local files, you should leverage the tools available to you to perform the
+      task. If you are asked a question, you should leverage the tools available
+      to you to answer the question.
+
+  - name: request_filesystem_search
+    description: >-
+      Ask the Filesystem Search Agent to locate files that contain symbols, words, etc.
+      Can summarize file contents and provide a list of files whose names match or
+      contents contain a given search term. Can take plain language requests and
+      perform the necessary operations to complete the task. You must be as specific as possible
+      if you intend to have the Agent perform tasks on your behalf.
+
+      The Filesystem Search Agent is not equiped to troubleshoot issues or
+      perform coding tasks. Use this Agent to get a good understanding of the
+      filesystem and its contents.
+    instructions: >-
+      When you are asked to perform a task that requires you to search the
+      filesystem, you should leverage the tools available to you to perform the
+      task. If you are asked a question, you should leverage the tools available
+      to you to answer the question.
+
+mcp:
+  filesystem-operations:
+    command: uvx
+    args:
+      - filesystem-operations-mcp

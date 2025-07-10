@@ -9,6 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "justMyCode": false,
             "console": "integratedTerminal",
             "envFile": "${workspaceFolder}/.env"
         },
@@ -38,7 +39,8 @@
                 "debug-test"
             ],
             "args": [
-                "-s" // Disable Captures
+                "-s", // Disable Captures
+                "-vvv" // Verbose
             ],
             "console": "integratedTerminal",
             "justMyCode": false
@@ -47,7 +49,7 @@
             "name": "Bundled - Run Server over SSE",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli.base",
+            "module": "fastmcp_agents.cli.main",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
@@ -64,7 +66,7 @@
             "name": "Bundled - Run Mutable Server over SSE",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli.base",
+            "module": "fastmcp_agents.cli.main",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",
@@ -83,7 +85,7 @@
             "name": "Bundled - Call Agent in Server",
             "type": "debugpy",
             "request": "launch",
-            "module": "fastmcp_agents.cli.base",
+            "module": "fastmcp_agents.cli.main",
             "justMyCode": false,
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/agent-working-dir",

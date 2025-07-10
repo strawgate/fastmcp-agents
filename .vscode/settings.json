@@ -5,7 +5,8 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "cursorpyright.analysis.typeCheckingMode": "standard",
+    "cursorpyright.analysis.inlayHints.variableTypes": true,
+    "cursorpyright.analysis.typeCheckingMode": "recommended",
     "cursorpyright.analysis.ignore": [
         "agent-working-dir/**"
     ]

@@ -1,22 +1,22 @@
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 from fastmcp import FastMCP
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 if TYPE_CHECKING:
     from fastmcp.tools import Tool as FastMCPTool
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "motherduckdb_mcp-server-motherduck"
 
 
@@ -26,12 +26,12 @@ class TestDuckDBAgent:
         return "ask_duckdb_agent"
 
     @pytest.fixture
-    async def populate_database(self, fastmcp_server: FastMCP):
-        tools = await fastmcp_server.get_tools()
+    async def populate_database(self, bundled_server: FastMCP[Any]) -> None:
+        tools = await bundled_server.get_tools()
 
         query_tool: FastMCPTool = tools["query"]
 
-        await query_tool.run(
+        _ = await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE people (id INTEGER, name TEXT);
@@ -44,7 +44,7 @@ class TestDuckDBAgent:
             }
         )
 
-        await query_tool.run(
+        _ = await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE dogs (id INTEGER, name TEXT, age INTEGER, color TEXT, sibling_ages INTEGER[]);
@@ -70,12 +70,12 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_database_inspection(self, temp_working_dir: Path, populate_database, agent: CuratorAgent):
+    async def test_database_inspection(self, temp_working_dir: Path, populate_database: Any, agent: CuratorAgent):  # pyright: ignore[reportAny]
         task = """
         Show me the current tables in the database, their schemas, and a sample of data from each table.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -106,7 +106,7 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_json_loading(self, temp_working_dir: Path, agent: CuratorAgent, fastmcp_server: FastMCP):
+    async def test_json_loading(self, temp_working_dir: Path, agent: CuratorAgent, bundled_server: FastMCP[Any]):
         task = """
         Load the JSON data from the file 'people.json' into a table called 'people'.
         Load the JSON data from the file 'dogs.json' into a table called 'dogs'.
@@ -132,7 +132,7 @@ class TestDuckDBAgent:
         with Path("dogs.json").open("w", encoding="utf-8") as f:
             json.dump(dogs_json, f)
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -160,16 +160,18 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_query_execution(self, temp_working_dir: Path, populate_database, agent: CuratorAgent, fastmcp_server: FastMCP):
+    async def test_query_execution(
+        self, temp_working_dir: Path, populate_database: None, agent: CuratorAgent, bundled_server: FastMCP[Any]
+    ):
         task = """
         Execute the following query and explain the results:
         SELECT * FROM my_data WHERE age > 100 ORDER BY birthyear DESC LIMIT 5;
         """
-        tools = await fastmcp_server.get_tools()
+        tools = await bundled_server.get_tools()
 
         query_tool: FastMCPTool = tools["query"]
 
-        await query_tool.run(
+        _ = await query_tool.run(
             arguments={
                 "query": """
             CREATE TABLE my_data (id INTEGER, name TEXT, birthyear INTEGER, age INTEGER, color TEXT, sibling_ages INTEGER[]);
@@ -181,7 +183,7 @@ class TestDuckDBAgent:
             """
             }
         )
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -210,13 +212,13 @@ class TestDuckDBAgent:
         """,
         minimum_grade=0.9,
     )
-    async def test_data_visualization(self, temp_working_dir: Path, populate_database, agent: CuratorAgent):
+    async def test_data_visualization(self, temp_working_dir: Path, populate_database: None, agent: CuratorAgent):
         task = """
         Create an ascii visualization of the data in dogs table.
         Show the distribution of values in sibling ages.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 

@@ -2,19 +2,18 @@
 
 from collections.abc import Sequence
 
-from mcp.types import BlobResourceContents, EmbeddedResource, ImageContent, TextContent, TextResourceContents
+from mcp.types import BlobResourceContents, ContentBlock, EmbeddedResource, ImageContent, TextContent, TextResourceContents
 
 from fastmcp_agents.conversation.types import (
     AssistantConversationEntry,
     Conversation,
-    MCPContent,
     SystemConversationEntry,
     ToolConversationEntry,
     UserConversationEntry,
 )
 
 
-def join_content(content: list[MCPContent]) -> str:
+def join_content(content: list[ContentBlock]) -> str:
     """Join the content of a list of TextContent, ImageContent, or EmbeddedResource into a single string.
 
     Args:
@@ -44,6 +43,7 @@ def join_content(content: list[MCPContent]) -> str:
 def build_conversation(
     system_prompt: SystemConversationEntry | str,
     instructions: Sequence[AssistantConversationEntry | UserConversationEntry] | UserConversationEntry | str | None,
+    task: list[UserConversationEntry] | UserConversationEntry | str | None,
 ) -> Conversation:
     """Prepare the conversation for the agent. Either by using the conversation history or the instructions."""
 
@@ -52,7 +52,7 @@ def build_conversation(
     if isinstance(system_prompt, str):
         new_conversation = new_conversation.append(SystemConversationEntry(content=system_prompt))
     else:
-        new_conversation.append(system_prompt)
+        new_conversation = new_conversation.append(system_prompt)
 
     if instructions is not None:
         if isinstance(instructions, str):
@@ -61,6 +61,9 @@ def build_conversation(
             new_conversation = new_conversation.append(instructions)
         else:
             new_conversation = new_conversation.extend(instructions)
+
+    if task is not None:
+        new_conversation = add_task_to_conversation(new_conversation, task)
 
     return new_conversation
 
@@ -81,30 +84,30 @@ def add_task_to_conversation(
     return conversation
 
 
-def prepare_conversation(
-    conversation: Conversation | None,
-    system_prompt: SystemConversationEntry | str | None,
-    instructions: Sequence[AssistantConversationEntry | UserConversationEntry] | UserConversationEntry | str | None,
-    task: list[UserConversationEntry] | UserConversationEntry | str | None,
-) -> Conversation:
-    """Prepare the conversation for the agent."""
+# def prepare_conversation(
+#     conversation: Conversation | None,
+#     system_prompt: SystemConversationEntry | str | None,
+#     instructions: Sequence[AssistantConversationEntry | UserConversationEntry] | UserConversationEntry | str | None,
+#     task: list[UserConversationEntry] | UserConversationEntry | str | None,
+# ) -> Conversation:
+#     """Prepare the conversation for the agent."""
 
-    if conversation is not None:
-        return add_task_to_conversation(conversation, task) if task is not None else conversation
+#     if conversation is not None:
+#         return add_task_to_conversation(conversation, task) if task is not None else conversation
 
-    if system_prompt is None:
-        msg = "system_prompt is required"
-        raise ValueError(msg)
+#     if system_prompt is None:
+#         msg = "system_prompt is required"
+#         raise ValueError(msg)
 
-    if instructions is None:
-        msg = "instructions is required"
-        raise ValueError(msg)
+#     if instructions is None:
+#         msg = "instructions is required"
+#         raise ValueError(msg)
 
-    return (
-        build_conversation(system_prompt, instructions)
-        if task is None
-        else add_task_to_conversation(build_conversation(system_prompt, instructions), task)
-    )
+#     return (
+#         build_conversation(system_prompt, instructions)
+#         if task is None
+#         else add_task_to_conversation(build_conversation(system_prompt, instructions), task)
+#     )
 
 
 def get_tool_calls_from_conversation(conversation: Conversation) -> list[ToolConversationEntry]:

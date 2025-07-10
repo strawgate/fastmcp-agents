@@ -2,15 +2,15 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "github_github-mcp-server"
 
 
@@ -34,9 +34,9 @@ class TestAskGitHubAgent:
         Summarize issue #64 in the repository modelcontextprotocol/servers.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify issue was retrieved and summarized
         assert isinstance(task_success, DefaultSuccessResponseModel)
@@ -59,9 +59,9 @@ class TestAskGitHubAgent:
         Clone the repository modelcontextprotocol/servers.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
         # Verify repo was cloned
         assert isinstance(task_success, DefaultSuccessResponseModel)
@@ -93,7 +93,7 @@ class TestSummarizeGitHubIssueAgent:
         Include any relevant comments and provide a clear overview of the issue's status and content.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -127,7 +127,7 @@ class TestSummarizeGitHubIssueAgent:
         Include a confidence rating for each related issue and explain why it's related.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -168,7 +168,7 @@ class TestPullRequestAgent:
         Include the files changed, review status, and any relevant comments.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -203,7 +203,7 @@ class TestPullRequestAgent:
         Include the review status, reviewer comments, and any requested changes.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 

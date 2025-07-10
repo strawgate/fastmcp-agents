@@ -2,15 +2,15 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "cyanheads_git-mcp-server"
 
 
@@ -33,7 +33,7 @@ class TestGitAgent:
     async def test_ask_git_for_clone(self, temp_working_dir: Path, agent: CuratorAgent):
         task = "Do a depth 1 clone of the repository https://github.com/modelcontextprotocol/servers"
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -51,7 +51,7 @@ class TestGitAgent:
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
         # Agent may also call set_working_dir to set the working directory
         assert "git_clone" in tool_call_names
-        assert "report_success" in tool_call_names
+        assert "report_task_success" in tool_call_names
 
         clone_tool_call = next(tool_call for tool_call in agent_tool_calls if tool_call.name == "git_clone")
         assert clone_tool_call.arguments == {
@@ -82,7 +82,7 @@ class TestGitAgent:
         3. Switch to the new branch
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -137,7 +137,7 @@ class TestGitAgent:
         4. List all remotes to confirm
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 

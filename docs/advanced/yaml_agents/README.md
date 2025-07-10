@@ -88,7 +88,7 @@ mcpServers:
       # Tool transformations for tools from this server
       read_file:
         description: "Read the content of a specified file."
-        parameter_overrides:
+        parameters:
           - name: "file_path"
             description: "The path to the file to read."
             required: true
@@ -99,7 +99,7 @@ mcpServers:
 Within the `tools` section of an `mcpServers` definition, you can define transformations for individual tools. The key is the original tool name, and the value is an object with the following properties:
 
 *   `description` (string, optional): A new description for the tool.
-*   `parameter_overrides` (list of objects, optional): A list of parameter override definitions. Each object has:
+*   `parameters` (list of objects, optional): A list of parameter override definitions. Each object has:
     *   `name` (string, required): The name of the parameter to override.
     *   `description` (string, optional): A new description for the parameter.
     *   `required` (boolean, optional): Whether the parameter is required.
@@ -115,7 +115,7 @@ mcpServers:
     tools:
       some_tool:
         description: "An enhanced version of some_tool."
-        parameter_overrides:
+        parameters:
           - name: "input_param"
             description: "The main input for the tool."
             required: true

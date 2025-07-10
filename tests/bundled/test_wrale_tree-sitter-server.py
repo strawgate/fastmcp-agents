@@ -3,14 +3,14 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "wrale_mcp-server-tree-sitter"
 
 
@@ -44,7 +44,7 @@ class TestTreeSitterAgent:
         2. Produce a basic analysis/query of the project
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -73,7 +73,7 @@ class TestTreeSitterAgent:
         3. Return the results in a clear format
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -102,7 +102,7 @@ class TestTreeSitterAgent:
         3. Return the results in a clear format
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]

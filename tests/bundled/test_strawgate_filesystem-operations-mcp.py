@@ -2,15 +2,15 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.agent.multi_step import DefaultSuccessResponseModel
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "strawgate_filesystem-operations-mcp"
 
 
@@ -36,7 +36,7 @@ class TestFilesystemOperationsAgent:
         Create a new file called 'test.txt' in the current directory with the content 'Hello, World!'
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -48,7 +48,7 @@ class TestFilesystemOperationsAgent:
 
         # Verify tool calls
         assert len(agent_tool_calls) >= 1
-        assert agent_tool_calls[0].name == "write_file"
+        assert "create_file" in agent_tool_calls or "write_file" in agent_tool_calls
 
         return agent, task, task_success, conversation
 
@@ -66,13 +66,13 @@ class TestFilesystemOperationsAgent:
     )
     async def test_file_reading(self, temp_working_dir: Path, agent: CuratorAgent):
         # First create a file to read
-        (temp_working_dir / "test.txt").write_text("Hello, World!")
+        _ = (temp_working_dir / "test.txt").write_text("Hello, World!")
 
         task = """
         Read the contents of the file 'test.txt' and show me its metadata.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -107,16 +107,16 @@ class TestFilesystemSearchAgent:
     )
     async def test_file_search(self, temp_working_dir: Path, agent: CuratorAgent):
         # First create some test files
-        (temp_working_dir / "test1.txt").write_text("Hello, World!")
-        (temp_working_dir / "test2.txt").write_text("Hello, Python!")
-        (temp_working_dir / "other.txt").write_text("Different content")
+        _ = (temp_working_dir / "test1.txt").write_text("Hello, World!")
+        _ = (temp_working_dir / "test2.txt").write_text("Hello, Python!")
+        _ = (temp_working_dir / "other.txt").write_text("Different content")
 
         task = """
         Search for files containing the text 'Hello' in the current directory.
         Show me the file names and their contents.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 
@@ -144,15 +144,15 @@ class TestFilesystemSearchAgent:
     )
     async def test_directory_listing(self, temp_working_dir: Path, agent: CuratorAgent):
         # First create some test files
-        (temp_working_dir / "test1.txt").write_text("Hello, World!")
-        (temp_working_dir / "test2.txt").write_text("Hello, Python!")
-        (temp_working_dir / "other.txt").write_text("Different content")
+        _ = (temp_working_dir / "test1.txt").write_text("Hello, World!")
+        _ = (temp_working_dir / "test2.txt").write_text("Hello, Python!")
+        _ = (temp_working_dir / "other.txt").write_text("Different content")
 
         task = """
         List all files in the current directory with their sizes and last modified dates.
         """
 
-        conversation, task_success = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, task_success = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
 

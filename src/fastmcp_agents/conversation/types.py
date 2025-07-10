@@ -2,9 +2,10 @@
 
 import json
 from collections.abc import Sequence
-from typing import Any, Literal, TypeAlias
+from typing import Any, ClassVar, Literal, TypeAlias
 
-from fastmcp.utilities.types import MCPContent
+from fastmcp.tools.tool import ToolResult
+from mcp.types import ContentBlock
 from openai.types.chat.chat_completion_message_tool_call_param import ChatCompletionMessageToolCallParam
 from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
@@ -12,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_serializer
 class BaseConvoModel(BaseModel):
     """A base class for Conversation models."""
 
-    model_config = ConfigDict(frozen=True, use_attribute_docstrings=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True, use_attribute_docstrings=True)
 
 
 class ToolRequestPart(BaseConvoModel):
@@ -30,7 +31,9 @@ class ToolRequestPart(BaseConvoModel):
     @classmethod
     def from_openai(cls, message: ChatCompletionMessageToolCallParam) -> "ToolRequestPart":
         function = message["function"]
-        return cls(id=message["id"], name=function["name"], arguments=json.loads(function["arguments"]))
+        arguments: dict[str, Any] = json.loads(function["arguments"])  # pyright: ignore[reportAny]
+
+        return cls(id=message["id"], name=function["name"], arguments=arguments)
 
     @model_serializer
     def serialize(self) -> dict[str, Any]:
@@ -79,7 +82,7 @@ class ToolConversationEntry(BaseConvoModel):
     arguments: dict[str, Any] = Field(..., exclude=True)
     """The arguments that were passed to the tool."""
 
-    content: list[MCPContent] = Field(...)
+    content: list[ContentBlock] = Field(...)
     """The content of the tool call response."""
 
     success: bool = Field(..., exclude=True)
@@ -104,13 +107,13 @@ class ToolConversationEntry(BaseConvoModel):
         return loggable
 
     @classmethod
-    def from_tool_request_part(cls, tool_request_part: ToolRequestPart, result: list[MCPContent], success: bool) -> "ToolConversationEntry":
+    def from_tool_request_part(cls, tool_request_part: ToolRequestPart, result: ToolResult, success: bool) -> "ToolConversationEntry":
         """Create a tool conversation entry from a tool request part."""
         return cls(
             tool_call_id=tool_request_part.id,
             name=tool_request_part.name,
             arguments=tool_request_part.arguments,
-            content=result,
+            content=result.content,
             success=success,
         )
 

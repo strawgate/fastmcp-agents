@@ -1,3 +1,3 @@
-from fastmcp_agents.cli.base import run_mcp
+# from fastmcp_agents.cli.main import run
 
-__all__ = ["run_mcp"]
+# __all__ = ["run"]

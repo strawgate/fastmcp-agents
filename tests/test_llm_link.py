@@ -6,7 +6,7 @@ from mcp.types import Tool
 
 from fastmcp_agents.conversation.types import Conversation, SystemConversationEntry, UserConversationEntry
 from fastmcp_agents.errors.llm_link import ModelDoesNotSupportFunctionCallingError
-from fastmcp_agents.llm_link.litellm import LitellmLLMLink
+from fastmcp_agents.llm_link.litellm import LiteLLMCompletionSettings, LitellmLLMLink, LiteLLMSettings
 
 
 @pytest.fixture
@@ -43,17 +43,28 @@ def test_llm_link_initialization_with_invalid_model():
         LitellmLLMLink(model="invalid-model")
 
 
-async def test_llm_link_completion_with_tools(mock_fastmcp_tool, conversation):
-    """Test that LLM link can make a completion with tools."""
-    # Use a real model that supports function calling
-    model = os.getenv("MODEL", "gpt-3.5-turbo")
-    llm_link = LitellmLLMLink(model=model)
+def test_litellm_settings_model_required():
+    """Test that Litellm settings are correctly initialized."""
+    del os.environ["MODEL"]
 
-    assistant_conversation_entry = await llm_link.async_completion(conversation=conversation, fastmcp_tools=[mock_fastmcp_tool])
+    with pytest.raises(expected_exception=ValueError, match="Model is required for Litellm"):
+        LiteLLMSettings()
 
-    tool_calls = assistant_conversation_entry.tool_calls
-    # Verify tool calls were generated
-    assert isinstance(tool_calls, list)
-    if tool_calls:  # Some models might not always generate tool calls
-        assert all(hasattr(call, "name") for call in tool_calls)
-        assert all(hasattr(call, "arguments") for call in tool_calls)
+
+def test_litellm_settings_from_env():
+    os.environ["MODEL"] = "gpt-4o"
+    os.environ["TEMPERATURE"] = "0.5"
+    os.environ["REASONING_EFFORT"] = "low"
+    os.environ["PRESENCE_PENALTY"] = "0.0"
+
+    settings = LiteLLMSettings()
+    assert settings.model == "gpt-4o"
+    assert settings.temperature == 0.5
+    assert settings.reasoning_effort == "low"
+    assert settings.presence_penalty == 0.0
+
+
+def test_litellm_completion_settings_from_env():
+    os.environ["LITELLM_COMPLETION_KWARGS_KEY"] = "value"
+    settings = LiteLLMCompletionSettings()
+    assert settings.kwargs == {"key": "value"}

@@ -37,7 +37,7 @@ tools:
       Register a new project for analysis. This tool must be called before any
       other project-related tools can be used. The project name will be used
       for all subsequent tool calls.
-    parameter_overrides:
+    parameters:
       - name: name
         description: The name of the project to register. All further calls that take a project name will be made using the value provided in this parameter. A good name is typically the name of the project directory.
         required: true
@@ -69,7 +69,7 @@ original_tool_definition = FunctionTool.from_function(
 override = ToolOverride(
     name="register_project_tool",
     description="Register a new project for analysis. This tool must be called before any other project-related tools can be used.",
-    parameter_overrides=[
+    parameters=[
         StringToolParameter(
             name="name",
             description="The name of the project to register. All further calls that take a project name will be made using the value provided in this parameter.",
@@ -154,7 +154,7 @@ wrapped_tool = transform_tool(
 
 ### Combining Overriding and Wrapping
 
-When using Python for configuration, you can combine both tool overriding and wrapping in a single `transform_tool` call by providing both `ToolOverride` parameters (like `name`, `description`, `parameter_overrides`) and the `pre_call_hook` and `post_call_hook` functions.
+When using Python for configuration, you can combine both tool overriding and wrapping in a single `transform_tool` call by providing both `ToolOverride` parameters (like `name`, `description`, `parameters`) and the `pre_call_hook` and `post_call_hook` functions.
 
 ```python
 import asyncio
@@ -164,7 +164,7 @@ from fastmcp_agents.vendored.tool_transformer import transform_tool, ToolOverrid
 # Define the override details
 override_name = "combined_enhanced_tool"
 override_description = "Tool with both metadata overrides and execution hooks."
-parameter_overrides = [
+parameters = [
     StringToolParameter(
         name="input_data",
         description="The data to be processed by the tool.",
@@ -190,7 +190,7 @@ combined_tool = transform_tool(
     original_tool_definition, # Using the dummy tool defined above
     name=override_name,
     description=override_description,
-    parameter_overrides=parameter_overrides,
+    parameters=parameters,
     pre_call_hook=pre_call_hook,
     post_call_hook=post_call_hook
 )

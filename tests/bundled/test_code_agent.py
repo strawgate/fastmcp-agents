@@ -1,16 +1,15 @@
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "flow_code-agent"
 
 
@@ -21,10 +20,10 @@ def project_in_dir(temp_working_dir: Path):
     project_dir.mkdir()
 
     # Initialize git repository
-    subprocess.run(["git", "init"], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "init"], cwd=project_dir, check=True)
 
     # Create a simple Python file with a bug
-    (project_dir / "calculator.py").write_text("""
+    _ = (project_dir / "calculator.py").write_text("""
 def add(a, b):
     return a - b  # Bug: should be addition
 
@@ -41,7 +40,7 @@ def divide(a, b):
     """)
 
     # Create a test file
-    (project_dir / "test_calculator.py").write_text("""
+    _ = (project_dir / "test_calculator.py").write_text("""
 def test_add():
     from calculator import add
     assert add(2, 3) == 5  # This will fail due to the bug
@@ -60,8 +59,8 @@ def test_divide():
     """)
 
     # Add and commit the files
-    subprocess.run(["git", "add", "."], cwd=project_dir, check=True)
-    subprocess.run(["git", "commit", "-m", "Initial commit with calculator implementation"], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "add", "."], cwd=project_dir, check=True)
+    _ = subprocess.run(["git", "commit", "-m", "Initial commit with calculator implementation"], cwd=project_dir, check=True)
 
     return project_dir
 
@@ -86,7 +85,7 @@ class TestCodeAgent:
         2. Explain the structure and functionality of the code
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -118,7 +117,7 @@ class TestCodeAgent:
         5. Verify the fix works
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -150,7 +149,7 @@ class TestCodeAgent:
         4. Update the tests to work with the new class-based implementation
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -182,7 +181,7 @@ class TestCodeAgent:
         4. Write tests for the new function
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -214,7 +213,7 @@ class TestCodeAgent:
         4. Write tests to verify the precision handling
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]

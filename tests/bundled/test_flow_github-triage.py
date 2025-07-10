@@ -7,6 +7,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from tests.conftest import evaluate_with_criteria
 from github import Github
 from github.ContentFile import ContentFile
 from github.Issue import Issue
@@ -16,7 +17,6 @@ from github.Repository import Repository
 
 from fastmcp_agents.agent.curator import CuratorAgent
 from fastmcp_agents.conversation.utils import get_tool_calls_from_conversation
-from tests.conftest import evaluate_with_criteria
 
 
 @pytest.fixture
@@ -298,7 +298,7 @@ def get_issue_comments(issue: Issue) -> list[str]:
 
 
 @pytest.fixture
-def server_config_name():
+def bundled_server_name():
     return "flow_github-triage"
 
 
@@ -346,7 +346,7 @@ class TestGitHubTriageAgent:
         4. Post a triage comment on the issue with your findings
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(feature_request)
@@ -388,15 +388,15 @@ class TestGitHubTriageAgent:
         4. Post a triage comment on the issue with your findings
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(issue)
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -438,15 +438,15 @@ class TestGitHubFeatureRequestAgent:
         4. Post a triage comment on the issue with your findings
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(feature_request)
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -488,15 +488,15 @@ class TestGitHubBugReportAgent:
         4. Post a triage comment on the issue with your findings
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(bug_report)
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -539,7 +539,7 @@ class TestGitHubIssueInvestigationAgent:
         5. Post a detailed analysis on the issue
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(bug_report)
@@ -593,15 +593,15 @@ class TestGitHubSolutionProposalAgent:
         5. Post a comprehensive solution on the issue
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         # Verify that the agent posted a comment
         comments = get_issue_comments(bug_report)
         assert len(comments) > 0, "Agent did not post any comments on the issue"
 
         # Verify that appropriate tools were called
-        #agent_tool_calls = get_tool_calls_from_conversation(conversation)
-        #tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
+        # agent_tool_calls = get_tool_calls_from_conversation(conversation)
+        # tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
 
         return agent, task, result, conversation
 
@@ -639,7 +639,7 @@ class TestGitHubPRReviewAgent:
         5. Call report success with the link to the PR review
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
@@ -691,7 +691,7 @@ class TestGitHubPRUpdateAgent:
         7. Post a comment on the GitHub PR with the changes you made
         """
 
-        conversation, result = await agent.perform_task_return_conversation(ctx=MagicMock(), task=task)
+        conversation, result = await agent.perform_task(ctx=MagicMock(), task=task)
 
         agent_tool_calls = get_tool_calls_from_conversation(conversation)
         tool_call_names = [tool_call.name for tool_call in agent_tool_calls]
