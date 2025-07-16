@@ -5,6 +5,7 @@ from urllib.parse import ParseResult, urlparse
 
 import requests
 import yaml
+import os
 
 from fastmcp_agents.cli.models import (
     AugmentedServerModel,
@@ -26,7 +27,8 @@ DEFAULT_ARG_REPLACEMENTS: dict[str, str] = {
 
 def get_config_from_string(config_string: str) -> AugmentedServerModel:
     """Serialize a config from a string."""
-    return AugmentedServerModel.model_validate(yaml.safe_load(config_string))
+    expanded_config_string = os.path.expandvars(config_string)
+    return AugmentedServerModel.model_validate(yaml.safe_load(expanded_config_string))
 
 
 def get_config_from_url(config_url: str) -> AugmentedServerModel:
