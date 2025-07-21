@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v2
       - id: set-matrix
         run: |
-          echo "projects=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep pyproject.toml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          echo "projects=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep pyproject.toml | xargs -I {} dirname {} | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 
   pypi-publish:
     name: Upload to PyPI
@@ -28,7 +28,7 @@ jobs:
       id-token: write
     needs: [list-projects]
     strategy: 
-      fail-fast: true 
+      fail-fast: false 
       matrix: 
         pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
     steps:
