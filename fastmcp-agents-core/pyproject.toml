@@ -60,4 +60,4 @@ build-backend = "hatchling.build"
 extend="../pyproject.toml"
 
 [tool.pyright]
-extends = "../pyproject.toml" 
+extends = "../pyproject.toml"

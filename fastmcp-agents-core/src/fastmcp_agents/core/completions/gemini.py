@@ -421,6 +421,10 @@ class FlexibleSchema(Schema):
         exclude=True,
     )
 
+    any_of: list["FlexibleSchema"] | None = Field(
+        default=None,
+        description="""Optional. The value should be validated against any (one or more) of the subschemas in the list.""",
+    )
     # @field_validator("format")
     # @classmethod
     # def validate_format(cls, v: str | None) -> str | None:
