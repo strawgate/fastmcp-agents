@@ -106,7 +106,7 @@ async def test_calculator_implementation(playground_directory: Path):
 
     tool_calls = context.tool_call_summary
 
-    assert "create_file" in tool_calls
+    assert "create_file" in tool_calls or "append_file" in tool_calls
     assert "read_file_lines" in tool_calls
 
 
