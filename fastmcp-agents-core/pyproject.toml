@@ -60,7 +60,4 @@ build-backend = "hatchling.build"
 extend="../pyproject.toml"
 
 [tool.pyright]
-extends = "../pyproject.toml"
-executionEnvironments = [
-    { root = "**/tests", reportPrivateUsage = false, include = ["**/src/*"]},
-]
+extends = "../pyproject.toml" 

@@ -57,7 +57,6 @@ class AskESQLAgent(TaskAgent):
         return await super().handle_task(task=task)
 
 
-
 server = FastMCPAgents(
     name="ask-elasticsearch",
     mcp=mcp_servers,

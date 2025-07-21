@@ -74,11 +74,12 @@ class GoogleGenaiPendingToolCall(BasePendingToolCall):
     def _tool_result_to_completion_message(self, tool_result: ToolResult) -> CompletionMessageType:
         """Convert a tool result to a chat completion tool message."""
 
-        output = (
-            tool_result.structured_content
-            if tool_result.structured_content
-            else [content.text for content in tool_result.content if isinstance(content, TextContent)]
-        )
+        response: dict[str, Any] = {}
+
+        if tool_result.structured_content:
+            response = tool_result.structured_content
+        else:
+            response["output"] = [content.text for content in tool_result.content if isinstance(content, TextContent)]
 
         return Content(
             role="tool",
@@ -87,9 +88,7 @@ class GoogleGenaiPendingToolCall(BasePendingToolCall):
                     function_response=FunctionResponse(
                         id=self.tool_call_id,
                         name=self.tool.name,
-                        response={
-                            "output": output,
-                        },
+                        response=response,
                     )
                 )
             ],
@@ -103,7 +102,12 @@ class GoogleGenaiCompletions(LLMCompletionsProtocol):
     default_model: str
     completion_settings: CompletionSettings
 
-    def __init__(self, default_model: str, client: Client | None = None, completion_settings: CompletionSettings | None = None) -> None:
+    def __init__(
+        self,
+        default_model: str,
+        client: Client | None = None,
+        completion_settings: CompletionSettings | None = None,
+    ) -> None:
         self.client = client or Client()
         self.default_model = default_model
         self.completion_settings = completion_settings or CompletionSettings.from_environment()
@@ -153,7 +157,11 @@ class GoogleGenaiCompletions(LLMCompletionsProtocol):
         messages: Sequence[CompletionMessageType] | CompletionMessageType,
         tools: Sequence[FastMCPTool] | dict[str, FastMCPTool],
         **kwargs: Any,  # pyright: ignore[reportAny]
-    ) -> tuple[GoogleGenaiCompletionExtras, CompletionMessageType, list[GoogleGenaiPendingToolCall]]:
+    ) -> tuple[
+        GoogleGenaiCompletionExtras,
+        CompletionMessageType,
+        list[GoogleGenaiPendingToolCall],
+    ]:
         """Tool completion."""
 
         if isinstance(tools, dict):
@@ -230,7 +238,11 @@ class GoogleGenaiCompletions(LLMCompletionsProtocol):
         messages: Sequence[CompletionMessageType] | CompletionMessageType,
         tools: Sequence[FastMCPTool] | dict[str, FastMCPTool],
         **kwargs: Any,  # pyright: ignore[reportAny]
-    ) -> tuple[GoogleGenaiCompletionExtras, CompletionMessageType, list[GoogleGenaiPendingToolCall]]:
+    ) -> tuple[
+        GoogleGenaiCompletionExtras,
+        CompletionMessageType,
+        list[GoogleGenaiPendingToolCall],
+    ]:
         """Tools completion."""
 
         extras, message, pending_tool_calls = await self._tool(system_prompt, messages, tools, **kwargs)
@@ -259,7 +271,9 @@ def extract_thinking_from_message(message: Content | Mapping[str, Any]) -> str |
     return "".join([part.text for part in thinking_parts if part.text])
 
 
-def extract_thinking_parts_from_message(message: Content | Mapping[str, Any]) -> list[Part] | None:
+def extract_thinking_parts_from_message(
+    message: Content | Mapping[str, Any],
+) -> list[Part] | None:
     """Extract the thinking from a message."""
 
     if isinstance(message, Mapping):
@@ -271,7 +285,9 @@ def extract_thinking_parts_from_message(message: Content | Mapping[str, Any]) ->
     return [part for part in parts if part.thought]
 
 
-def reasoning_effort_to_thinking_config(reasoning_effort: Literal["low", "medium", "high"] | None) -> ThinkingConfig | None:
+def reasoning_effort_to_thinking_config(
+    reasoning_effort: Literal["low", "medium", "high"] | None,
+) -> ThinkingConfig | None:
     """Convert a reasoning effort to a thinking config."""
     if not reasoning_effort:
         return None
@@ -405,6 +421,15 @@ class FlexibleSchema(Schema):
         exclude=True,
     )
 
+    # @field_validator("format")
+    # @classmethod
+    # def validate_format(cls, v: str | None) -> str | None:
+    #     """Validate the format."""
+    #     if v and v not in ["float", "double", "int32", "int64", "email", "byte"]:
+    #         return None
+
+    #     return v
+
     @model_validator(mode="after")
     def normalize(self) -> Self:
         """Remove the default if anyOf is present."""
@@ -414,6 +439,9 @@ class FlexibleSchema(Schema):
         if self.const:
             self.default: Any = self.const  # pyright: ignore[reportAny]
             del self.const
+
+        if self.format and self.format not in ["float", "double", "int32", "int64", "email", "byte"]:
+            del self.format
 
         return self
 
@@ -442,7 +470,13 @@ def convert_fastmcp_tool_parameters_to_function_declaration(
 
     parameters: dict[str, Any] = fastmcp_tool.parameters.copy()
 
-    parameters = replace_refs(obj=parameters, lazy_load=False, proxies=False, merge_props=True, jsonschema=True)  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
+    parameters = replace_refs(
+        obj=parameters,
+        lazy_load=False,
+        proxies=False,
+        merge_props=True,
+        jsonschema=True,
+    )  # pyright: ignore[reportAssignmentType, reportUnknownVariableType]
 
     parameters.pop("$defs", None)
 

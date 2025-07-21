@@ -1,4 +1,3 @@
-
 from fastmcp.mcp_config import TransformingStdioMCPServer
 from fastmcp.tools.tool_transform import ToolTransformConfig
 

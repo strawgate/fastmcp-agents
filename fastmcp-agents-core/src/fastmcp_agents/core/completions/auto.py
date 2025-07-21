@@ -1,6 +1,6 @@
-from functools import cache
 import logging
 import os
+from functools import cache
 from logging import Logger
 from typing import NoReturn
 
@@ -20,6 +20,7 @@ def required_llm() -> LLMCompletionsProtocol:
     """Get the required LLM completions."""
 
     return auto_llm() or raise_missing_llm()
+
 
 @cache
 def auto_llm() -> LLMCompletionsProtocol | None:

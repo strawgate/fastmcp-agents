@@ -431,7 +431,7 @@ class BaseMultiStepAgent(BaseAgent, ABC):
 
 def trim_tool_call_result(tool_call_result: CallToolResult, length: int = 500) -> str:
     """Trim the tool call result.
-    
+
     Args:
         tool_call_result: The tool call result to trim.
         length: The length to trim the tool call result to.

@@ -6,10 +6,11 @@ from pydantic import BaseModel
 
 def read_write_knowledge_base_mcp() -> TransformingStdioMCPServer:
     return TransformingStdioMCPServer(
-    command="uvx",
-    args=["knowledge-base-mcp", "auto", "run"],
-    tools={},
-)
+        command="uvx",
+        args=["knowledge-base-mcp", "auto", "run"],
+        tools={},
+    )
+
 
 def read_only_knowledge_base_mcp() -> TransformingStdioMCPServer:
     mcp = read_write_knowledge_base_mcp()
