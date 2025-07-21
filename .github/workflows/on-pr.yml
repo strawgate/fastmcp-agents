@@ -10,11 +10,11 @@ jobs:
     name: List Projects
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      projects: ${{ steps.set-matrix.outputs.projects }}
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo "$(ls **/pyproject.toml)" >> $GITHUB_OUTPUT
+        run: echo "projects=$(ls **/pyproject.toml | xargs)" >> $GITHUB_OUTPUT
 
   test:
     name: Run Tests
@@ -25,7 +25,7 @@ jobs:
     strategy: 
       fail-fast: true 
       matrix: 
-        pyproject: ${{needs.list-projects.outputs }}
+        pyproject: ${{needs.list-projects.outputs.projects}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
