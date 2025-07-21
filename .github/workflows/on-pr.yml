@@ -44,7 +44,7 @@ jobs:
         working-directory: ${{ matrix.pyproject }}
 
       - name: Test
-        run: uv run pytest -v tests/
+        run: uv run pytest -m "not skip_on_ci" -v tests/
         working-directory: ${{ matrix.pyproject }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

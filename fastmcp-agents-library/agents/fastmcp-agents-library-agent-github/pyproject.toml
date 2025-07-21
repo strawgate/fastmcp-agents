@@ -31,6 +31,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
+markers = [
+    "not_on_ci: Skip running the test when running on CI",
+]
 addopts = "-s" 
 
 
