@@ -47,7 +47,7 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = "-s -vvv"  # Disable Captures
 
 [tool.ruff]
-extend="../pyproject.toml"
+extend="../pyproject.toml" 
 
 [tool.pyright]
 extends = "../pyproject.toml"

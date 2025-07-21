@@ -373,8 +373,9 @@ lint = [{ name = "ruff" }]
 [[package]]
 name = "fastmcp-agents-library-mcp"
 version = "0.5.1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
+    { name = "fastmcp" },
     { name = "fastmcp-agents-core", extra = ["auto"] },
 ]
 
@@ -384,7 +385,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp-agents-core", extras = ["auto"], editable = "../../../fastmcp-agents-core" }]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=2.10.7.dev16" },
+    { name = "fastmcp-agents-core", extras = ["auto"], editable = "../../../fastmcp-agents-core" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "ruff", specifier = ">=0.12.4" }]

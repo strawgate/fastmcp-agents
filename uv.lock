@@ -362,7 +362,7 @@ version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp-agents-cli" },
-    { name = "fastmcp-agents-core" },
+    { name = "fastmcp-agents-core", extra = ["auto"] },
 ]
 
 [package.dev-dependencies]
@@ -380,8 +380,8 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastmcp-agents-cli", editable = "fastmcp-agents-cli" },
-    { name = "fastmcp-agents-core", editable = "fastmcp-agents-core" },
+    { name = "fastmcp-agents-cli", extras = ["auto"], editable = "fastmcp-agents-cli" },
+    { name = "fastmcp-agents-core", extras = ["auto"], editable = "fastmcp-agents-core" },
 ]
 
 [package.metadata.requires-dev]

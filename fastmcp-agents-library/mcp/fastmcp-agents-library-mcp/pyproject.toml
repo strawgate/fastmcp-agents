@@ -5,10 +5,24 @@ description = "MCP Library for FastMCP Agents"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastmcp>=2.10.7.dev16",
     "fastmcp-agents-core[auto]",
 ]
 [tool.uv.sources]
 fastmcp-agents-core = { path = "../../../fastmcp-agents-core", editable = true }
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastmcp_agents"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/fastmcp_agents"]
+
+
 
 [dependency-groups]
 dev = [
@@ -21,3 +35,4 @@ extend="../../../pyproject.toml"
 
 [tool.pyright]
 extends = "../../../pyproject.toml"
+

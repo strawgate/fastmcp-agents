@@ -8,6 +8,10 @@ set -e
 
 pyproject_files=$(find .. -name "pyproject.toml" -not -path "*/.venv/*")
 
+# Load environment variables from .env file
+echo "Loading environment variables from .env file"
+set -a; source ../.env; set +a
+
 for pyproject_file in $pyproject_files; do
     echo "Testing $pyproject_file"
     cd $(dirname $pyproject_file)

@@ -72,7 +72,7 @@ class CodeInvestigationAgent(BaseCodeAgent):
 
     name: str = "ask_code_investigation_agent"
 
-    instructions: str | None = code_investigation_instructions
+    instructions: str = code_investigation_instructions
 
     mcp: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         default=mcp_servers,

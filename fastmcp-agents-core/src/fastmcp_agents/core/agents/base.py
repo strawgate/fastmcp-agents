@@ -13,6 +13,7 @@ from fastmcp.tools.tool import FunctionTool
 from fastmcp.tools.tool import Tool as FastMCPTool
 from fastmcp.utilities.components import FastMCPComponent
 from fastmcp.utilities.mcp_config import mount_mcp_config_into_server  # pyright: ignore[reportUnknownVariableType]
+from mcp.types import CallToolResult
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, TypeAdapter
 
 from fastmcp_agents.core.agents.context import AgentRunContext
@@ -316,7 +317,7 @@ class BaseMultiStepAgent(BaseAgent, ABC):
 
                 continue
 
-            self.logger.debug(msg=f"Tool {pending_tool_call.tool.name} has returned: {tool_call_result.content[:500]}...")
+            self.logger.debug(msg=f"Tool {pending_tool_call.tool.name} has returned: {trim_tool_call_result(tool_call_result)}...")
 
             if run_context:
                 run_context.successful_tool_calls.append(pending_tool_call.tool.name)
@@ -426,3 +427,21 @@ class BaseMultiStepAgent(BaseAgent, ABC):
         self.logger.error(msg=f"Step limit reached for agent {self.name} with step limit {self.step_limit}.")
 
         raise StepLimitReachedError(agent_name=self.name, step_limit=self.step_limit)
+
+
+def trim_tool_call_result(tool_call_result: CallToolResult, length: int = 500) -> str:
+    """Trim the tool call result.
+    
+    Args:
+        tool_call_result: The tool call result to trim.
+        length: The length to trim the tool call result to.
+    """
+
+    output: str
+
+    if tool_call_result.structured_content:
+        output = json.dumps(tool_call_result.structured_content, indent=2)
+    else:
+        output = "\n".join([content.text for content in tool_call_result.content])
+
+    return output[:length]

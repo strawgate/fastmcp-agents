@@ -1,23 +1,11 @@
-import os
 
 from fastmcp.mcp_config import TransformingStdioMCPServer
 from fastmcp.tools.tool_transform import ToolTransformConfig
 
+from fastmcp_agents.library.mcp.strawgate.elasticsearch_mcp import elasticsearch_mcp
 from fastmcp_agents.library.mcp.strawgate.knowledge_base_mcp import (
     SeedKnowledgeBaseRequest,
     seed_knowledge_base,
-)
-
-base_elasticsearch_mcp = TransformingStdioMCPServer(
-    command="uvx",
-    env={
-        "ES_HOST": os.getenv("ES_HOST"),
-        "ES_API_KEY": os.getenv("ES_API_KEY"),
-    },
-    args=[
-        "strawgate-es-mcp",
-    ],
-    tools={},
 )
 
 esql_instructions = """
@@ -111,20 +99,23 @@ formatting_instructions = """
 Provide answers in Markdown and explain each part of the query with links to documentation for that part of the query.
 """
 
-elasticsearch_mcp = base_elasticsearch_mcp.model_copy()
-elasticsearch_mcp.tools = {
-    "esql_query": ToolTransformConfig(
-        tags={"esql"},
-    ),
-    "summarize_data_streams": ToolTransformConfig(
-        tags={"data_streams"},
-    ),
-    "indices_data_streams_stats": ToolTransformConfig(
-        name="get_data_streams",
-        tags={"data_streams"},
-    ),
-}
-elasticsearch_mcp.include_tags = {"esql", "data_streams"}
+
+def esql_elasticsearch_mcp() -> TransformingStdioMCPServer:
+    mcp = elasticsearch_mcp()
+    mcp.tools = {
+        "esql_query": ToolTransformConfig(
+            tags={"esql"},
+        ),
+        "summarize_data_streams": ToolTransformConfig(
+            tags={"data_streams"},
+        ),
+        "indices_data_streams_stats": ToolTransformConfig(
+            name="get_data_streams",
+            tags={"data_streams"},
+        ),
+    }
+    mcp.include_tags = {"esql", "data_streams"}
+    return mcp
 
 
 async def prepare_knowledge_base(knowledge_base_mcp: TransformingStdioMCPServer) -> None:

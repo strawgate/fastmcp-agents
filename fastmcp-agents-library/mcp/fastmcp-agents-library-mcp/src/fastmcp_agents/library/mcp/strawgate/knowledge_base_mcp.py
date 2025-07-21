@@ -3,19 +3,23 @@ from fastmcp.mcp_config import MCPConfig, TransformingStdioMCPServer
 from fastmcp.tools.tool_transform import ToolTransformConfig
 from pydantic import BaseModel
 
-read_write_knowledge_base_mcp = TransformingStdioMCPServer(
+
+def read_write_knowledge_base_mcp() -> TransformingStdioMCPServer:
+    return TransformingStdioMCPServer(
     command="uvx",
     args=["knowledge-base-mcp", "auto", "run"],
     tools={},
 )
 
-readonly_knowledge_base_mcp = read_write_knowledge_base_mcp.model_copy()
-readonly_knowledge_base_mcp.tools = {
-    "docs_query": ToolTransformConfig(
-        tags={"documentation"},
-    )
-}
-readonly_knowledge_base_mcp.include_tags = {"documentation"}
+def read_only_knowledge_base_mcp() -> TransformingStdioMCPServer:
+    mcp = read_write_knowledge_base_mcp()
+    mcp.tools = {
+        "docs_query": ToolTransformConfig(
+            tags={"documentation"},
+        )
+    }
+    mcp.include_tags = {"documentation"}
+    return mcp
 
 
 class SeedKnowledgeBaseRequest(BaseModel):

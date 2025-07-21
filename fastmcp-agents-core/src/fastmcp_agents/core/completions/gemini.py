@@ -74,6 +74,12 @@ class GoogleGenaiPendingToolCall(BasePendingToolCall):
     def _tool_result_to_completion_message(self, tool_result: ToolResult) -> CompletionMessageType:
         """Convert a tool result to a chat completion tool message."""
 
+        output = (
+            tool_result.structured_content
+            if tool_result.structured_content
+            else [content.text for content in tool_result.content if isinstance(content, TextContent)]
+        )
+
         return Content(
             role="tool",
             parts=[
@@ -82,7 +88,7 @@ class GoogleGenaiPendingToolCall(BasePendingToolCall):
                         id=self.tool_call_id,
                         name=self.tool.name,
                         response={
-                            "output": [content.text for content in tool_result.content if isinstance(content, TextContent)],
+                            "output": output,
                         },
                     )
                 )

@@ -5,8 +5,8 @@ description = "Fastmcp Agents Project"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp-agents-cli",
-    "fastmcp-agents-core",
+    "fastmcp-agents-cli[auto]",
+    "fastmcp-agents-core[auto]",
 ]
 
 [tool.hatch.metadata]
@@ -92,7 +92,7 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = "-s -vvv"  # Disable Captures
 
 [tool.ruff.lint.extend-per-file-ignores]
-"**/tests/*.py" = [
+"*/tests/**" = [ 
     "S101", # Ignore asserts
     "DTZ005", # Ignore datetime.UTC
     "PLR2004", # Ignore magic values
@@ -120,3 +120,5 @@ members = [
 [tool.pyright]
 reportExplicitAny = false
 reportMissingTypeStubs = false
+include = ["**/tests/*"]
+

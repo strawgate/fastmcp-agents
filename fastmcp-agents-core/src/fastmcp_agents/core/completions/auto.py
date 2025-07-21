@@ -1,3 +1,4 @@
+from functools import cache
 import logging
 import os
 from logging import Logger
@@ -20,11 +21,13 @@ def required_llm() -> LLMCompletionsProtocol:
 
     return auto_llm() or raise_missing_llm()
 
-
+@cache
 def auto_llm() -> LLMCompletionsProtocol | None:
     """Convert the completions options to a completions provider."""
 
     provider = os.getenv("MODEL_PROVIDER")
+
+    selected_llm: LLMCompletionsProtocol | None = None
 
     if provider == "vertex_ai":
         logger.info("Vertex AI has been selected as the model provider.")
@@ -45,7 +48,7 @@ def auto_llm() -> LLMCompletionsProtocol | None:
 
             credentials = service_account.Credentials.from_service_account_file(filename=credentials_json, scopes=scopes)  # pyright: ignore[reportUnknownMemberType]
 
-        return GoogleGenaiCompletions(
+        selected_llm = GoogleGenaiCompletions(
             client=GoogleGenaiClient(vertexai=True, credentials=credentials),
             default_model=os.getenv("MODEL") or "gemini-2.5-flash",
         )
@@ -60,7 +63,7 @@ def auto_llm() -> LLMCompletionsProtocol | None:
 
         genai_client: GoogleGenaiClient = genai.Client()
 
-        return GoogleGenaiCompletions(
+        selected_llm = GoogleGenaiCompletions(
             client=genai_client,
             default_model=os.getenv("MODEL") or "gemini-2.5-flash",
         )
@@ -76,7 +79,7 @@ def auto_llm() -> LLMCompletionsProtocol | None:
             api_key=os.getenv("API_KEY"),
         )
 
-        return OpenAILLMCompletions(
+        selected_llm = OpenAILLMCompletions(
             default_model=os.getenv("MODEL") or "gpt-4.1-mini",  # pyright: ignore[reportArgumentType]
             client=openai_client,
         )
@@ -86,8 +89,8 @@ def auto_llm() -> LLMCompletionsProtocol | None:
 
         from fastmcp_agents.core.completions.litellm import LiteLLMCompletions
 
-        return LiteLLMCompletions(
+        selected_llm = LiteLLMCompletions(
             default_model=os.getenv("MODEL") or "openai/gpt-4.1-mini",
         )
 
-    return None
+    return selected_llm
