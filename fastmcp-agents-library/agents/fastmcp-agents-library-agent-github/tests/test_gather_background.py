@@ -38,7 +38,7 @@ def extract_structured_content_from_call_tool_result(call_tool_result: CallToolR
 
 
 @pytest.mark.asyncio
-@pytest.mark.not_on_ci
+@pytest.mark.skip_on_ci
 async def test_simple_background():
     agent = GitHubIssueBackgroundAgent()
 
