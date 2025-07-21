@@ -5,7 +5,7 @@ description = "MCP Library for FastMCP Agents"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp-agents-core",
+    "fastmcp-agents-core[auto]",
 ]
 [tool.uv.sources]
 fastmcp-agents-core = { path = "../../../fastmcp-agents-core", editable = true }

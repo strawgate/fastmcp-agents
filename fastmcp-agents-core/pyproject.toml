@@ -35,11 +35,17 @@ dev = [
   "google-genai>=1.26.0",
   "litellm>=1.74.7",
 ]
-google = [
-    "google-genai>=1.26.0",
-]
 lint = [
   "ruff"
+]
+[project.optional-dependencies]
+auto = [
+  "google-genai>=1.26.0",
+  "openai>=1.97.0",
+  "litellm>=1.74.7",
+]
+google = [
+    "google-genai>=1.26.0",
 ]
 openai = [
     "openai>=1.97.0",

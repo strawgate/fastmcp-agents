@@ -16,7 +16,7 @@ for pyproject_file in $pyproject_files; do
     uv build
     # if there is a tests/ directory, run pytest
     if [ -d "tests/" ]; then
-        uv run pytest -v tests/
+        uv run --active pytest -v tests/
     fi
     deactivate
     cd -

@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 
 dependencies = [
     "asyncstdlib>=3.13.1",
-    "fastmcp-agents-core",
+    "fastmcp-agents-core[auto]",
     "fastmcp-agents-library-agent-simple-code",
     "gitpython>=3.1.44",
 ]

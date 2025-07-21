@@ -14,8 +14,8 @@ for pyproject_file in $pyproject_files; do
     cd $(dirname $pyproject_file)
     uv venv
     source .venv/bin/activate
-    uv run ruff format
-    uv run ruff check --fix
+    uv run --active ruff format
+    uv run --active ruff check --fix
     deactivate
     cd -
 done

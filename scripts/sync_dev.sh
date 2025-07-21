@@ -13,7 +13,7 @@ for pyproject_file in $pyproject_files; do
     cd $(dirname $pyproject_file)
     uv venv
     source .venv/bin/activate
-    uv sync --dev
+    uv sync --dev --all-groups --active
     deactivate
     cd -
 done

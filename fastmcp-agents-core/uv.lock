@@ -344,6 +344,19 @@ dependencies = [
     { name = "pyyaml" },
 ]
 
+[package.optional-dependencies]
+auto = [
+    { name = "google-genai" },
+    { name = "litellm" },
+    { name = "openai" },
+]
+google = [
+    { name = "google-genai" },
+]
+openai = [
+    { name = "openai" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
@@ -355,27 +368,27 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
-google = [
-    { name = "google-genai" },
-]
 lint = [
     { name = "ruff" },
-]
-openai = [
-    { name = "openai" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "asyncstdlib", specifier = ">=3.13.1" },
     { name = "fastmcp", git = "https://github.com/jlowin/fastmcp.git?rev=main" },
+    { name = "google-genai", marker = "extra == 'auto'", specifier = ">=1.26.0" },
+    { name = "google-genai", marker = "extra == 'google'", specifier = ">=1.26.0" },
     { name = "jsonref", specifier = ">=1.1.0" },
+    { name = "litellm", marker = "extra == 'auto'", specifier = ">=1.74.7" },
     { name = "mcp", specifier = "==1.10.1" },
+    { name = "openai", marker = "extra == 'auto'", specifier = ">=1.97.0" },
+    { name = "openai", marker = "extra == 'openai'", specifier = ">=1.97.0" },
     { name = "opentelemetry-api", specifier = ">=1.33.1" },
     { name = "opentelemetry-exporter-otlp", specifier = ">=1.33.1" },
     { name = "opentelemetry-sdk", specifier = ">=1.33.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
 ]
+provides-extras = ["auto", "google", "openai"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -388,9 +401,7 @@ dev = [
     { name = "pytest-mock" },
     { name = "ruff" },
 ]
-google = [{ name = "google-genai", specifier = ">=1.26.0" }]
 lint = [{ name = "ruff" }]
-openai = [{ name = "openai", specifier = ">=1.97.0" }]
 
 [[package]]
 name = "filelock"
