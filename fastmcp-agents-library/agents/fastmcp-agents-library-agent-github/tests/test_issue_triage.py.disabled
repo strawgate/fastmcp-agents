@@ -1,0 +1,25 @@
+import pytest
+from fastmcp.client import Client, FastMCPTransport
+from fastmcp_agents.library.agent.github.issue_triage import server
+
+
+def test_init():
+    assert server is not None
+
+
+@pytest.mark.asyncio
+async def test_simple_traige():
+    client = Client[FastMCPTransport](transport=server)
+    async with client:
+        response = await client.call_tool(
+            "triage_github_issue",
+            arguments={
+                "issue_repository_owner": "strawgate",
+                "issue_repository": "fastmcp-agents",
+                "issue_number": 5,
+            },
+        )
+
+    assert response is not None
+
+    print(response)

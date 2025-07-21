@@ -1,0 +1,57 @@
+[project]
+name = "fastmcp-agents-core"
+version = "0.5.1"
+description = "Fastmcp Agents Core Package"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "asyncstdlib>=3.13.1",
+    "fastmcp@git+https://github.com/jlowin/fastmcp.git@main",
+    "jsonref>=1.1.0",
+    "mcp==1.10.1",
+    "opentelemetry-api>=1.33.1",
+    "opentelemetry-exporter-otlp>=1.33.1",
+    "opentelemetry-sdk>=1.33.1",
+    "pyyaml>=6.0.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastmcp_agents"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/fastmcp_agents"]
+
+[tool.hatch.metadata]
+allow-direct-references=true
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-mock",
+  "pytest-asyncio",
+  "ruff",
+  "basedpyright>=1.30.1",
+  "pillow>=11.3.0",
+  "google-genai>=1.26.0",
+  "litellm>=1.74.7",
+]
+google = [
+    "google-genai>=1.26.0",
+]
+lint = [
+  "ruff"
+]
+openai = [
+    "openai>=1.97.0",
+]
+
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+extend="../pyproject.toml"
+
+[tool.pyright]
+extends = "../pyproject.toml"

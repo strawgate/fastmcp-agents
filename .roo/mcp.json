@@ -3,8 +3,12 @@
     "running-server": {
       "url": "http://localhost:8000/sse",
       "alwaysAllow": [
-        "ask_tree_sitter_agent_get_instructions",
-        "ask_tree_sitter_agent_trace_conversation"
+        "ask_duckduckgo_agent_get_instructions",
+        "ask_duckduckgo_agent_change_instructions",
+        "ask_duckduckgo_agent_trace_conversation",
+        "ask_duckdb_agent_get_instructions",
+        "ask_duckdb_agent_trace_conversation",
+        "ask_duckdb_agent_change_instructions"
       ]
     }
   }

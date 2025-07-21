@@ -9,12 +9,28 @@ permissions:
   contents: read
 
 jobs:
+  list-projects:
+    name: List Projects
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: set-matrix
+        run: echo "$(git diff --name-only ${{ github.event.before }} \
+            ${{ github.event.after }} | grep pyproject.toml)" >> $GITHUB_OUTPUT
+
   pypi-publish:
     name: Upload to PyPI
     runs-on: ubuntu-latest
     environment: PyPi
     permissions:
       id-token: write
+    needs: [list-projects]
+    strategy: 
+      fail-fast: true 
+      matrix: 
+        pyproject: ${{needs.list-projects.outputs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +42,16 @@ jobs:
 
       - name: Build
         run: uv build
+        working-directory: ${{ matrix.pyproject }}
+
+      - name: Test
+        run: uv run pytest -v tests/
+        working-directory: ${{ matrix.pyproject }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODEL: gemini-2.5-flash
+          MODEL_PROVIDER: gemini
 
       - name: Publish to PyPi
         run: uv publish -v dist/*
+        working-directory: ${{ matrix.pyproject }}
