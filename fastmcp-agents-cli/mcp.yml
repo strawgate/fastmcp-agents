@@ -1,0 +1,10 @@
+mcp:
+    fetch:
+        command: "uvx"
+        args:
+            - "mcp-server-fetch"
+
+agents:
+  - name: "fetch_agent"
+    description: "Fetch data from the web"
+    instructions: "Fetch data from the web"

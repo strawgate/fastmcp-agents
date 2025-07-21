@@ -1,0 +1,191 @@
+"""
+This agent is used to triage issues on a GitHub repository.
+"""
+
+from fastmcp import Context
+from fastmcp.client.client import CallToolResult, Client
+from fastmcp.client.transports import FastMCPTransport
+
+from fastmcp_agents.core.agents.task import TaskAgent
+from fastmcp_agents.core.models.server_builder import FastMCPAgents
+from fastmcp_agents.library.agent.github.shared.git import quick_clone_github_repo
+from fastmcp_agents.library.agent.github.shared.helpers import generate_background, get_issue_background
+from fastmcp_agents.library.agent.github.shared.mcp import github_mcp_server
+from fastmcp_agents.library.agent.simple_code.investigate import server_builder as code_investigate_server_builder
+
+issue_triage_instructions = """
+## Persona & Goal:
+You are an expert software investigator and debugger. Your primary mission is to perform a deep, methodical analysis of issues by
+understanding the exact code paths, conditions, and edge cases that lead to the bug.
+
+{mindset_instructions}
+{confidence_levels}
+{section_guidelines}
+
+## Analysis Process:
+1. Initial Code Investigation
+    - Use the code agent to examine the relevant code files
+    - Look for the specific code mentioned in the issue
+    - Identify related code paths and dependencies
+    - Document the exact code structure and patterns
+    - Document your thought process as you examine the code
+
+2. Behavior Hypothesis
+    - Formulate hypotheses about the intended behavior
+    - Consider mathematical correctness (e.g., division by zero is undefined)
+    - Consider user experience expectations
+    - Consider programming language conventions
+    - Document your reasoning for each hypothesis
+    - Evaluate each hypothesis against the code
+
+3. Issue Context Analysis
+    - Extract key terms and patterns from the code investigation
+    - Use these terms to search for related issues
+    - Look for similar error handling patterns
+    - Identify broader patterns in the codebase
+    - Document how these findings affect your hypotheses
+
+4. Test Analysis
+    - Examine test files to understand current error handling
+    - Look for similar test cases
+    - Identify gaps in test coverage
+    - Document existing error handling patterns
+    - Evaluate if tests align with your hypotheses
+
+5. Related Issues Search
+    - Use specific terms from code investigation
+    - Search for similar error patterns
+    - Look for related documentation issues
+    - Consider feature requests that might be impacted
+    - Document any found relationships with confidence levels
+    - Use expandable sections for low confidence relationships
+    - Consider how related issues affect your hypotheses
+    - List recent issues in the repository to catch related issues that might not match search terms
+    - Review issue titles and bodies for semantic relationships
+    - Look for patterns in how issues are reported and handled
+    - Consider both open and recently closed issues for context
+
+**Desired Outcome:** Produce a comprehensive analysis posted as a comment on GitHub issue `$github_issue_number`. This analysis must:
+* Begin with a clear code investigation summary
+* Present your hypotheses about the intended behavior
+* Document your thought process and reasoning
+* Explain why you believe each hypothesis is correct or incorrect
+* Document exact conditions that trigger the behavior
+* Include a proposed test case that verifies the correct behavior
+* Explain why the behavior occurs at a code level
+* Reference specific lines of code and their behavior
+* Include a section on related issues found during the search
+* Use specific terms from the code investigation in the analysis
+* Conclude with a clear recommendation about whether this is a bug or expected behavior
+"""
+
+
+mcp_servers = {
+    "github": github_mcp_server,
+}
+
+
+def triage_issue(
+    issue_repository_owner: str,
+    issue_repository: str,
+    issue_number: int,
+    code_repository_owner: str | None = None,
+    code_repository: str | None = None,
+):
+    """Triage a GitHub issue."""
+
+    if code_repository_owner is None or code_repository is None:
+        code_repository_owner = issue_repository_owner
+        code_repository = issue_repository
+
+
+class GithubIssueTriageAgent(TaskAgent):
+    """An agent that can triage GitHub issues."""
+
+    name: str = "triage_github_issue"
+
+    instructions: str | None = issue_triage_instructions
+
+    async def __call__(
+        self,
+        ctx: Context,
+        issue_repository_owner: str,
+        issue_repository: str,
+        issue_number: int,
+        code_repository_owner: str | None = None,
+        code_repository: str | None = None,
+    ):
+        """Triage a GitHub issue."""
+
+        if code_repository_owner is None or code_repository is None:
+            code_repository_owner = issue_repository_owner
+            code_repository = issue_repository
+
+        issue_content, comments_content, related_issues_content = await get_issue_background(
+            ctx,
+            issue_repository_owner,
+            issue_repository,
+            issue_number,
+        )
+
+        background: str = generate_background(issue_content, comments_content)
+
+        code_agent_task = """
+        We are investigating the code base for the repository {code_repository_owner}/{code_repository}.
+
+        {background}
+
+        The codebase has been cloned to the following path: `{repo_path}`
+
+        Please investigate the codebase to understand the issue and formulate a detailed analysis of the issue.
+
+        Please provide your analysis as a single markdown block.
+        """
+
+        with quick_clone_github_repo(code_repository_owner, code_repository) as repo_path:
+            code_agent_server = code_investigate_server_builder(root_directory=repo_path)
+            code_agent_client = Client[FastMCPTransport](transport=code_agent_server)
+
+            async with code_agent_client:
+                code_agent_response: CallToolResult = await code_agent_client.call_tool(
+                    "ask_issue_background",
+                    arguments={
+                        "task": code_agent_task.format(
+                            code_repository_owner=code_repository_owner,
+                            code_repository=code_repository,
+                            background=background,
+                            repo_path=repo_path,
+                        ),
+                    },
+                )
+
+        github_agent_task = """
+        Background:
+        ```markdown
+        {background}
+        ```
+
+        We've identified the following potential related issues:
+        ```markdown
+        {github_related_issues}
+        ```
+
+        We have dispatched a code agent to investigate the codebase related to the issue. They have provided the following analysis:
+
+        ```markdown
+        {code_agent_response}
+        ```
+
+        Please formulate a detailed response that can be posted as a comment on the issue.
+        """
+
+
+server = FastMCPAgents(
+    name="triage-github-issue",
+    mcp=mcp_servers,
+    agents=[GithubIssueTriageAgent()],
+).to_server()
+
+
+if __name__ == "__main__":
+    server.run(transport="sse")

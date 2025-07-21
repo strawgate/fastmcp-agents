@@ -9,12 +9,63 @@ permissions:
   contents: read
 
 jobs:
+  list-projects:
+    name: List Projects
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.set-matrix.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v2
+      - id: set-matrix
+        run: |
+          echo "projects=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep pyproject.toml | xargs -I {} dirname {} | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: [list-projects]
+    permissions:
+      id-token: write
+    strategy: 
+      fail-fast: false 
+      matrix: 
+        pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v3
+
+      - name: Sync
+        run: uv sync --dev --all-groups
+        working-directory: ${{ matrix.pyproject }}
+
+      - name: Build
+        run: uv build
+        working-directory: ${{ matrix.pyproject }}
+
+      - name: Test
+        run: uv run pytest -v tests/
+        working-directory: ${{ matrix.pyproject }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          MODEL: gemini-2.5-flash
+          MODEL_PROVIDER: gemini
+
   pypi-publish:
     name: Upload to PyPI
     runs-on: ubuntu-latest
+    needs: [list-projects, test]
     environment: PyPi
     permissions:
       id-token: write
+    strategy: 
+      fail-fast: false 
+      matrix: 
+        pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +77,8 @@ jobs:
 
       - name: Build
         run: uv build
+        working-directory: ${{ matrix.pyproject }}
 
       - name: Publish to PyPi
         run: uv publish -v dist/*
+        working-directory: ${{ matrix.pyproject }}

@@ -1,0 +1,57 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug CLI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.main",
+            "console": "integratedTerminal",
+            "args": [
+                "mcpservers"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "List Tools",
+            "type": "debugpy",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "module": "fastmcp_agents.cli.main",
+            "justMyCode": false,
+            "args": [
+                "client",
+                "list",
+                "tools",
+            ],
+        },
+        {
+            "name": "Textual App",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.textual",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Fetch Tool Call",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp_agents.cli.main",
+            "envFile": "${workspaceFolder}/.env.vertex_ai",
+            "args": [
+                "client",
+                "call",
+                "tool",
+                "fetch_agent",
+                "--task",
+                "Fetch me the google.com website"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

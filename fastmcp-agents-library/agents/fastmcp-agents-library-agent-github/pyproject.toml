@@ -1,0 +1,50 @@
+[project]
+name = "fastmcp-agents-library-agent-github"
+version = "0.5.1"
+description = "Agents for GitHub"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "asyncstdlib>=3.13.1",
+    "fastmcp-agents-core[auto]",
+    "fastmcp-agents-library-agent-simple-code",
+    "gitpython>=3.1.44",
+]
+
+[project.scripts]
+github-issue-triage = "fastmcp_agents.library.agent.github.issue_triage:main"
+github-gather-background = "fastmcp_agents.library.agent.github.gather_background:main"
+
+[tool.uv.sources]
+fastmcp-agents-core = { path = "../../../fastmcp-agents-core", editable = true }
+fastmcp-agents-library-agent-simple-code = { path = "../fastmcp-agents-library-agent-simple-code", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.1.0",
+    "ruff>=0.12.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+markers = [
+    "skip_on_ci: Skip running the test when running on CI",
+]
+addopts = "-s" 
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastmcp_agents"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/fastmcp_agents"]
+
+[tool.ruff]
+extend="../../../pyproject.toml"
+
+[tool.pyright]
+extends = "../../../pyproject.toml"
