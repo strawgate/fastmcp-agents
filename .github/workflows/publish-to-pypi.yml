@@ -13,12 +13,12 @@ jobs:
     name: List Projects
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.projects }}
+      projects: ${{ steps.set-matrix.outputs.projects }}
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo "projects=$(git diff --name-only ${{ github.event.before }} \
-            ${{ github.event.after }} | grep pyproject.toml | xargs)" >> $GITHUB_OUTPUT
+        run: |
+          echo "projects=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep pyproject.toml | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 
   pypi-publish:
     name: Upload to PyPI
@@ -30,7 +30,7 @@ jobs:
     strategy: 
       fail-fast: true 
       matrix: 
-        pyproject: ${{needs.list-projects.outputs.matrix}}
+        pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
