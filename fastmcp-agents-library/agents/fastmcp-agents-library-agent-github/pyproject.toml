@@ -36,6 +36,8 @@ build-backend = "hatchling.build"
 markers = [
     "skip_on_ci: Skip running the test when running on CI",
 ]
+include =["./tests"]
+ignore = ["./playground"]
 addopts = "-s" 
 env_files = [".env"]
 

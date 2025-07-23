@@ -1,8 +1,8 @@
 from fastmcp.mcp_config import TransformingStdioMCPServer
 from fastmcp.tools.tool_transform import ToolTransformConfig
 
-from fastmcp_agents.library.mcp.strawgate.elasticsearch_mcp import elasticsearch_mcp
-from fastmcp_agents.library.mcp.strawgate.knowledge_base_mcp import (
+from fastmcp_agents.library.mcp.strawgate.elasticsearch import elasticsearch_mcp
+from fastmcp_agents.library.mcp.strawgate.knowledge_base import (
     SeedKnowledgeBaseRequest,
     seed_knowledge_base,
 )
@@ -102,18 +102,12 @@ Provide answers in Markdown and explain each part of the query with links to doc
 def esql_elasticsearch_mcp() -> TransformingStdioMCPServer:
     mcp = elasticsearch_mcp()
     mcp.tools = {
-        "esql_query": ToolTransformConfig(
-            tags={"esql"},
-        ),
-        "summarize_data_streams": ToolTransformConfig(
-            tags={"data_streams"},
-        ),
         "indices_data_streams_stats": ToolTransformConfig(
             name="get_data_streams",
             tags={"data_streams"},
         ),
     }
-    mcp.include_tags = {"esql", "data_streams"}
+    mcp.include_tags = {"esql", "summarize", "tips"}
     return mcp
 
 

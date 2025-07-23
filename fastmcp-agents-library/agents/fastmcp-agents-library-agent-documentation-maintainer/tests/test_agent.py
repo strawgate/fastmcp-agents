@@ -33,9 +33,9 @@ def update() -> Agent[None, UpdateDocumentationResponse]:
 
 
 def test_init(
-    best_practices_agent: Agent[None, BestPracticesResponse],
-    gather_agent: Agent[None, GatherDocumentationResponse],
-    update_agent: Agent[None, UpdateDocumentationResponse],
+    best_practices: Agent[None, BestPracticesResponse],
+    gather: Agent[None, GatherDocumentationResponse],
+    update: Agent[None, UpdateDocumentationResponse],
 ):
     assert best_practices_agent
     assert gather_agent

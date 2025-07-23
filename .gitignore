@@ -179,3 +179,5 @@ prompt_suggestions
 agent-working-dir
 
 **/*.bak
+
+storage

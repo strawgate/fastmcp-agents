@@ -80,7 +80,8 @@ best_practices_agent = Agent(
     If the user requests a thorough summary, you will check for additional files/examples and your best practices should be very detailed,
     not just a list of simple sentences
 
-    If the user requests a brief summary, previewing the files/examples is sufficient and your best practices should be a list of simple sentences
+    If the user requests a brief summary, previewing the files/examples is sufficient and your best practices should be a list of
+    simple sentences
     """
     ),
 )
@@ -103,7 +104,6 @@ class GatherDocumentationResponse(BaseModel):
 
 gather_agent = Agent(
     model=os.environ.get("MODEL"),
-    toolsets=[gather_toolset],
     output_type=GatherDocumentationResponse,
     instructions="""
     You are a documentation gathering agent. You are responsible for helping to update documenation in a project
@@ -112,9 +112,10 @@ gather_agent = Agent(
     You will:
     1. begin by reviewing the current documentation using the filesystem tools along with similar documentation in the repository to
        understand what "good" should look like.
-    2. review the list of current documentation by checking the existing knowledge bases via the `get_knowledge_bases` tool. If you find that
-       the documentation is already present in the knowledge base, you can end and report success.
-    3. Otherwise, use the web search tool to find the most relevant online documentation, prefering vendor documentation over general documentation.
+    2. review the list of current documentation by checking the existing knowledge bases via the `get_knowledge_bases` tool. If you find
+       that the documentation is already present in the knowledge base, you can end and report success.
+    3. Otherwise, use the web search tool to find the most relevant online documentation, prefering vendor documentation over
+       general documentation.
     4. use the knowledge base `load_website` tool to crawl and index the relevant documentation. The `load_website` tool will gather child
        pages so ensure the seed_url you provide ends with a slash. If you provide a seed_url, there is no need to provide
        subpages, they will automatically be included.
@@ -133,7 +134,6 @@ class UpdateDocumentationResponse(BaseModel):
 
 update_agent = Agent(
     model=os.environ.get("MODEL"),
-    toolsets=[update_toolset],
     output_type=UpdateDocumentationResponse,
     retries=3,
     output_retries=3,
@@ -198,7 +198,8 @@ async def best_practices(task: str, depth: Literal["thorough", "normal", "brief"
         user_prompt=[
             task,
             f"The requester has asked that you produce a {depth} summary of best practices.",
-        ]
+        ],
+        toolsets=[best_practices_toolset],
     )
 
     record_result(run_result, "best_practices")
@@ -222,11 +223,13 @@ async def do_it_all(task: str) -> str:
     ```
     """
 
-    # print("Running gather agent with task: {gather_task}")
-    # async with gather_agent:
-    #     gather_run_result: AgentRunResult[GatherDocumentationResponse] = await gather_agent.run(user_prompt=[gather_task, task])
+    print("Running gather agent with task: {gather_task}")
+    async with gather_agent:
+        gather_run_result: AgentRunResult[GatherDocumentationResponse] = await gather_agent.run(
+            user_prompt=[gather_task, task], toolsets=[gather_toolset]
+        )
 
-    # record_result(gather_run_result, "gather_documentation")
+    record_result(gather_run_result, "gather_documentation")
 
     update_task = f"""
     The best practices for documentation are (this may inform what you should gather):
@@ -241,7 +244,9 @@ async def do_it_all(task: str) -> str:
 
     print("Running update agent with task: {update_task}")
     async with update_agent:
-        update_run_result: AgentRunResult[UpdateDocumentationResponse] = await update_agent.run(user_prompt=[update_task, task])
+        update_run_result: AgentRunResult[UpdateDocumentationResponse] = await update_agent.run(
+            user_prompt=[update_task, task], toolsets=[update_toolset]
+        )
 
     record_result(update_run_result, "update_documentation")
 

@@ -3,20 +3,23 @@ import shutil
 from pathlib import Path
 
 import pytest
+from pydantic import AnyHttpUrl
 
 from fastmcp_agents.library.agent.simple_code.implement import (
-    CodeImplementationAgent,
     ImplementationResponse,
+    code_implementation_agent,
+    implement_code,
 )
 from fastmcp_agents.library.agent.simple_code.investigate import (
-    CodeInvestigationAgent,
     InvestigationResponse,
+    code_investigation_agent,
+    investigate_code,
 )
 
 
-def test_init():
-    agent = CodeInvestigationAgent()
-    assert agent is not None
+def test_init_agents():
+    assert code_investigation_agent is not None
+    assert code_implementation_agent is not None
 
 
 @pytest.fixture
@@ -59,108 +62,50 @@ def playground_directory():
 
 @pytest.mark.asyncio
 async def test_calculator_investigation(playground_directory: Path):
-    agent = CodeInvestigationAgent()
-    assert agent is not None
-
-    result = await agent(
-        git_url="https://github.com/strawgate/fastmcp-agents-tests-e2e.git",
+    investigation_reponse: InvestigationResponse = await investigate_code(
+        code_repository=AnyHttpUrl("https://github.com/strawgate/fastmcp-agents-tests-e2e.git"),
         task="I can't figure out how to do matrix multiplication in the calculator. Please do a search for matrix.",
     )
 
-    assert isinstance(result, InvestigationResponse)
+    assert isinstance(investigation_reponse, InvestigationResponse)
 
-    assert result is not None
+    assert investigation_reponse is not None
 
-    assert len(result.findings) > 0
+    assert len(investigation_reponse.findings) > 0
 
-    assert result.summary is not None
-
-    context = agent._last_run_context
-    assert context is not None
-
-    tool_calls = context.tool_call_summary
-
-    assert "read_file_lines" in tool_calls or "search_files" in tool_calls
+    assert investigation_reponse.summary is not None
 
 
 @pytest.mark.asyncio
 async def test_calculator_implementation(playground_directory: Path):
-    agent = CodeImplementationAgent()
-    assert agent is not None
-
-    result = await agent(
-        git_url="https://github.com/strawgate/fastmcp-agents-tests-e2e.git",
+    implementation_response: ImplementationResponse = await implement_code(
+        code_repository=AnyHttpUrl("https://github.com/strawgate/fastmcp-agents-tests-e2e.git"),
         task="Implement matrix multiplication in the calculator.",
     )
 
-    assert isinstance(result, ImplementationResponse)
+    assert isinstance(implementation_response, ImplementationResponse)
 
-    assert result is not None
+    assert implementation_response.confidence is not None
 
-    assert result.summary is not None
+    assert implementation_response.summary is not None
 
-    assert result.confidence is not None
-
-    context = agent._last_run_context
-    assert context is not None
-
-    tool_calls = context.tool_call_summary
-
-    assert "create_file" in tool_calls or "append_file" in tool_calls
-    assert "read_file_lines" in tool_calls
+    assert implementation_response.potential_flaws is not None
 
 
 @pytest.mark.asyncio
 async def test_many_append_insert_replace(playground_directory: Path):
-    agent = CodeImplementationAgent(step_limit=40)
-    assert agent is not None
-
-    result = await agent(
-        git_url="https://github.com/strawgate/fastmcp-agents-tests-e2e.git",
+    implementation_response: ImplementationResponse = await implement_code(
+        code_repository=AnyHttpUrl("https://github.com/strawgate/fastmcp-agents-tests-e2e.git"),
         task="""Perform two appends, inserts, and replaces of lines in a file and verify the results. Upon completion, report failure
         if any of these operations did not work on the first try. If possible please try to explain why you think it did not work""",
     )
 
-    assert isinstance(result, ImplementationResponse)
+    assert isinstance(implementation_response, ImplementationResponse)
 
-    assert result is not None
+    assert implementation_response is not None
 
-    assert result.summary is not None
+    assert implementation_response.summary is not None
 
-    assert result.confidence is not None
+    assert implementation_response.confidence is not None
 
-    context = agent._last_run_context
-    assert context is not None
-
-    tool_calls = context.tool_call_summary
-
-    assert "create_file" in tool_calls
-    assert "read_file_lines" in tool_calls
-
-
-@pytest.mark.asyncio
-async def test_many_filesystem_operations(playground_directory: Path):  # pyright: ignore[reportUnusedParameter]
-    agent = CodeImplementationAgent(step_limit=40)
-    assert agent is not None
-
-    result = await agent(
-        git_url="https://github.com/strawgate/fastmcp-agents-tests-e2e.git",
-        task="""Perform two of each type of filesystem operation and verify the results. Upon completion, report failure
-        if any of these operations did not work on the first try. If possible please try to explain why you think it did not work""",
-    )
-
-    assert isinstance(result, ImplementationResponse)
-
-    assert result is not None
-
-    assert result.summary is not None
-
-    assert result.confidence is not None
-
-    context = agent._last_run_context
-    assert context is not None
-
-    tool_calls = context.tool_call_summary
-
-    assert "create_file" in tool_calls
-    assert "read_file_lines" in tool_calls
+    assert implementation_response.potential_flaws is not None

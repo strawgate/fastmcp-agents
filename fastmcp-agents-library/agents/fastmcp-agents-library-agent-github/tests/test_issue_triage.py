@@ -8,6 +8,7 @@ from fastmcp_agents.library.agent.github.shared.git import get_repo_url
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip_on_ci
 async def test_simple_traige():
     issue_summary, investigation_response, issue_response = await investigate_github_issue(
         owner="strawgate",

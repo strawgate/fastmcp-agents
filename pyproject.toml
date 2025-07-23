@@ -87,8 +87,12 @@ line-length = 140
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = ["-s", "-vvv", "--import-mode=importlib"]
+addopts = ["-s", "-vvv", "--import-mode=importlib", "--ignore=**/playground"]
 pythonpath = ["."]
+norecursedirs = ["playground"]
+markers = [
+    "skip_on_ci: Skip running the test when running on CI",
+]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "*/tests/**" = [ 
@@ -119,6 +123,12 @@ members = [
 typeCheckingMode = "strict"
 reportExplicitAny = false
 reportMissingTypeStubs = false
-include = ["**/tests/*"]
-extend-exclude = ["**/.venv/**", "**/playground/**"]
+include = ["**/tests/**", "**/src/**"]
+exclude = [
+    "**/playground/**",
+    "**/examples/**",
+    "**/references/**",
+    "**/docs/**",
+    "**/.venv/**",
+]
 

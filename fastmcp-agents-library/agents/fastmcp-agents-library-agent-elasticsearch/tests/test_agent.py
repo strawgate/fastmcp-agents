@@ -1,10 +1,8 @@
-from fastmcp_agents.library.agent.elasticsearch.esql_agent import AskESQLAgent
-from fastmcp_agents.library.agent.elasticsearch.esql_expert import AskESQLExpert
+from fastmcp_agents.library.agent.elasticsearch.esql_agent import ask_esql_agent
+from fastmcp_agents.library.agent.elasticsearch.esql_expert import ask_esql_expert
 
 
 def test_init():
-    agent = AskESQLAgent()
-    assert agent is not None
+    assert ask_esql_agent is not None
 
-    expert = AskESQLExpert()
-    assert expert is not None
+    assert ask_esql_expert is not None

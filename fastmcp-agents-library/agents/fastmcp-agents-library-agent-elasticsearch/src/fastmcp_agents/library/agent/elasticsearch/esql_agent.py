@@ -1,18 +1,24 @@
-from typing import Any, override
+import os
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any
 
-from fastmcp.mcp_config import MCPConfig, MCPServerTypes
-from pydantic import Field
+from fastmcp import FastMCP
+from fastmcp.tools.tool import Tool
+from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
+from pydantic import BaseModel, Field
+from pydantic_ai import Agent
 
-from fastmcp_agents.core.agents.task import DefaultFailureModel, DefaultSuccessModel, TaskAgent
-from fastmcp_agents.core.models.server_builder import FastMCPAgents
 from fastmcp_agents.library.agent.elasticsearch.shared import (
     esql_elasticsearch_mcp,
-    esql_instructions,
-    formatting_instructions,
-    knowledge_base_instructions,
     prepare_knowledge_base,
 )
-from fastmcp_agents.library.mcp.strawgate.knowledge_base_mcp import read_write_knowledge_base_mcp
+from fastmcp_agents.library.mcp.strawgate import (
+    read_only_knowledge_base_mcp,
+    read_write_knowledge_base_mcp,
+)
+
+if TYPE_CHECKING:
+    from pydantic_ai.agent import AgentRunResult
 
 elasticsearch_instructions = """
 You have access to the Elasticsearch MCP Server to perform queries so you can verify the indices, fields, mappings and more:
@@ -29,39 +35,63 @@ If the user asks you a specific question, like how many of X are there, you shou
 also provide the full query, explanation, documentation links, and results in your response unless specifically asked not to.
 """
 
+server = FastMCP[None](name="ask-esql-agent")
 
 mcp_servers = {
-    "knowledge-base": read_write_knowledge_base_mcp(),
+    "knowledge-base": read_only_knowledge_base_mcp(),
     "strawgate-elasticsearch": esql_elasticsearch_mcp(),
 }
 
-
-class AskESQLAgent(TaskAgent):
-    """An agent that can ask questions about Elasticsearch and ES|QL and will use
-    the Knowledge Base and connected Elasticsearch server to answer questions."""
-
-    name: str = "ask_esql_agent"
-
-    mcp: MCPConfig | dict[str, MCPServerTypes] | dict[str, Any] | None = Field(default=mcp_servers)
-
-    instructions: str = f"""
-    {esql_instructions}
-    {elasticsearch_instructions}
-    {formatting_instructions}
-    {knowledge_base_instructions}
-    """
-
-    @override
-    async def __call__(self, task: str) -> DefaultSuccessModel | DefaultFailureModel:
-        """Call the agent."""
-        return await super().handle_task(task=task)
+ask_esql_toolset = FastMCPToolset.from_mcp_config(mcp_config=mcp_servers)
 
 
-server = FastMCPAgents(
-    name="ask-elasticsearch",
-    mcp=mcp_servers,
-    agents=[AskESQLAgent(tools_from_context=True)],
-).to_server()
+class QueryExplanation(BaseModel):
+    """The explanation of a query."""
+
+    step: str = Field(description="The step of the query. Each pipe `|` is a step.")
+    explanation: str = Field(description="The explanation of the step.")
+    reference: str = Field(description="A reference to the documentation for the step.")
+
+
+class AskESQLAgentResponse(BaseModel):
+    """The response from the ask_esql_agent."""
+
+    answer: str = Field(description="A summary of the results of the query.")
+    query: str = Field(description="The query that was run.")
+    explanation: list[QueryExplanation] = Field(description="The explanation of the query.")
+    results: list[dict[str, Any]] = Field(description="The results of the query.")
+
+
+ask_esql_agent = Agent(
+    model=os.environ.get("MODEL"),
+    toolsets=[ask_esql_toolset],
+    instructions=dedent(
+        text="""
+        {esql_instructions}
+        {elasticsearch_instructions}
+        {formatting_instructions}
+        {knowledge_base_instructions}
+        """
+    ),
+    output_type=AskESQLAgentResponse,
+)
+
+
+async def ask_esql_agent_fn(question: str) -> AskESQLAgentResponse:
+    """Ask an ESQL question."""
+
+    async with ask_esql_agent:
+        esql_tips: Any = await ask_esql_toolset.call_tool("esql_tips")
+        run_result: AgentRunResult[AskESQLAgentResponse] = await ask_esql_agent.run(
+            user_prompt=[str(esql_tips), question],
+            toolsets=[ask_esql_toolset],
+        )
+
+        return run_result.output
+
+
+ask_esql_tool = Tool.from_function(fn=ask_esql_agent_fn, name="ask_esql_agent")
+server.add_tool(tool=ask_esql_tool)
 
 if __name__ == "__main__":
     import asyncio
