@@ -5,7 +5,7 @@ description = "An agent for maintaining documentation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp @ git+https://github.com/jlowin/fastmcp.git@main",
+    "fastmcp",
     "fastmcp-agents-library-mcp",
     "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.0",
     "gitpython>=3.1.44",
