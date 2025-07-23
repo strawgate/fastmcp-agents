@@ -5,6 +5,7 @@ description = "Fastmcp Agents Project"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastmcp @ git+https://github.com/jlowin/fastmcp.git@main",
 ]
 
 [tool.hatch.metadata]

@@ -12,10 +12,7 @@ pyproject_files=$(find .. -name "pyproject.toml" -not -path "*/.venv/*")
 for pyproject_file in $pyproject_files; do  
     echo "Linting $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv venv
-    source .venv/bin/activate
-    uv run --active ruff format
-    uv run --active ruff check --fix
-    deactivate
+    uv run ruff format
+    uv run ruff check --fix
     cd -
 done

@@ -11,9 +11,6 @@ pyproject_files=$(find .. -name "pyproject.toml" -not -path "*/.venv/*")
 for pyproject_file in $pyproject_files; do  
     echo "Updating $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv venv
-    source .venv/bin/activate
-    uv sync -U --active
-    deactivate
+    uv sync -U --active --all-packages
     cd -
 done

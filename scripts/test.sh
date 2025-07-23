@@ -15,9 +15,6 @@ set -a; source ../.env; set +a
 for pyproject_file in $pyproject_files; do
     echo "Testing $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv venv
-    source .venv/bin/activate
     uv run --active pytest -v tests/
-    deactivate
     cd -
 done

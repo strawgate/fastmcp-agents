@@ -11,13 +11,10 @@ pyproject_files=$(find .. -name "pyproject.toml" -not -path "*/.venv/*")
 for pyproject_file in $pyproject_files; do
     echo "Building and testing $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv venv
-    source .venv/bin/activate
     uv build
     # if there is a tests/ directory, run pytest
     if [ -d "tests/" ]; then
-        uv run --active pytest -v tests/
+        uv run pytest -v tests/
     fi
-    deactivate
     cd -
 done
