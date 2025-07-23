@@ -1,21 +1,24 @@
 [project]
-name = "fastmcp-agents-agent-strawgate-elasticsearch"
+name = "fastmcp-agents-library-agent-documentation-maintainer"
 version = "0.5.1"
-description = "An agent for interacting with Elasticsearch"
+description = "An agent for maintaining documentation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "fastmcp @ git+https://github.com/jlowin/fastmcp.git@main",
     "fastmcp-agents-library-mcp",
+    "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.0",
     "gitpython>=3.1.44",
     "pydantic>=2.11.7",
+    "pydantic-ai>=0.4.4",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv.sources]
-fastmcp-agents-library-mcp = { workspace = true }
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fastmcp_agents"]
@@ -23,6 +26,15 @@ packages = ["src/fastmcp_agents"]
 [tool.hatch.build.targets.sdist]
 packages = ["src/fastmcp_agents"]
 
+[tool.uv.sources]
+fastmcp-agents-library-mcp = { workspace = true }
+
+
+[tool.pytest.ini_options]
+markers = [
+    "skip_on_ci: Skip running the test when running on CI",
+]
+addopts = "-s" 
 
 [dependency-groups]
 dev = [
@@ -32,8 +44,7 @@ dev = [
 ]
 
 [project.scripts]
-esql-standalone = "fastmcp_agents.library.agent.elasticsearch.esql.standalone:run"
-esql-connected = "fastmcp_agents.library.agent.elasticsearch.esql.connected:main"
+maintain-documentation = "fastmcp_agents.library.agent.documentation.maintainer:run"
 
 
 [tool.ruff]

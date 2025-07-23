@@ -46,7 +46,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Sync
-        run: uv sync --dev --all-groups
+        run: uv sync --dev --all-groups --all-packages
         working-directory: ${{ matrix.pyproject }}
 
       - name: Build
@@ -57,9 +57,7 @@ jobs:
         run: uv run pytest -m skip_on_ci -v tests/
         working-directory: ${{ matrix.pyproject }}
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          MODEL: gemini-2.5-flash
-          MODEL_PROVIDER: gemini
+          GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       
       - name: Mark for publish
         id: set-matrix
@@ -90,10 +88,5 @@ jobs:
       - name: "Install uv"
         uses: astral-sh/setup-uv@v3
 
-      - name: Build
-        run: uv build
-        working-directory: ${{ matrix.pyproject }}
-
       - name: Publish to PyPi
         run: uv publish -v dist/*
-        working-directory: ${{ matrix.pyproject }}

@@ -1,14 +1,11 @@
 import json
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from fastmcp.client.client import CallToolResult
 from mcp.types import TextContent
 
-from fastmcp_agents.library.agent.github.gather_background import GitHubIssueBackgroundAgent, GitHubIssueSummary, server
-
-if TYPE_CHECKING:
-    from fastmcp_agents.core.agents.base import DefaultFailureModel
+from fastmcp_agents.library.agent.github.gather_background import GitHubIssueSummary, gather_background, server
 
 
 def test_init():
@@ -40,11 +37,8 @@ def extract_structured_content_from_call_tool_result(call_tool_result: CallToolR
 @pytest.mark.asyncio
 @pytest.mark.skip_on_ci
 async def test_simple_background():
-    agent = GitHubIssueBackgroundAgent()
 
-    result: GitHubIssueSummary | DefaultFailureModel = await agent(
-        issue_repository_owner="strawgate", issue_repository="fastmcp-agents", issue_number=5
-    )
+    result = await gather_background(repo="fastmcp-agents", owner="strawgate", issue_number=5)
 
     assert isinstance(result, GitHubIssueSummary)
 
@@ -52,8 +46,6 @@ async def test_simple_background():
     assert result.issue_number == 5
 
     assert len(result.detailed_summary) > 10
-
-    # assert "closed" in result.detailed_summary.lower() or "resolved" in result.detailed_summary.lower()
 
     assert result.related_issues is not None
     assert len(result.related_issues) > 0

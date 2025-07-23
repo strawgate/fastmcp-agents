@@ -1,13 +1,10 @@
 {
-    "python.analysis.typeCheckingMode": "standard",
-    "python.testing.pytestArgs": [
-        "-s", "tests"
-    ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "cursorpyright.analysis.inlayHints.variableTypes": true,
     "cursorpyright.analysis.typeCheckingMode": "recommended",
     "cursorpyright.analysis.ignore": [
         "agent-working-dir/**"
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true
 }

@@ -11,7 +11,24 @@
             "program": "${file}",
             "justMyCode": false,
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/.env"
+            "envFile": "${workspaceFolder}/.env",
+            "cwd": "${workspaceFolder}/fastmcp-agents-library/agents/fastmcp-agents-library-agent-documentation-maintainer/playground/es_integrations",
+        },
+        // Debug Tests config
+        {
+            "name": "Python: Debug Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "purpose": [
+                "debug-test"
+            ],
+            "args": [
+                "-vv",
+                "-s" // Disable Captures
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }

@@ -2,25 +2,19 @@
 This agent is used to triage issues on a GitHub repository.
 """
 
-from typing import TYPE_CHECKING, Any, Literal, override
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from fastmcp import FastMCP
+from fastmcp.tools.tool import Tool
+from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
+from pydantic import BaseModel
+from pydantic_ai import Agent
 
-from fastmcp_agents.core.agents.base import DefaultFailureModel
-from fastmcp_agents.core.agents.task import TaskAgent
-from fastmcp_agents.core.models.server_builder import FastMCPAgents
-from fastmcp_agents.library.agent.github.shared.helpers import (
-    generate_background,
-    get_issue_background,
-    restricted_get_issue_tool_factory,
-    restricted_get_pull_request_tool_factory,
-    restricted_search_issues_tool_factory,
-)
-from fastmcp_agents.library.agent.github.shared.mcp import github_mcp_server
-from fastmcp_agents.library.agent.simple_code.investigate import CodeInvestigationAgent
+from fastmcp_agents.library.agent.github.shared.logging import configure_console_logging
+from fastmcp_agents.library.mcp.github import repo_restricted_github_mcp
+from fastmcp_agents.library.mcp.nickclyde import duckduckgo_mcp
 
-if TYPE_CHECKING:
-    from fastmcp.tools.tool import Tool as FastMCPTool
+configure_console_logging()
 
 gather_background_instructions = """
 ## Persona & Goal:
@@ -31,13 +25,27 @@ to connect them with previous issues posted, open or closed pull requests, and d
 {confidence_levels}
 {section_guidelines}
 
+You will perform multiple searches against the repository across issues, pull requests, and discussions to identify
+and relevant information for the issue. If you find a relevant related item, you will review the comments or discussion
+under that item to determine if it is related to the issue and how it might be related.
+
 Your goal is to "connect the dots", and gather all related information to assist the maintainer in investigating the issue.
 """
 
 
-mcp_servers = {
-    "github": github_mcp_server,
-}
+def mcp_servers_factory(owner: str, repo: str) -> dict[str, Any]:
+    return {
+        "duckduckgo": duckduckgo_mcp(),
+        "github": repo_restricted_github_mcp(owner=owner, repo=repo, read_only=True),
+    }
+
+def repo_restricted_toolset_factory(owner: str, repo: str) -> FastMCPToolset:
+    return FastMCPToolset.from_mcp_config(
+        mcp_config=mcp_servers_factory(
+            owner=owner,
+            repo=repo,
+        )
+    )
 
 
 class GitHubRelatedIssue(BaseModel):
@@ -54,58 +62,28 @@ class GitHubIssueSummary(BaseModel):
     related_issues: list[GitHubRelatedIssue]
 
 
-class GitHubIssueBackgroundAgent(TaskAgent):
-    """An agent that can gather background information about a GitHub issue."""
+gather_background_agent = Agent[Any, GitHubIssueSummary](
+    model="google-vertex:gemini-2.5-flash",
+    system_prompt=gather_background_instructions,
+    output_type=GitHubIssueSummary,
+)
 
-    name: str = "ask_issue_background"
+server = FastMCP[None](name="gather-github-issue-background")
 
-    mcp: dict[str, Any] = Field(default=mcp_servers)
+async def gather_background(owner: str, repo: str, issue_number: int) -> GitHubIssueSummary:
 
-    instructions: str = gather_background_instructions
+    result = await gather_background_agent.run(
+        user_prompt=[
+            f"The issue number to gather background information for is {issue_number}.",
+        ],
+        toolsets=[repo_restricted_toolset_factory(owner=owner, repo=repo)],
+    )
 
-    @override
-    async def __call__(
-        self,
-        *,
-        issue_repository_owner: str,
-        issue_repository: str,
-        issue_number: int,
-        code_repository_owner: str | None = None,
-        code_repository: str | None = None,
-    ) -> GitHubIssueSummary | DefaultFailureModel:
-        """Gather background information about a GitHub issue."""
+    return result.output
 
-        if code_repository_owner is None or code_repository is None:
-            code_repository_owner = issue_repository_owner
-            code_repository = issue_repository
+gather_background_tool = Tool.from_function(fn=gather_background)
 
-        tools: dict[str, FastMCPTool] = await self.get_tools()
-
-        restricted_tools: dict[str, FastMCPTool] = {
-            "get_issue": await restricted_get_issue_tool_factory(tools, issue_repository_owner, issue_repository),
-            "get_pull_request": await restricted_get_pull_request_tool_factory(tools, issue_repository_owner, issue_repository),
-            "search_issues": await restricted_search_issues_tool_factory(issue_repository_owner, issue_repository),
-        }
-
-        issue_content, comments_content = await get_issue_background(tools, issue_repository_owner, issue_repository, issue_number)
-
-        background = generate_background(
-            issue_content, comments_content, "It is mandatory to use the Code Investigation Agent to investigate the code repository."
-        )
-
-        code_investigation_agent = CodeInvestigationAgent(tools_from_context=self.tools_from_context)
-
-        restricted_tools["code_investigation"] = code_investigation_agent.to_tool()
-
-        return await self.handle_task(task=background, tools=restricted_tools, success_model=GitHubIssueSummary)
-
-
-server = FastMCPAgents(
-    name="gather-github-issue-background",
-    mcp=mcp_servers,
-    agents=[GitHubIssueBackgroundAgent(tools_from_context=True)],
-).to_server()
-
+server.add_tool(tool=gather_background_tool)
 
 if __name__ == "__main__":
     server.run(transport="sse")

@@ -1,3 +1,3 @@
-from .investigate import CodeInvestigationAgent
+from .investigate import code_investigation_agent
 
-__all__ = ["CodeInvestigationAgent"]
+__all__ = ["code_investigation_agent"]

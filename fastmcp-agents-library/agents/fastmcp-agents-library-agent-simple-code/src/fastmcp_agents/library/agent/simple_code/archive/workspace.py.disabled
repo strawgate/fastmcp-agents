@@ -1,0 +1,18 @@
+
+from collections.abc import AsyncIterator
+from contextlib import ExitStack, asynccontextmanager
+from pathlib import Path
+from typing import Any
+
+from fastmcp_agents.library.agent.simple_code.helpers.git import quick_clone_git_repo
+
+
+@asynccontextmanager
+async def prepare_workspace(*, git_url: str | None = None, clean_workspace: bool = True) -> AsyncIterator[tuple[Path, dict[str, Any] | None]]:
+    directory = Path.cwd()
+
+    with ExitStack() as stack:
+        if git_url is not None:
+            context_manager = quick_clone_git_repo(git_url=git_url, set_cwd=True, delete_on_exit=clean_workspace)
+
+            _ = stack.enter_context(cm=context_manager)

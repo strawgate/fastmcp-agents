@@ -5,15 +5,10 @@ description = "Fastmcp Agents Project"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "fastmcp-agents-cli[auto]",
-    "fastmcp-agents-core[auto]",
 ]
 
 [tool.hatch.metadata]
 allow-direct-references=true
-
-[project.scripts]
-fastmcp-agents-cli = "fastmcp_agents.cli.main:run"
 
 [dependency-groups]
 dev = [
@@ -30,7 +25,7 @@ lint = [
 ]
 
 [build-system]
-requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.sdist]
@@ -86,10 +81,12 @@ lint.extend-select = [
 
 line-length = 140
 
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-s -vvv"  # Disable Captures
+addopts = ["-s", "-vvv", "--import-mode=importlib"]
+pythonpath = ["."]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "*/tests/**" = [ 
@@ -108,16 +105,16 @@ addopts = "-s -vvv"  # Disable Captures
 "**/example-*.py" = ["ALL"]
 
 
-[tool.uv.sources]
-fastmcp-agents-cli = { path = "fastmcp-agents-cli", editable = true }
-fastmcp-agents-core = { path = "fastmcp-agents-core", editable = true }
 
 [tool.uv.workspace]
 members = [
-    "fastmcp-agents-library/agents/fastmcp-agents-library-agent-github",
+    "fastmcp-agents-library/agents/*",
+    "fastmcp-agents-library/mcp/*",
+    "fastmcp-agents-library/tools/*",
 ]
 
 [tool.pyright]
+typeCheckingMode = "strict"
 reportExplicitAny = false
 reportMissingTypeStubs = false
 include = ["**/tests/*"]

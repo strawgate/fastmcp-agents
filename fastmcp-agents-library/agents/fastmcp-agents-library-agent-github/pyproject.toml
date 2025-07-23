@@ -7,8 +7,9 @@ requires-python = ">=3.13"
 
 dependencies = [
     "asyncstdlib>=3.13.1",
-    "fastmcp-agents-core[auto]",
     "fastmcp-agents-library-agent-simple-code",
+    "fastmcp-agents-library-mcp",
+    "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.2",
     "gitpython>=3.1.44",
 ]
 
@@ -16,15 +17,16 @@ dependencies = [
 github-issue-triage = "fastmcp_agents.library.agent.github.issue_triage:main"
 github-gather-background = "fastmcp_agents.library.agent.github.gather_background:main"
 
-[tool.uv.sources]
-fastmcp-agents-core = { path = "../../../fastmcp-agents-core", editable = true }
-fastmcp-agents-library-agent-simple-code = { path = "../fastmcp-agents-library-agent-simple-code", editable = true }
-
 [dependency-groups]
 dev = [
     "pytest-asyncio>=1.1.0",
+    "pytest-dotenv",
     "ruff>=0.12.4",
 ]
+
+[tool.uv.sources]
+fastmcp-agents-library-agent-simple-code = { workspace = true }
+fastmcp-agents-library-mcp = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
@@ -35,7 +37,7 @@ markers = [
     "skip_on_ci: Skip running the test when running on CI",
 ]
 addopts = "-s" 
-
+env_files = [".env"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/fastmcp_agents"]

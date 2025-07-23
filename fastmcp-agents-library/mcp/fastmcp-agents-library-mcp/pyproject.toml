@@ -6,11 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastmcp>=2.10.7.dev16",
-    "fastmcp-agents-core[auto]",
 ]
-[tool.uv.sources]
-fastmcp-agents-core = { path = "../../../fastmcp-agents-core", editable = true }
-
 
 [build-system]
 requires = ["hatchling"]
