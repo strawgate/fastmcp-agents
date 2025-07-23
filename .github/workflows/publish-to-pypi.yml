@@ -15,11 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.set-matrix.outputs.projects }}
-    # steps:
-    #   - uses: actions/checkout@v2
-    #   - id: set-matrix
-    #     run: |
-    #       echo "projects=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep pyproject.toml | xargs -I {} dirname {} | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
@@ -54,39 +49,21 @@ jobs:
         working-directory: ${{ matrix.pyproject }}
 
       - name: Test
-        run: uv run pytest -m skip_on_ci -v tests/
+        run: uv run pytest -m "not skip_on_ci" -v tests/
         working-directory: ${{ matrix.pyproject }}
         env:
-          GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          MODEL: ${{ vars.MODEL }}
       
-      - name: Mark for publish
-        id: set-matrix
-        run: |
-          echo "::set-output name=pyproject::${{ matrix.pyproject }}" >> $GITHUB_OUTPUT
-
-    outputs:
-      pyproject: ${{ steps.set-matrix.outputs.pyproject }}
-  
-  pypi-publish:
-    name: Upload to PyPI
-    runs-on: ubuntu-latest
-    needs: [test]
-    environment: PyPi
-    if: always()
-    permissions:
-      id-token: write
-    strategy: 
-      fail-fast: false 
-      matrix: 
-        pyproject: ${{fromJson(needs.test.outputs.pyproject)}}
-    steps:
-      - name: Checkout
+      - name: Clean
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          clean: true
 
-      - name: "Install uv"
-        uses: astral-sh/setup-uv@v3
+      - name: Build
+        run: uv build
+        working-directory: ${{ matrix.pyproject }}
 
       - name: Publish to PyPi
         run: uv publish -v dist/*

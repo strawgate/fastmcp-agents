@@ -11,6 +11,7 @@ from fastmcp_agents.library.agent.documentation_maintainer.agent import (
     GatherDocumentationResponse,
     UpdateDocumentationResponse,
     best_practices_agent,
+    do_it_all,
     gather_agent,
     update_agent,
 )
@@ -43,7 +44,6 @@ def test_init(
 
 @pytest.fixture
 async def in_temp_dir():
-
     original_dir = Path.cwd()
     with tempfile.TemporaryDirectory() as temp_dir:
         os.chdir(path=temp_dir)
@@ -101,11 +101,9 @@ async def test_best_practices(best_practices: Agent[None, BestPracticesResponse]
     assert len(result.output.best_practices) > 0
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.skip_on_ci
 async def test_best_practices_elastic_integrations(best_practices: Agent[None, BestPracticesResponse]):
-
     os.chdir(Path(__file__).parent.parent / "playground/es_integrations")
 
     result = await best_practices.run(user_prompt="What are the best practices for package readmes?")
@@ -113,3 +111,35 @@ async def test_best_practices_elastic_integrations(best_practices: Agent[None, B
     assert result.output.best_practices is not None
 
     assert len(result.output.best_practices) > 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip_on_ci
+async def test_gather_documentation_kafka(gather: Agent[None, GatherDocumentationResponse]):
+    os.chdir(Path(__file__).parent.parent / "playground/es_integrations")
+
+    result = await gather.run(user_prompt="Let's gather documentation to update the README.md in the Kafka package")
+
+    assert result.output.sources is not None
+    assert result.output.summary is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip_on_ci
+async def test_update_documentation_kafka(update: Agent[None, UpdateDocumentationResponse]):
+    os.chdir(Path(__file__).parent.parent / "playground/es_integrations")
+
+    result = await update.run(user_prompt="Let's update the README.md in the Kafka package")
+
+    assert result.output.changes is not None
+    assert result.output.summary is not None
+
+
+@pytest.mark.asyncio
+@pytest.mark.skip_on_ci
+async def test_do_it_all():
+    os.chdir(Path(__file__).parent.parent / "playground/es_integrations")
+
+    result = await do_it_all(task="Let's update the README.md in the Kafka package")
+
+    assert result is not None

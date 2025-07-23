@@ -1,5 +1,3 @@
-from ast import Set
-from gzip import WRITE
 import os
 
 from fastmcp.mcp_config import TransformingStdioMCPServer
@@ -18,7 +16,7 @@ def github_mcp() -> TransformingStdioMCPServer:
             "GITHUB_PERSONAL_ACCESS_TOKEN",
             "ghcr.io/github/github-mcp-server",
         ],
-        env=os.environ,
+        env=dict(os.environ.copy()),
         tools={},
     )
 
@@ -209,7 +207,8 @@ github_search_syntax_help = """
 *   `commenter:_USERNAME_`: Finds issues/PRs with a comment from a user.
 *   `involves:_USERNAME_`: Finds issues/PRs where a user is involved (author, assignee, mentioner, or commenter).
 *   `team:_ORGNAME/TEAMNAME_`: Finds issues/PRs that mention a specific team.
-*   `@me`: Can be used with `author`, `assignee`, `mentions`, `commenter`, `user-review-requested` to refer to the current user (e.g., `author:@me`).
+*   `@me`: Can be used with `author`, `assignee`, `mentions`, `commenter`, `user-review-requested` to
+            refer to the current user (e.g., `author:@me`).
 
 ### Labels, Milestones, and Projects
 
@@ -264,7 +263,8 @@ github_search_syntax_help = """
 
 *   `is:issue is:open author:octocat label:"bug"`: Open bugs created by octocat.
 *   `type:pr review:required language:javascript`: JavaScript pull requests requiring review.
-*   `repo:octo-org/octo-project comments:>50 created:>=2023-01-01`: Issues/PRs in `octo-org/octo-project` with over 50 comments created since Jan 1, 2023.
+*   `repo:octo-org/octo-project comments:>50 created:>=2023-01-01`: Issues/PRs in `octo-org/octo-project` with
+        over 50 comments created since Jan 1, 2023.
 *   `is:issue no:assignee no:milestone`: Issues with no assignee and no milestone.
 *   `team:myorg/frontend-team is:open is:pr`: Open pull requests mentioning the `myorg/frontend-team`.
-"""
+"""  # noqa: E501

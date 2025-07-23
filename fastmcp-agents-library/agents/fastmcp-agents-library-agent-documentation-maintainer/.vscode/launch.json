@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "fastmcp_agents.library.agent.documentation_maintainer.agent",
             "console": "integratedTerminal",
-            "envFile": "${workspaceFolder}/.env.vertex_ai",
+            "envFile": "${workspaceFolder}/../../../.env",
             "cwd": "${workspaceFolder}/playground",
             "justMyCode": false
         }

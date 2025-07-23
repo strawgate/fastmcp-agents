@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastmcp.client import Client
 from fastmcp.mcp_config import MCPConfig, TransformingStdioMCPServer
-from fastmcp.tools.tool_transform import ToolTransformConfig
+from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
 from pydantic import BaseModel
 
 
@@ -18,7 +18,23 @@ def read_write_knowledge_base_mcp(backend: Literal["duckdb", "elasticsearch"] = 
     return TransformingStdioMCPServer(
         command="uvx",
         args=["knowledge-base-mcp", *backend_args, "run"],
-        tools={},
+        tools={
+            "load_website": ToolTransformConfig(
+                arguments={
+                    "background": ArgTransformConfig(default=False),
+                },
+            ),
+            "load_directory": ToolTransformConfig(
+                arguments={
+                    "background": ArgTransformConfig(default=False),
+                },
+            ),
+            # "load_github_issues": ToolTransformConfig(
+            #     arguments={
+            #         "background": ArgTransformConfig(default=False),
+            #     },
+            # ),
+        },
     )
 
 

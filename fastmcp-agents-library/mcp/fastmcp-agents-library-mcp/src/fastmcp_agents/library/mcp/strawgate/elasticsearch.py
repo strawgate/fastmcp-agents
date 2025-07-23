@@ -16,6 +16,7 @@ def elasticsearch_mcp() -> TransformingStdioMCPServer:
         tools={},
     )
 
+
 # READ_ONLY_ELASTICSEARCH_TOOLS = {
 #     "indices_data_streams_stats",
 #     "summarize_data_stream",

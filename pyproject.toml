@@ -39,6 +39,8 @@ include = ["_fastmcp-agents/fastmcp_agents"]
 
 [tool.ruff]
 target-version = "py310"
+extend-exclude = ["**/.venv/**", "**/playground/**"]
+
 lint.fixable = ["ALL"]
 lint.ignore = [
     "COM812", 
@@ -118,4 +120,5 @@ typeCheckingMode = "strict"
 reportExplicitAny = false
 reportMissingTypeStubs = false
 include = ["**/tests/*"]
+extend-exclude = ["**/.venv/**", "**/playground/**"]
 

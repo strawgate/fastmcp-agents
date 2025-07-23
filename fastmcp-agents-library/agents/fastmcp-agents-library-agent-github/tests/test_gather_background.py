@@ -37,7 +37,6 @@ def extract_structured_content_from_call_tool_result(call_tool_result: CallToolR
 @pytest.mark.asyncio
 @pytest.mark.skip_on_ci
 async def test_simple_background():
-
     result = await gather_background(repo="fastmcp-agents", owner="strawgate", issue_number=5)
 
     assert isinstance(result, GitHubIssueSummary)

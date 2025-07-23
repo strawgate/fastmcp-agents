@@ -1,9 +1,11 @@
 import json
+import os
 from pathlib import Path
 from textwrap import dedent
 from typing import Any, Literal
 
 from fastmcp import FastMCP
+from fastmcp.tools.tool import Tool
 from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
@@ -57,11 +59,13 @@ class BestPractice(BaseModel):
 class BestPracticesResponse(BaseModel):
     """The response from the best practices agent."""
 
-    best_practices: list[BestPractice] = Field(description="A detailed list of best practices that exist across the documentation you reviewed.")
+    best_practices: list[BestPractice] = Field(
+        description="A detailed list of best practices that exist across the documentation you reviewed."
+    )
 
 
 best_practices_agent = Agent(
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     toolsets=[best_practices_toolset],
     output_type=BestPracticesResponse,
     instructions=dedent(
@@ -98,7 +102,7 @@ class GatherDocumentationResponse(BaseModel):
 
 
 gather_agent = Agent(
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     toolsets=[gather_toolset],
     output_type=GatherDocumentationResponse,
     instructions="""
@@ -108,10 +112,12 @@ gather_agent = Agent(
     You will:
     1. begin by reviewing the current documentation using the filesystem tools along with similar documentation in the repository to
        understand what "good" should look like.
-    2. review the list of current documentation by checking the existing knowledge bases via the `get_knowledge_bases` tool.
-    3. use the web search tool to find the most relevant online documentation, prefering vendor documentation over general documentation.
+    2. review the list of current documentation by checking the existing knowledge bases via the `get_knowledge_bases` tool. If you find that
+       the documentation is already present in the knowledge base, you can end and report success.
+    3. Otherwise, use the web search tool to find the most relevant online documentation, prefering vendor documentation over general documentation.
     4. use the knowledge base `load_website` tool to crawl and index the relevant documentation. The `load_website` tool will gather child
-       pages so ensure the seed_url you provide ends with a slash.
+       pages so ensure the seed_url you provide ends with a slash. If you provide a seed_url, there is no need to provide
+       subpages, they will automatically be included.
 
     You will return a summary of the documentation and the sources used to gather the documentation.
     """,
@@ -126,9 +132,11 @@ class UpdateDocumentationResponse(BaseModel):
 
 
 update_agent = Agent(
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     toolsets=[update_toolset],
     output_type=UpdateDocumentationResponse,
+    retries=3,
+    output_retries=3,
     instructions=dedent(
         text="""
         You are a documentation updating agent. You are responsible for updating the documentation in a project repository.
@@ -198,11 +206,12 @@ async def best_practices(task: str, depth: Literal["thorough", "normal", "brief"
     return run_result.output
 
 
-@fastmcp_server.tool
 async def do_it_all(task: str) -> str:
     """Do it all."""
 
-    best_practices_run_result: AgentRunResult[BestPracticesResponse] = await best_practices_agent.run(user_prompt=task)
+    print(f"Running best practices agent with task: {task}")
+    async with best_practices_agent:
+        best_practices_run_result: AgentRunResult[BestPracticesResponse] = await best_practices_agent.run(user_prompt=task)
 
     record_result(best_practices_run_result, "best_practices")
 
@@ -213,9 +222,11 @@ async def do_it_all(task: str) -> str:
     ```
     """
 
-    gather_run_result: AgentRunResult[GatherDocumentationResponse] = await gather_agent.run(user_prompt=[gather_task, task])
+    # print("Running gather agent with task: {gather_task}")
+    # async with gather_agent:
+    #     gather_run_result: AgentRunResult[GatherDocumentationResponse] = await gather_agent.run(user_prompt=[gather_task, task])
 
-    record_result(gather_run_result, "gather_documentation")
+    # record_result(gather_run_result, "gather_documentation")
 
     update_task = f"""
     The best practices for documentation are (this may inform what you should gather):
@@ -224,15 +235,13 @@ async def do_it_all(task: str) -> str:
     ```
     the gathered documentation is:
     ```md
-    {gather_run_result.output.summary}
-    ```
-    the sources used to gather the documentation are:
-    ```md
-    {gather_run_result.output.sources}
+    Documentation is available in the knowledge base.
     ```
     """
 
-    update_run_result: AgentRunResult[UpdateDocumentationResponse] = await update_agent.run(user_prompt=[update_task, task])
+    print("Running update agent with task: {update_task}")
+    async with update_agent:
+        update_run_result: AgentRunResult[UpdateDocumentationResponse] = await update_agent.run(user_prompt=[update_task, task])
 
     record_result(update_run_result, "update_documentation")
 
@@ -245,6 +254,9 @@ async def do_it_all(task: str) -> str:
     {update_run_result.output.summary}
     """
 
+
+do_it_all_tool = Tool.from_function(do_it_all)
+fastmcp_server.add_tool(do_it_all_tool)
 
 server = fastmcp_server
 

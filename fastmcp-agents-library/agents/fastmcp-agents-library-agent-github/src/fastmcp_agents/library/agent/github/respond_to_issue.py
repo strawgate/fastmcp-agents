@@ -2,6 +2,7 @@
 This agent is used to triage issues on a GitHub repository.
 """
 
+import os
 from textwrap import dedent
 from typing import Any
 
@@ -52,8 +53,9 @@ def repo_restricted_toolset_factory(owner: str, repo: str) -> FastMCPToolset:
         )
     )
 
+
 issue_response_agent = Agent[Any, str](
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     system_prompt=respond_instructions,
     output_type=str,
 )
@@ -68,26 +70,27 @@ async def respond_to_issue(
     issue_summary: GitHubIssueSummary,
     investigation: InvestigationResponse | None = None,
 ) -> str:
-
     background_yaml = yaml.safe_dump(issue_summary.model_dump())
     investigation_yaml = yaml.safe_dump(data=investigation.model_dump()) if investigation else None
 
-    task = dedent(text=f"""The issue number to reply to is {issue_number}.
+    task = dedent(
+        text=f"""The issue number to reply to is {issue_number}.
 
     The background information is as follows:
     {background_yaml}
-    """).strip()
+    """
+    ).strip()
 
     if investigation:
-        task += dedent(text=f"""
+        task += dedent(
+            text=f"""
         The investigation response is as follows:
         {investigation_yaml}
-        """).strip()
+        """
+        ).strip()
 
     run_result = await issue_response_agent.run(
-        user_prompt=task,
-        toolsets=[repo_restricted_toolset_factory(owner=owner, repo=repo)],
-        output_type=str
+        user_prompt=task, toolsets=[repo_restricted_toolset_factory(owner=owner, repo=repo)], output_type=str
     )
 
     print(run_result.output)

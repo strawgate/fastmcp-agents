@@ -2,6 +2,7 @@
 This agent is used to triage issues on a GitHub repository.
 """
 
+import os
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -39,6 +40,7 @@ def mcp_servers_factory(owner: str, repo: str) -> dict[str, Any]:
         "github": repo_restricted_github_mcp(owner=owner, repo=repo, read_only=True),
     }
 
+
 def repo_restricted_toolset_factory(owner: str, repo: str) -> FastMCPToolset:
     return FastMCPToolset.from_mcp_config(
         mcp_config=mcp_servers_factory(
@@ -63,15 +65,15 @@ class GitHubIssueSummary(BaseModel):
 
 
 gather_background_agent = Agent[Any, GitHubIssueSummary](
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     system_prompt=gather_background_instructions,
     output_type=GitHubIssueSummary,
 )
 
 server = FastMCP[None](name="gather-github-issue-background")
 
-async def gather_background(owner: str, repo: str, issue_number: int) -> GitHubIssueSummary:
 
+async def gather_background(owner: str, repo: str, issue_number: int) -> GitHubIssueSummary:
     result = await gather_background_agent.run(
         user_prompt=[
             f"The issue number to gather background information for is {issue_number}.",
@@ -80,6 +82,7 @@ async def gather_background(owner: str, repo: str, issue_number: int) -> GitHubI
     )
 
     return result.output
+
 
 gather_background_tool = Tool.from_function(fn=gather_background)
 

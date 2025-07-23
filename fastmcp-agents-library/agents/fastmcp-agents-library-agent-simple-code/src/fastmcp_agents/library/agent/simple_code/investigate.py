@@ -2,6 +2,7 @@
 This agent is used to perform simple code tasks.
 """
 
+import os
 import tempfile
 from pathlib import Path
 from textwrap import dedent
@@ -9,14 +10,15 @@ from typing import Annotated, Any, Literal
 
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
-from fastmcp_agents.library.agent.simple_code.helpers.filesystem import (
-    get_structure,
-    read_only_filesystem_mcp,
-)
 from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
 from git import Repo
 from pydantic import AnyHttpUrl, BaseModel, Field, RootModel
 from pydantic_ai import Agent
+
+from fastmcp_agents.library.agent.simple_code.helpers.filesystem import (
+    get_structure,
+    read_only_filesystem_mcp,
+)
 
 mcp_servers = {
     "filesystem": read_only_filesystem_mcp(),
@@ -59,6 +61,7 @@ references to the relevant code or tests that might need to be updated, or remov
 Remember, you cannot make any changes to the codebase. You can only read files.
 """
 
+
 class FileLines(RootModel[list[str]]):
     """A file line with line number and content."""
 
@@ -93,14 +96,14 @@ class InvestigationResponse(BaseModel):
 
 
 code_investigation_agent = Agent[None, InvestigationResponse](
-    model="google-vertex:gemini-2.5-flash",
+    model=os.environ.get("MODEL"),
     toolsets=[
         # We will provide a directory-locked toolset at runtime
     ],
     system_prompt=code_investigation_instructions,
     output_type=InvestigationResponse,
     retries=2,
-    output_retries=2
+    output_retries=2,
 )
 
 server = FastMCP[Any](name="investigate-code-agent")

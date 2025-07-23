@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
 from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
@@ -19,25 +21,37 @@ async def investigate_github_issue(
     *,
     owner: str,
     repo: str,
-    code_owner: str | None = None,
-    code_repo: str | None = None,
+    reply_to_owner: str | None = None,
+    reply_to_repo: str | None = None,
+    reply_to_issue_number: int | None = None,
+    code_path: Path | None = None,
     issue_number: int,
     reply_to_issue: bool,
 ) -> tuple[GitHubIssueSummary, InvestigationResponse, str | None]:
     issue_summary: GitHubIssueSummary = await gather_background(owner=owner, repo=repo, issue_number=issue_number)
 
+    code_repository: Path | AnyHttpUrl
+
+    if code_path:
+        code_repository = code_path
+    elif owner and repo:
+        code_repository = AnyHttpUrl(f"https://github.com/{owner}/{repo}.git")
+    else:
+        msg = "Either code_path or owner and repo must be provided"
+        raise ValueError(msg)
+
     investigation_response: InvestigationResponse = await investigate_code(
         task=issue_summary.detailed_summary,
-        code_repository=AnyHttpUrl(f"https://github.com/{code_owner or owner}/{code_repo or repo}.git"),
+        code_repository=code_repository,
     )
 
     if not reply_to_issue:
         return issue_summary, investigation_response, None
 
     response = await respond_to_issue(
-        owner=owner,
-        repo=repo,
-        issue_number=issue_number,
+        owner=reply_to_owner or owner,
+        repo=reply_to_repo or repo,
+        issue_number=reply_to_issue_number or issue_number,
         issue_summary=issue_summary,
         investigation=investigation_response,
     )
