@@ -27,6 +27,7 @@ jobs:
     needs: [list-projects]
     permissions:
       id-token: write
+    environment: pypi
     strategy: 
       fail-fast: false 
       matrix: 
