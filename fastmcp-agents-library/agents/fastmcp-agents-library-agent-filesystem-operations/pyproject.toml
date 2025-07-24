@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-filesystem-operations"
-version = "0.5.6"
+version = "0.5.7"
 description = "An agent for interacting with the filesystem"
 readme = "README.md"
 requires-python = ">=3.13"

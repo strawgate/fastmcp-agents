@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-simple-agents"
-version = "0.5.6"
+version = "0.5.7"
 description = "Add your description here"
 readme = "README.md"
 authors = [

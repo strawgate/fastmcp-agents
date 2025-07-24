@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-cli"
-version = "0.5.6"
+version = "0.5.7"
 description = "CLI for running FastMCP and calling tools on it"
 readme = "README.md"
 requires-python = ">=3.13"

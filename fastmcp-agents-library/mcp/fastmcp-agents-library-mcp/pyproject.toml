@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-mcp"
-version = "0.5.6"
+version = "0.5.7"
 description = "MCP Library for FastMCP Agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -18,6 +18,7 @@ module-name = "fastmcp_agents.library.mcp"
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
     "ruff>=0.12.4",
 ]
 

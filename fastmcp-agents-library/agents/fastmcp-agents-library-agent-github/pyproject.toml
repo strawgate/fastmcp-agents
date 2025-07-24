@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-github"
-version = "0.5.6"
+version = "0.5.7"
 description = "Agents for GitHub"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -16,6 +16,7 @@ dependencies = [
 [project.scripts]
 github-investigate-issue = "fastmcp_agents.library.agent.github.investigate_issue:run"
 github-gather-background = "fastmcp_agents.library.agent.github.gather_background:run"
+fastmcp-agents-library-agent-github = "fastmcp_agents.library.agent.github.investigate_issue:run"
 
 [dependency-groups]
 dev = [

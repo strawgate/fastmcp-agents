@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from pydantic_ai.agent import AgentRunResult
 
-from fastmcp_agents.library.agent.github.shared.logging import configure_console_logging
+from fastmcp_agents.library.agent.documentation_maintainer.logging import configure_console_logging
 from fastmcp_agents.library.mcp.nickclyde import duckduckgo_mcp
 from fastmcp_agents.library.mcp.strawgate import (
     read_only_filesystem_mcp,
