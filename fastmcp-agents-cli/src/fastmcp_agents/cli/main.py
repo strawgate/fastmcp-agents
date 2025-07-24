@@ -1,13 +1,13 @@
 import json as pyjson
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
-
+import os 
 import yaml
 from cyclopts import App
 from cyclopts.parameter import Parameter
 from fastmcp import Client, FastMCP
 from fastmcp.client.transports import FastMCPTransport
-from fastmcp.mcp_config import MCPConfig
+from fastmcp.mcp_config import MCPConfig, StdioMCPServer, TransformingStdioMCPServer
 from rich import print as rich_print
 from rich.pretty import pprint as rich_pprint
 
@@ -54,6 +54,10 @@ def get_client(config: Path | None) -> Client[FastMCPTransport]:
 
     mcp_config: MCPConfig = MCPConfig.from_dict(config=config_dict)
 
+    for mcp_server_config in mcp_config.mcpServers.values():
+        if isinstance(mcp_server_config, TransformingStdioMCPServer | StdioMCPServer):
+            mcp_server_config.env = dict(os.environ.copy())
+
     server: FastMCPProxy = FastMCP.as_proxy(backend=mcp_config)
 
     client: Client[FastMCPTransport] = Client(server)
@@ -76,8 +80,8 @@ async def list_tools(
 @call_app.command(name="tool")
 async def call_tool(
     tool: Annotated[str, Parameter(help="The name of the tool to call")],
-    args: Annotated[str | None, Parameter(help="Arguments passed as JSON")] = None,
     config: Annotated[Path | None, Parameter(help="Path to the MCP Configuration file.")] = None,
+    args: Annotated[str | None, Parameter(help="Arguments passed as JSON")] = None,
 ):
     """Call a tool with the given arguments."""
 

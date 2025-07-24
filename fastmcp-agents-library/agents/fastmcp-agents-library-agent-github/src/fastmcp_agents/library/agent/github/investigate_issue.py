@@ -7,7 +7,10 @@ from pydantic import AnyHttpUrl
 
 from fastmcp_agents.library.agent.github.gather_background import GitHubIssueSummary, gather_background, gather_background_tool
 from fastmcp_agents.library.agent.github.respond_to_issue import respond_to_issue
+from fastmcp_agents.library.agent.github.shared.logging import configure_console_logging
 from fastmcp_agents.library.agent.simple_code.investigate import InvestigationResponse, investigate_code, investigate_code_tool
+
+configure_console_logging()
 
 fastmcp = FastMCP[None](name="github-issue-triage")
 

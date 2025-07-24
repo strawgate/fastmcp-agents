@@ -517,7 +517,7 @@ lint = [{ name = "ruff" }]
 
 [[package]]
 name = "fastmcp-agents-cli"
-version = "0.5.7"
+version = "0.5.8"
 source = { editable = "fastmcp-agents-cli" }
 dependencies = [
     { name = "cyclopts" },
