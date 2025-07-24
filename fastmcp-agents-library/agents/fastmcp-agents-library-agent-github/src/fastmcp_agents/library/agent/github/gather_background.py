@@ -88,5 +88,10 @@ gather_background_tool = Tool.from_function(fn=gather_background)
 
 server.add_tool(tool=gather_background_tool)
 
+
+def run():
+    server.run()
+
+
 if __name__ == "__main__":
     server.run(transport="sse")

@@ -63,5 +63,10 @@ investigate_github_issue_tool = Tool.from_function(fn=investigate_github_issue)
 
 fastmcp.add_tool(tool=investigate_github_issue_tool)
 
+
+def run():
+    fastmcp.run()
+
+
 if __name__ == "__main__":
     fastmcp.run(transport="sse")

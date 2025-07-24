@@ -154,5 +154,11 @@ investigate_code_tool = Tool.from_function(fn=investigate_code)
 
 server.add_tool(tool=investigate_code_tool)
 
+
+def run():
+    """Run the agent."""
+    server.run(transport="stdio")
+
+
 if __name__ == "__main__":
     server.run(transport="sse")

@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-agent-strawgate-elasticsearch"
-version = "0.5.1"
+version = "0.5.5"
 description = "An agent for interacting with Elasticsearch"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -32,8 +32,8 @@ dev = [
 ]
 
 [project.scripts]
-esql-standalone = "fastmcp_agents.library.agent.elasticsearch.esql.standalone:run"
-esql-connected = "fastmcp_agents.library.agent.elasticsearch.esql.connected:main"
+esql-agent = "fastmcp_agents.library.agent.elasticsearch.esql.agent:run"
+esql-expert = "fastmcp_agents.library.agent.elasticsearch.esql.expert:run"
 
 
 [tool.ruff]

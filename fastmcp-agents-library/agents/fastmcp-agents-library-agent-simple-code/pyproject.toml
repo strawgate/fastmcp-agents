@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-simple-code"
-version = "0.5.1"
+version = "0.5.5"
 description = "Agents for Simple Code"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -8,10 +8,11 @@ requires-python = ">=3.13"
 dependencies = [
     "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.2",
     "gitpython>=3.1.44",
+    "fastmcp-agents-library-mcp",
 ]
 
 [project.scripts]
-simple-code = "fastmcp_agents.library.agent.simple_code:main"
+simple-code = "fastmcp_agents.library.agent.simple_code:run"
 
 [tool.uv.sources]
 fastmcp-agents-library-mcp = { workspace = true }

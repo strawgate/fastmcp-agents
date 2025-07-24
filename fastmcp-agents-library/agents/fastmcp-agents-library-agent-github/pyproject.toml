@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-github"
-version = "0.5.1"
+version = "0.5.5"
 description = "Agents for GitHub"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -14,8 +14,8 @@ dependencies = [
 ]
 
 [project.scripts]
-github-issue-triage = "fastmcp_agents.library.agent.github.issue_triage:main"
-github-gather-background = "fastmcp_agents.library.agent.github.gather_background:main"
+github-investigate-issue = "fastmcp_agents.library.agent.github.investigate_issue:run"
+github-gather-background = "fastmcp_agents.library.agent.github.gather_background:run"
 
 [dependency-groups]
 dev = [
@@ -28,10 +28,6 @@ dev = [
 fastmcp-agents-library-agent-simple-code = { workspace = true }
 fastmcp-agents-library-mcp = { workspace = true }
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [tool.pytest.ini_options]
 markers = [
     "skip_on_ci: Skip running the test when running on CI",
@@ -41,11 +37,12 @@ ignore = ["./playground"]
 addopts = "-s" 
 env_files = [".env"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/fastmcp_agents"]
+[build-system]
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
 
-[tool.hatch.build.targets.sdist]
-packages = ["src/fastmcp_agents"]
+[tool.uv.build-backend]
+module-name = "fastmcp_agents.library.agent.github"
 
 [tool.ruff]
 extend="../../../pyproject.toml"

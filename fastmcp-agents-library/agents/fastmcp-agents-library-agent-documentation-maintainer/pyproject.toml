@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-documentation-maintainer"
-version = "0.5.1"
+version = "0.5.5"
 description = "An agent for maintaining documentation"
 readme = "README.md"
 requires-python = ">=3.13"

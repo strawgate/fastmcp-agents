@@ -90,6 +90,12 @@ async def ask_esql_expert_fn(question: str) -> AskESQLExpertResponse:
 ask_esql_expert_tool = Tool.from_function(fn=ask_esql_expert_fn, name="ask_esql_expert")
 server.add_tool(tool=ask_esql_expert_tool)
 
+
+def run():
+    """Run the agent."""
+    server.run(transport="stdio")
+
+
 if __name__ == "__main__":
     import asyncio
 

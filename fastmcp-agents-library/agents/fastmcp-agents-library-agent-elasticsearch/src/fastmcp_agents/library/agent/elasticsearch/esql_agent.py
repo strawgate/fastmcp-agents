@@ -93,9 +93,15 @@ async def ask_esql_agent_fn(question: str) -> AskESQLAgentResponse:
 ask_esql_tool = Tool.from_function(fn=ask_esql_agent_fn, name="ask_esql_agent")
 server.add_tool(tool=ask_esql_tool)
 
+
+def run():
+    """Run the agent."""
+    server.run(transport="stdio")
+
+
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(prepare_knowledge_base(read_write_knowledge_base_mcp()))
+    asyncio.run(prepare_knowledge_base(knowledge_base_mcp=read_write_knowledge_base_mcp()))
 
     server.run(transport="sse")
