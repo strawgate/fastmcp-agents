@@ -1,14 +1,12 @@
 [project]
-name = "fastmcp-agents-library-agent-elasticsearch"
+name = "fastmcp-agents-library-agent-filesystem-operations"
 version = "0.5.6"
-description = "An agent for interacting with Elasticsearch"
+description = "An agent for interacting with the filesystem"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastmcp-agents-library-mcp",
     "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.0",
-    "gitpython>=3.1.44",
-    "pydantic>=2.11.7",
 ]
 
 [tool.uv.sources]
@@ -19,8 +17,7 @@ requires = ["uv_build>=0.8.2,<0.9.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "fastmcp_agents.library.agent.elasticsearch"
-
+module-name = "fastmcp_agents.library.agent.filesystem_operations"
 
 [dependency-groups]
 dev = [
@@ -30,9 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-esql-agent = "fastmcp_agents.library.agent.elasticsearch.esql.agent:run"
-esql-expert = "fastmcp_agents.library.agent.elasticsearch.esql.expert:run"
-
+filesystem-agent = "fastmcp_agents.library.agent.filesystem_operations.agent:run"
 
 [tool.ruff]
 extend="../../../pyproject.toml"

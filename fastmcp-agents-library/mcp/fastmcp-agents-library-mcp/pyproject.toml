@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-mcp"
-version = "0.5.5"
+version = "0.5.6"
 description = "MCP Library for FastMCP Agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -9,16 +9,11 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/fastmcp_agents"]
-
-[tool.hatch.build.targets.sdist]
-packages = ["src/fastmcp_agents"]
-
-
+[tool.uv.build-backend]
+module-name = "fastmcp_agents.library.mcp"
 
 [dependency-groups]
 dev = [

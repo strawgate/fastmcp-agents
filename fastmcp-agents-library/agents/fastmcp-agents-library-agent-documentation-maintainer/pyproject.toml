@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agent-documentation-maintainer"
-version = "0.5.5"
+version = "0.5.6"
 description = "An agent for maintaining documentation"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -14,17 +14,15 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "fastmcp_agents.library.agent.documentation_maintainer"
+
 
 [tool.hatch.metadata]
 allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/fastmcp_agents"]
-
-[tool.hatch.build.targets.sdist]
-packages = ["src/fastmcp_agents"]
 
 [tool.uv.sources]
 fastmcp-agents-library-mcp = { workspace = true }

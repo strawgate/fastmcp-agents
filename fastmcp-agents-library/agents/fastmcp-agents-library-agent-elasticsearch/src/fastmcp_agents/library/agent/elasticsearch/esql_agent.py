@@ -10,6 +10,9 @@ from pydantic_ai import Agent
 
 from fastmcp_agents.library.agent.elasticsearch.shared import (
     esql_elasticsearch_mcp,
+    esql_instructions,
+    formatting_instructions,
+    knowledge_base_instructions,
     prepare_knowledge_base,
 )
 from fastmcp_agents.library.mcp.strawgate import (
@@ -66,7 +69,7 @@ ask_esql_agent = Agent(
     model=os.environ.get("MODEL"),
     toolsets=[ask_esql_toolset],
     instructions=dedent(
-        text="""
+        text=f"""
         {esql_instructions}
         {elasticsearch_instructions}
         {formatting_instructions}
@@ -81,7 +84,7 @@ async def ask_esql_agent_fn(question: str) -> AskESQLAgentResponse:
     """Ask an ESQL question."""
 
     async with ask_esql_agent:
-        esql_tips: Any = await ask_esql_toolset.call_tool("esql_tips")
+        esql_tips: Any = await ask_esql_toolset.call_tool_direct(name="esql_tips", tool_args={})
         run_result: AgentRunResult[AskESQLAgentResponse] = await ask_esql_agent.run(
             user_prompt=[str(esql_tips), question],
             toolsets=[ask_esql_toolset],
