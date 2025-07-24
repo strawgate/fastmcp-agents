@@ -118,6 +118,7 @@ members = [
     "fastmcp-agents-library/agents/*",
     "fastmcp-agents-library/mcp/*",
     "fastmcp-agents-library/tools/*",
+    "fastmcp-agents-cli",
 ]
 
 [tool.pyright]

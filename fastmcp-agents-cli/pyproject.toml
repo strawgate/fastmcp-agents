@@ -1,0 +1,44 @@
+[project]
+name = "fastmcp-agents-cli"
+version = "0.5.4"
+description = "CLI for running FastMCP and calling tools on it"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "cyclopts>=3.22.2",
+    "fastmcp",
+    "pyyaml>=6.0.2",
+    "rich>=14.0.0",
+]
+
+[project.scripts]
+fastmcp-agents-cli = "fastmcp_agents.cli.main:run"
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.1.0",
+    "pytest-dotenv",
+    "ruff>=0.12.4",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "skip_on_ci: Skip running the test when running on CI",
+]
+asyncio_mode = "auto"
+addopts = "-s" 
+env_files = [".env"]
+
+[build-system]
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "fastmcp_agents.cli"
+
+[tool.ruff]
+extend="../pyproject.toml"
+
+[tool.pyright]
+extends = "../pyproject.toml"

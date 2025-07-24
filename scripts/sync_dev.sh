@@ -11,6 +11,6 @@ pyproject_files=$(find .. -name "pyproject.toml" -not -path "*/.venv/*")
 for pyproject_file in $pyproject_files; do
     echo "Syncing $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv sync --dev --all-groups --active --all-projects
+    uv sync --dev --all-groups --active --all-packages
     cd -
 done

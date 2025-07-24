@@ -1,0 +1,4 @@
+mcpServers:
+  timezone:
+    command: uvx
+    args: ["filesystem-operations-mcp"]
