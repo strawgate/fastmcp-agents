@@ -11,7 +11,7 @@ from typing import Annotated, Any, Literal
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
 from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
-from git import Repo
+from git.repo import Repo
 from pydantic import AnyHttpUrl, BaseModel, Field, RootModel
 from pydantic_ai import Agent
 
@@ -84,6 +84,27 @@ class InvestigationRecommendation(BaseModel):
     proposed_lines: FileLines = Field(default=..., description="The proposed lines of code in the file with their line numbers.")
 
 
+class BranchInfo(BaseModel):
+    """A repository info."""
+
+    name: str
+    commit_sha: str
+
+    @classmethod
+    def from_repo(cls, repo: Repo) -> "BranchInfo":
+        """Create a branch info from a repository."""
+        return cls(name=repo.active_branch.name, commit_sha=repo.head.commit.hexsha)
+
+    @classmethod
+    def from_dir(cls, directory: Path) -> "BranchInfo | None":
+        """Create a branch info from a directory."""
+        try:
+            repo: Repo = Repo(path=directory)
+            return cls.from_repo(repo)
+        except Exception:
+            return None
+
+
 class InvestigationResponse(BaseModel):
     """An investigation response."""
 
@@ -123,16 +144,19 @@ CODE_REPOSITORY_TYPE = Annotated[
 ]
 
 
-async def investigate_code(task: str, code_repository: CODE_REPOSITORY_TYPE) -> InvestigationResponse:
+async def investigate_code(task: str, code_repository: CODE_REPOSITORY_TYPE) -> tuple[InvestigationResponse, BranchInfo | None]:
     """Perform a code investigation."""
 
     with tempfile.TemporaryDirectory(delete=False) as temp_dir:
         # We only actually use the tempdir if we are cloning a git repository
         if isinstance(code_repository, AnyHttpUrl):
             Repo.clone_from(url=str(code_repository), to_path=temp_dir, single_branch=True, depth=1)
+
             code_repository = Path(temp_dir)
         if code_repository is None:
             code_repository = Path.cwd()
+
+        branch_info: BranchInfo | None = BranchInfo.from_dir(directory=code_repository)
 
         directory_locked_toolset = FastMCPToolset.from_mcp_config(
             mcp_config={"filesystem": read_only_filesystem_mcp(root_dir=code_repository)}
@@ -147,7 +171,7 @@ async def investigate_code(task: str, code_repository: CODE_REPOSITORY_TYPE) -> 
 
         run_result = await code_investigation_agent.run(user_prompt=[task, repo_info], toolsets=[directory_locked_toolset])
 
-        return run_result.output
+        return run_result.output, branch_info
 
 
 investigate_code_tool = Tool.from_function(fn=investigate_code)

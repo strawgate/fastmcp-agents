@@ -62,10 +62,12 @@ def playground_directory():
 
 @pytest.mark.asyncio
 async def test_calculator_investigation(playground_directory: Path):
-    investigation_reponse: InvestigationResponse = await investigate_code(
+    investigation_reponse, branch_info = await investigate_code(
         code_repository=AnyHttpUrl("https://github.com/strawgate/fastmcp-agents-tests-e2e.git"),
         task="I can't figure out how to do matrix multiplication in the calculator. Please do a search for matrix.",
     )
+
+    assert branch_info is not None
 
     assert isinstance(investigation_reponse, InvestigationResponse)
 

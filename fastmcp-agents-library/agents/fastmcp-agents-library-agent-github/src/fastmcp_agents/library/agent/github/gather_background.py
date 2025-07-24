@@ -12,12 +12,17 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 
 from fastmcp_agents.library.agent.github.shared.logging import configure_console_logging
+from fastmcp_agents.library.agent.github.shared.prompts import (
+    confidence_levels,
+    mindset_instructions,
+    section_guidelines,
+)
 from fastmcp_agents.library.mcp.github import repo_restricted_github_mcp
 from fastmcp_agents.library.mcp.nickclyde import duckduckgo_mcp
 
 configure_console_logging()
 
-gather_background_instructions = """
+gather_background_instructions = f"""
 ## Persona & Goal:
 You are a helpful assistant to an open source maintainer. You triage issues posted on a GitHub repository, looking
 to connect them with previous issues posted, open or closed pull requests, and discussions.

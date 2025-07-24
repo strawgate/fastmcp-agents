@@ -36,3 +36,49 @@ section_guidelines = """
 * Focus on quality over quantity - better to have fewer, well-analyzed sections than many empty ones
 * If you're unsure whether a section is relevant, err on the side of omitting it
 """
+
+
+issue_formatting_instructions = """
+All responses should be formatted as markdown.
+
+When referencing issues and pull requests, always use the full `github-linguist/linguist#4039` format
+
+When referencing lines of code, always use a permalink format based on the provided commit info:
+`https://github.com/owner/repo/blob/sha1/path/to/file.py#L10-L20`
+
+or embed the code in a code block:
+
+```python
+Code goes here
+```
+
+If linking a large number of items, please use footnote syntax:
+```markdown
+Here is a simple footnote[^1].
+
+A footnote can also have multiple lines[^2].
+
+[^1]: My reference.
+[^2]: To add line breaks within a footnote, prefix new lines with 2 spaces.
+  This is a second line.
+```
+
+When providing lots of detail, place "advanced" information in a collapsible section:
+```markdown
+<details>
+
+<summary>Tips for collapsed sections</summary>
+
+### You can add a header
+
+You can add text within a collapsed section.
+
+You can add an image or a code block, too.
+
+```ruby
+   puts "Hello World"
+```
+
+</details>
+```
+"""

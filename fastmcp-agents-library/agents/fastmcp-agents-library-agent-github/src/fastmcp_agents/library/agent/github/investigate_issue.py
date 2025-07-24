@@ -43,7 +43,7 @@ async def investigate_github_issue(
         msg = "Either code_path or owner and repo must be provided"
         raise ValueError(msg)
 
-    investigation_response: InvestigationResponse = await investigate_code(
+    investigation_response, branch_info = await investigate_code(
         task=issue_summary.detailed_summary,
         code_repository=code_repository,
     )
@@ -56,6 +56,7 @@ async def investigate_github_issue(
         repo=reply_to_repo or repo,
         issue_number=reply_to_issue_number or issue_number,
         issue_summary=issue_summary,
+        branch_info=branch_info,
         investigation=investigation_response,
     )
 
