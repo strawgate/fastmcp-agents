@@ -59,8 +59,6 @@ def delete_comments(dataset: Dataset):
     for case in dataset.cases:
         issue = github_client.get_repo(f"{case.inputs['owner']}/{case.inputs['repo']}").get_issue(int(case.inputs["issue_number"]))
 
-        #issue.edit(state="open")
-
         for comment in issue.get_comments():
             comment.delete()
 

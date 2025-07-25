@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agents"
-version = "0.1.0"
+version = "0.1.1"
 description = "Agents with no dependencies on other libraries"
 readme = "README.md"
 authors = [
@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 github = "fastmcp_agents.library.agents.github.agents:run"
+github-triage = "fastmcp_agents.library.agents.flows.triage_github_issue:run"
 simple-code = "fastmcp_agents.library.agent.simple_code.agents:run"
 
 

@@ -16,9 +16,39 @@ jobs:
     outputs:
       projects: ${{ steps.set-matrix.outputs.projects }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: set-matrix
-        run: echo "projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+        run: |
+          # Find all projects with pyproject.toml
+          all_projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \;)
+          
+          # Filter to only projects that have changed
+          changed_projects=""
+          while IFS= read -r project; do
+            if [ -n "$project" ]; then
+              # Check if any files in this project directory have changed
+              if git diff --name-only HEAD~1 HEAD | grep -q "^${project#./}/"; then
+                if [ -z "$changed_projects" ]; then
+                  changed_projects="$project"
+                else
+                  changed_projects="$changed_projects"$'\n'"$project"
+                fi
+              fi
+            fi
+          done <<< "$all_projects"
+          
+          # Convert to JSON array
+          if [ -n "$changed_projects" ]; then
+            projects_json=$(echo "$changed_projects" | jq -R -s -c 'split("\n")[:-1]')
+          else
+            projects_json="[]"
+          fi
+          
+          echo "projects=$projects_json" >> $GITHUB_OUTPUT
+          echo "Changed projects:"
+          echo "$changed_projects"
       
   publish:
     continue-on-error: true
