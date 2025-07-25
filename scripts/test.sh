@@ -13,8 +13,13 @@ echo "Loading environment variables from .env file"
 set -a; source ../.env; set +a
 
 for pyproject_file in $pyproject_files; do
+    # skip ../pyproject.toml
+    if [ "$pyproject_file" == "../pyproject.toml" ]; then
+        continue
+    fi
+
     echo "Testing $pyproject_file"
     cd $(dirname $pyproject_file)
-    uv run --active pytest -v tests/
+    uv run pytest -v tests/
     cd -
 done

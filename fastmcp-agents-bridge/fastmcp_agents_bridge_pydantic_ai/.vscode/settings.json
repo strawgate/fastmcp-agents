@@ -1,0 +1,8 @@
+{
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.venvPath": "/Users/bill.easton/repos/fastmcp-ai-agent-bridge"
+}

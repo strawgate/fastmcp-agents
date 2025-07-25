@@ -5,15 +5,13 @@ requires-python = ">=3.13"
 [manifest]
 members = [
     "fastmcp-agents",
+    "fastmcp-agents-bridge-pydantic-ai",
     "fastmcp-agents-cli",
     "fastmcp-agents-library-agent-documentation-maintainer",
     "fastmcp-agents-library-agent-elasticsearch",
     "fastmcp-agents-library-agent-filesystem-operations",
-    "fastmcp-agents-library-agent-github",
-    "fastmcp-agents-library-agent-simple-code",
+    "fastmcp-agents-library-agents",
     "fastmcp-agents-library-mcp",
-    "fastmcp-agents-library-simple-agents",
-    "fastmcp-agents-library-tools-git",
 ]
 
 [[package]]
@@ -133,15 +131,6 @@ wheels = [
 ]
 
 [[package]]
-name = "asyncstdlib"
-version = "3.13.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/50/e1/72e388631c85233a2fd890d024fc20a8a9961dbba8614d78266636218f1f/asyncstdlib-3.13.1.tar.gz", hash = "sha256:f47564b9a3566f8f9172631d88c75fe074b0ce2127963b7265d310df9aeed03a", size = 49752, upload-time = "2025-03-09T07:52:51.587Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b9/4a/c86c045bc7bb0244044935ba80c83998f1fdee4f4cef64c6b078e043b0e6/asyncstdlib-3.13.1-py3-none-any.whl", hash = "sha256:a64da68176af1da8c699026cad98f70b184f82b4cb39739e0b9701a2a7541cf9", size = 43993, upload-time = "2025-03-09T07:52:50.108Z" },
-]
-
-[[package]]
 name = "attrs"
 version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -176,30 +165,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.39.13"
+version = "1.39.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/cc/5ebce7eeba468c0bf5092c94684039e8484ca00329e62f0627662c930959/boto3-1.39.13.tar.gz", hash = "sha256:ace50ccfc4caba235b020e7d36f0191aa399771cb6fe6e34b4359b671aab1a4b", size = 111862, upload-time = "2025-07-24T19:18:27.416Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/8f/acc7d434730e0c931ece4b46c983bf5afb7ae63abb545b535f0eda538476/boto3-1.39.14.tar.gz", hash = "sha256:fabb16360a93b449d5241006485bcc761c26694e75ac01009f4459f114acc06e", size = 111844, upload-time = "2025-07-25T19:25:26.943Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/bf/a6a73de65e3347305fc0aed129c63897e047042f55152414295a930700d6/boto3-1.39.13-py3-none-any.whl", hash = "sha256:8e62c5724dc06a1934fde155a2eb48cb851cc17ad0b5142da9eb9e46fe0355d3", size = 139899, upload-time = "2025-07-24T19:18:25.388Z" },
+    { url = "https://files.pythonhosted.org/packages/93/9a/01ea17a58a27b7f4a7a6f6e2f4d4191b9e92362b77b6d58689f2d7eccb99/boto3-1.39.14-py3-none-any.whl", hash = "sha256:82c6868cad18c3bd4170915e9525f9af5f83e9779c528417f8863629558fc2d0", size = 139898, upload-time = "2025-07-25T19:25:25.506Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.39.13"
+version = "1.39.14"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/39/eb875fff1c1d3299da660ed6cb00dd9b313e831ef7d18cb3c0f346a39578/botocore-1.39.13.tar.gz", hash = "sha256:ee8053f34e425a40843daccfa78820d6891f0d4f85fc647ab98f9ba28c36f9e7", size = 14222597, upload-time = "2025-07-24T19:18:16.023Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/ca/8994676a67f0a9d39a0844124f196c4dedc2fbca370c839f61246c1fea6d/botocore-1.39.14.tar.gz", hash = "sha256:7fc44d4ad13b524e5d8a6296785776ef5898ac026ff74df9b35313831d507926", size = 14226110, upload-time = "2025-07-25T19:25:17.751Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/ce/8bb5626b0313c3f203215124f432d04ef46de611a9377b0791386e7355b2/botocore-1.39.13-py3-none-any.whl", hash = "sha256:6318ae28984d05aaabe92160446d37a2c498951b34a4d5431bc1ec7eb0376417", size = 13882999, upload-time = "2025-07-24T19:18:11.103Z" },
+    { url = "https://files.pythonhosted.org/packages/08/c0/6b8200686c1f9ea44ab0daab0223b04799d60ccf882b9d7f770fbb40571e/botocore-1.39.14-py3-none-any.whl", hash = "sha256:4ed551c77194167b7e8063f33059bc2f9b2ead0ed4ee33dc7857273648ed4349", size = 13888318, upload-time = "2025-07-25T19:25:13.386Z" },
 ]
 
 [[package]]
@@ -464,8 +453,8 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-version = "2.10.7.dev37+d048405"
-source = { git = "https://github.com/jlowin/fastmcp.git?rev=main#d04840560a31ede819f4951f49b15e63d55ff23c" }
+version = "2.10.7.dev41+a5708ff"
+source = { git = "https://github.com/jlowin/fastmcp#a5708ff91878fb5544d50e867884b878de526aa3" }
 dependencies = [
     { name = "authlib" },
     { name = "cyclopts" },
@@ -483,10 +472,7 @@ dependencies = [
 [[package]]
 name = "fastmcp-agents"
 version = "0.5.7"
-source = { editable = "." }
-dependencies = [
-    { name = "fastmcp" },
-]
+source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
@@ -502,12 +488,50 @@ lint = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp", git = "https://github.com/jlowin/fastmcp.git?rev=main" }]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright", specifier = ">=1.30.1" },
     { name = "pygithub", specifier = ">=2.6.1" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
+lint = [{ name = "ruff" }]
+
+[[package]]
+name = "fastmcp-agents-bridge-pydantic-ai"
+version = "0.1.4"
+source = { editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "logfire" },
+    { name = "pydantic-ai" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "basedpyright" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
+lint = [
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", git = "https://github.com/jlowin/fastmcp" },
+    { name = "logfire", specifier = ">=3.25.0" },
+    { name = "pydantic-ai", specifier = ">=0.4.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "basedpyright", specifier = ">=1.30.1" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-mock" },
@@ -554,8 +578,8 @@ version = "0.5.7"
 source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-documentation-maintainer" }
 dependencies = [
     { name = "fastmcp" },
+    { name = "fastmcp-agents-bridge-pydantic-ai" },
     { name = "fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai" },
     { name = "gitpython" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
@@ -571,8 +595,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastmcp" },
+    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
     { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai", specifier = ">=0.1.0" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pydantic-ai", specifier = ">=0.4.4" },
@@ -590,8 +614,8 @@ name = "fastmcp-agents-library-agent-elasticsearch"
 version = "0.5.7"
 source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-elasticsearch" }
 dependencies = [
+    { name = "fastmcp-agents-bridge-pydantic-ai" },
     { name = "fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai" },
     { name = "gitpython" },
     { name = "pydantic" },
 ]
@@ -605,8 +629,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
     { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai", specifier = ">=0.1.0" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "pydantic", specifier = ">=2.11.7" },
 ]
@@ -623,8 +647,8 @@ name = "fastmcp-agents-library-agent-filesystem-operations"
 version = "0.5.7"
 source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-filesystem-operations" }
 dependencies = [
+    { name = "fastmcp-agents-bridge-pydantic-ai" },
     { name = "fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai" },
 ]
 
 [package.dev-dependencies]
@@ -636,8 +660,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
     { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai", specifier = ">=0.1.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -648,74 +672,29 @@ dev = [
 ]
 
 [[package]]
-name = "fastmcp-agents-library-agent-github"
-version = "0.5.8"
-source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-github" }
+name = "fastmcp-agents-library-agents"
+version = "0.1.0"
+source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agents" }
 dependencies = [
-    { name = "asyncstdlib" },
-    { name = "fastmcp-agents-library-agent-simple-code" },
+    { name = "fastmcp-agents-bridge-pydantic-ai" },
     { name = "fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai" },
     { name = "gitpython" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "pytest-asyncio" },
-    { name = "pytest-dotenv" },
-    { name = "ruff" },
+    { name = "pygithub" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "asyncstdlib", specifier = ">=3.13.1" },
-    { name = "fastmcp-agents-library-agent-simple-code", editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-simple-code" },
+    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
     { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai", specifier = ">=0.1.2" },
     { name = "gitpython", specifier = ">=3.1.44" },
 ]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "pytest-asyncio", specifier = ">=1.1.0" },
-    { name = "pytest-dotenv" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
-name = "fastmcp-agents-library-agent-simple-code"
-version = "0.5.8"
-source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-simple-code" }
-dependencies = [
-    { name = "fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai" },
-    { name = "gitpython" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-dotenv" },
-    { name = "pytest-env" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "fastmcp-ai-agent-bridge-pydantic-ai", specifier = ">=0.1.2" },
-    { name = "gitpython", specifier = ">=3.1.44" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-asyncio", specifier = ">=1.1.0" },
-    { name = "pytest-dotenv", specifier = ">=0.5.2" },
-    { name = "pytest-env", specifier = ">=1.1.5" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
+dev = [{ name = "pygithub", specifier = ">=2.6.1" }]
 
 [[package]]
 name = "fastmcp-agents-library-mcp"
@@ -733,61 +712,13 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp" }]
+requires-dist = [{ name = "fastmcp", git = "https://github.com/jlowin/fastmcp" }]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=1.1.0" },
     { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
-name = "fastmcp-agents-library-simple-agents"
-version = "0.5.7"
-source = { editable = "fastmcp-agents-library/simple_agents/fastmcp-agents-library-simple-agents" }
-
-[[package]]
-name = "fastmcp-agents-library-tools-git"
-version = "0.5.7"
-source = { editable = "fastmcp-agents-library/tools/fastmcp-agents-library-tools-git" }
-dependencies = [
-    { name = "gitpython" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-dotenv" },
-    { name = "pytest-env" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "gitpython", specifier = ">=3.1.44" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.4.1" },
-    { name = "pytest-asyncio", specifier = ">=1.1.0" },
-    { name = "pytest-dotenv", specifier = ">=0.5.2" },
-    { name = "pytest-env", specifier = ">=1.1.5" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
-name = "fastmcp-ai-agent-bridge-pydantic-ai"
-version = "0.1.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "fastmcp" },
-    { name = "logfire" },
-    { name = "pydantic-ai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/91/53/2d2069d26a56f0445702ccc20556aa8be5b0a41373ca8ef75f6e12bfaa08/fastmcp_ai_agent_bridge_pydantic_ai-0.1.4.tar.gz", hash = "sha256:e1800aa3360629fa25ff9c9c72d425dfaed6ba5e467fcdfb0e96a8cace9e06ee", size = 3660, upload-time = "2025-07-24T14:30:32.879Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/e2/a1da9cd2e2e83ac469b2db2a0e57ef61e4b213ea9cfa2de1af2b8622eedc/fastmcp_ai_agent_bridge_pydantic_ai-0.1.4-py3-none-any.whl", hash = "sha256:8f5497dff6abbdfe9b9446ff9ed05df49fb58bb1a93167883b13c3993df00ac3", size = 5488, upload-time = "2025-07-24T14:30:31.903Z" },
 ]
 
 [[package]]
@@ -1012,7 +943,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.33.5"
+version = "0.34.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1024,9 +955,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/02/16/5716d03e2b48bcc8e32d9b18ed7e55d2ae52e3d5df146cced9fe0581b5ff/huggingface_hub-0.33.5.tar.gz", hash = "sha256:814097e475646d170c44be4c38f7d381ccc4539156a5ac62a54f53aaf1602ed8", size = 427075, upload-time = "2025-07-24T12:30:31.449Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/cd/841bc8e0550d69f632a15cdd70004e95ba92cd0fbe13087d6669e2bb5f44/huggingface_hub-0.34.1.tar.gz", hash = "sha256:6978ed89ef981de3c78b75bab100a214843be1cc9d24f8e9c0dc4971808ef1b1", size = 456783, upload-time = "2025-07-25T14:54:54.758Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/d5/d9e9b75d8dc9cf125fff16fb0cd51d864a29e8b46b6880d8808940989405/huggingface_hub-0.33.5-py3-none-any.whl", hash = "sha256:29b4e64982c2064006021af297e1b17d44c85a8aaf90a0d7efeff7e7d2426296", size = 515705, upload-time = "2025-07-24T12:30:29.55Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/cf/dd53c0132f50f258b06dd37a4616817b1f1f6a6b38382c06effd04bb6881/huggingface_hub-0.34.1-py3-none-any.whl", hash = "sha256:60d843dcb7bc335145b20e7d2f1dfe93910f6787b2b38a936fb772ce2a83757c", size = 558788, upload-time = "2025-07-25T14:54:52.957Z" },
 ]
 
 [package.optional-dependencies]
@@ -1689,19 +1620,19 @@ email = [
 
 [[package]]
 name = "pydantic-ai"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic-ai-slim", extra = ["ag-ui", "anthropic", "bedrock", "cli", "cohere", "evals", "google", "groq", "huggingface", "mcp", "mistral", "openai", "vertexai"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/0f/507f4e4b16f51ad5d61e61c9c4ba051b3f16558c69724e2998312e9d8272/pydantic_ai-0.4.6.tar.gz", hash = "sha256:939b267a0a3c1b33b4a42b7fdc3d44ba71b1c7572b6b2feb55959862b191a862", size = 41409393, upload-time = "2025-07-23T14:52:28.575Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/88/598d1e0eac500525391f54ef9baccdd5267d2b27d743e39d6c9cfae19eb5/pydantic_ai-0.4.7.tar.gz", hash = "sha256:456cfd5d1e8c94da25e78f75dc29997b308d8b06a79dad7b09175f2e71cade2d", size = 43549424, upload-time = "2025-07-24T21:47:48.947Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/a8/4a41d7de8543e50d1247df515d7d6e61550203027e888561b04f820f416f/pydantic_ai-0.4.6-py3-none-any.whl", hash = "sha256:d77090ee1c5abbf9d86403dd73ceb93ebf0f2aef647916aa4ab085b5441a17ba", size = 10180, upload-time = "2025-07-23T14:52:19.899Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d5/f8a7dd3e9082b6c3907191e1a43991889be4ec4a701097f2068d01705808/pydantic_ai-0.4.7-py3-none-any.whl", hash = "sha256:3624595b542fe13d7b48a4aaedc6eac567424be9e8788697accacc986cb7a2e6", size = 10180, upload-time = "2025-07-24T21:47:40.28Z" },
 ]
 
 [[package]]
 name = "pydantic-ai-slim"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eval-type-backport" },
@@ -1712,9 +1643,9 @@ dependencies = [
     { name = "pydantic-graph" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/47/4c/4b98c41d5fee646f4eda863503a4a21ba04a9a2a4a0491a22f77569a39f3/pydantic_ai_slim-0.4.6.tar.gz", hash = "sha256:8d0d7e8a5b565e3d3287b1b1ed418b67dd2d7bdbcb55909c5d31098f7f12708e", size = 184311, upload-time = "2025-07-23T14:52:33.137Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/60/4d23ac61c5b12a8a78a6d46a4ea1cff3396e580967a8088ee9d4cba485e8/pydantic_ai_slim-0.4.7.tar.gz", hash = "sha256:64d9d2c62247eaabd323cc0c379fb9386a8e0919db5677082666743dfbaad96f", size = 186740, upload-time = "2025-07-24T21:47:53.192Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/46/ccee8354a1cdf8adaf5b9c8a75faeee410831d2f4de6b0e7f99c1dce8719/pydantic_ai_slim-0.4.6-py3-none-any.whl", hash = "sha256:c4408ea2660852b704a0b31295dfa218a2376dc1d8bd2fb72abfe711e20b5219", size = 247338, upload-time = "2025-07-23T14:52:22.713Z" },
+    { url = "https://files.pythonhosted.org/packages/81/42/08b464a8dddd96dd9556b78ff31ba886c4866c85f21d616d99f515e945c2/pydantic_ai_slim-0.4.7-py3-none-any.whl", hash = "sha256:3a91163fdec3c1465eaa9449ec1e9dc92029fd1ab933c650442b92f846be8a05", size = 251711, upload-time = "2025-07-24T21:47:43.032Z" },
 ]
 
 [package.optional-dependencies]
@@ -1792,7 +1723,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-evals"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1802,14 +1733,14 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/e5/1766d7ce6163aa4ed40de0eab49268710f53d3ecc5938c1a64fecb079ec2/pydantic_evals-0.4.6.tar.gz", hash = "sha256:4d24c9d06d254fa6f2d0b97df2c6f16f756c73c470af4aadc12be9754faffa00", size = 43730, upload-time = "2025-07-23T14:52:34.172Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/1a/124c9a84e80135d7dd8b676a6559116046e07d0321b67ea40742f3630490/pydantic_evals-0.4.7.tar.gz", hash = "sha256:de9439ae2025bb08ae464af5dd22982e09c59373e29d73a7b619ad1b71732150", size = 43730, upload-time = "2025-07-24T21:47:54.482Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/f6/1c783bb47ee273d10cf0739049123097fd3c3e5ea70399a6fb9615567cd6/pydantic_evals-0.4.6-py3-none-any.whl", hash = "sha256:7b9b8dbe9bb6c2bece0dfdc4635462b60dd67152603e5c9ab5f26190f340f874", size = 52505, upload-time = "2025-07-23T14:52:24.407Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/3a/ef9eb87246d9f07062ab08e54afd041ffab58e442eaa1ecb81f981382bc3/pydantic_evals-0.4.7-py3-none-any.whl", hash = "sha256:5ea3b17f353d7a838408f52e4ffe924ce3805e1d260810bd2aa3bee9442792b0", size = 52506, upload-time = "2025-07-24T21:47:45.377Z" },
 ]
 
 [[package]]
 name = "pydantic-graph"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1817,9 +1748,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/de/3369de515fe8df5dede79176087b85640703e62f8aa8fe2f88dae0ce7b01/pydantic_graph-0.4.6.tar.gz", hash = "sha256:45e41d9a5f87495c1f12a85a6cab243b4fc824a072da121ca93f633f954005a7", size = 21978, upload-time = "2025-07-23T14:52:35.067Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/be/bd4324083e3b5dbd4b46a45f003e04c38eca421a0c1bbfbba43e1e56837f/pydantic_graph-0.4.7.tar.gz", hash = "sha256:5c4125efa68e922946581b050d00defcf2ffd4a5ff61a03a3aa298dfd49d1503", size = 21980, upload-time = "2025-07-24T21:47:55.388Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/87/fb3e4cd834dc084d4caf2f38d4889ecc866ac41cd70628f2ce4fa8ecc5df/pydantic_graph-0.4.6-py3-none-any.whl", hash = "sha256:5ab17cab8e5289ea10e92dbfb9ae4ee0b59dc4ec885f414a8db164b79c6b8548", size = 27565, upload-time = "2025-07-23T14:52:25.978Z" },
+    { url = "https://files.pythonhosted.org/packages/36/a3/f900c4b7a60d78354bcf948a7941df27f086f661e6ffaa77c80908d50452/pydantic_graph-0.4.7-py3-none-any.whl", hash = "sha256:eb677d92e68222babb98fa99a08ead2611f3a2ec2f75262b403eb45617106dcb", size = 27565, upload-time = "2025-07-24T21:47:46.569Z" },
 ]
 
 [[package]]
@@ -1944,18 +1875,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytest-env"
-version = "1.1.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pytest" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1f/31/27f28431a16b83cab7a636dce59cf397517807d247caa38ee67d65e71ef8/pytest_env-1.1.5.tar.gz", hash = "sha256:91209840aa0e43385073ac464a554ad2947cc2fd663a9debf88d03b01e0cc1cf", size = 8911, upload-time = "2024-09-17T22:39:18.566Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/b8/87cfb16045c9d4092cfcf526135d73b88101aac83bc1adcf82dfb5fd3833/pytest_env-1.1.5-py3-none-any.whl", hash = "sha256:ce90cf8772878515c24b31cd97c7fa1f4481cd68d588419fd45f10ecaee6bc30", size = 6141, upload-time = "2024-09-17T22:39:16.942Z" },
-]
-
-[[package]]
 name = "pytest-mock"
 version = "3.14.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2069,15 +1988,15 @@ wheels = [
 
 [[package]]
 name = "rich"
-version = "14.0.0"
+version = "14.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/53/830aa4c3066a8ab0ae9a9955976fb770fe9c6102117c8ec4ab3ea62d89e8/rich-14.0.0.tar.gz", hash = "sha256:82f1bc23a6a21ebca4ae0c45af9bdbc492ed20231dcb63f297d6d1021a9d5725", size = 224078, upload-time = "2025-03-30T14:15:14.23Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/75/af448d8e52bf1d8fa6a9d089ca6c07ff4453d86c65c145d0a300bb073b9b/rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8", size = 224441, upload-time = "2025-07-25T07:32:58.125Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0d/9b/63f4c7ebc259242c89b3acafdb37b41d1185c07ff0011164674e9076b491/rich-14.0.0-py3-none-any.whl", hash = "sha256:1c9491e1951aac09caffd42f448ee3d04e58923ffe14993f6e83068dc395d7e0", size = 243229, upload-time = "2025-03-30T14:15:12.283Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/30/3c4d035596d3cf444529e0b2953ad0466f6049528a879d27534700580395/rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f", size = 243368, upload-time = "2025-07-25T07:32:56.73Z" },
 ]
 
 [[package]]

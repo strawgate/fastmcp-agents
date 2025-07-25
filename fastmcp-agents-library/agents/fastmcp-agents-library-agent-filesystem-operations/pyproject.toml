@@ -6,11 +6,12 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastmcp-agents-library-mcp",
-    "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.0",
+    "fastmcp_agents.bridge.pydantic_ai>=0.1.0",
 ]
 
 [tool.uv.sources]
 fastmcp-agents-library-mcp = { workspace = true }
+fastmcp-agents-bridge-pydantic-ai = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.8.2,<0.9.0"]

@@ -4,7 +4,8 @@ import pytest
 from fastmcp.mcp_config import MCPConfig
 
 from fastmcp_agents.library.mcp.strawgate import elasticsearch_mcp
-from tests.conftest import assert_mcp_init
+
+from ..conftest import assert_mcp_init
 
 
 @pytest.mark.asyncio

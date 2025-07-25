@@ -6,11 +6,11 @@ from typing import Any, Literal
 
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
-from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from pydantic_ai.agent import AgentRunResult
 
+from fastmcp_agents.bridge.pydantic_ai import FastMCPToolset
 from fastmcp_agents.library.agent.documentation_maintainer.logging import configure_console_logging
 from fastmcp_agents.library.mcp.nickclyde import duckduckgo_mcp
 from fastmcp_agents.library.mcp.strawgate import (

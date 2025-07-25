@@ -2,7 +2,8 @@ import pytest
 from fastmcp.mcp_config import MCPConfig
 
 from fastmcp_agents.library.mcp.strawgate import read_only_filesystem_mcp, read_write_filesystem_mcp
-from tests.conftest import assert_mcp_init
+
+from ..conftest import assert_mcp_init
 
 
 @pytest.mark.asyncio

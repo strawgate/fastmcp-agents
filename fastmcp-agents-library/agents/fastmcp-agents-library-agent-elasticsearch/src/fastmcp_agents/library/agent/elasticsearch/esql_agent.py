@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Any
 
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
-from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
+from fastmcp_agents.bridge.pydantic_ai import FastMCPToolset
 from fastmcp_agents.library.agent.elasticsearch.shared import (
     esql_elasticsearch_mcp,
     esql_instructions,

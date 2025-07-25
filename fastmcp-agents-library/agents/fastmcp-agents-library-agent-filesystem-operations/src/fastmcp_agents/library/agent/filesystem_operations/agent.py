@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from fastmcp import FastMCP
 from fastmcp.tools.tool import Tool
-from fastmcp_ai_agent_bridge.pydantic_ai import FastMCPToolset
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
+from fastmcp_agents.bridge.pydantic_ai import FastMCPToolset
 from fastmcp_agents.library.mcp.strawgate import (
     read_only_filesystem_mcp,
 )

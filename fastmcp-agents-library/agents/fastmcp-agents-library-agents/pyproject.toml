@@ -1,0 +1,35 @@
+[project]
+name = "fastmcp-agents-library-agents"
+version = "0.1.0"
+description = "Agents with no dependencies on other libraries"
+readme = "README.md"
+authors = [
+    { name = "William Easton", email = "williamseaston@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp-agents-library-mcp",
+    "fastmcp_agents.bridge.pydantic_ai>=0.1.2",
+    "gitpython>=3.1.44",
+]
+
+[project.scripts]
+github = "fastmcp_agents.library.agents.github.agents:run"
+simple-code = "fastmcp_agents.library.agent.simple_code.agents:run"
+
+
+[tool.uv.build-backend]
+module-name = "fastmcp_agents.library.agents"
+
+[tool.uv.sources]
+fastmcp-agents-library-mcp = { workspace = true }
+fastmcp-agents-bridge-pydantic-ai = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pygithub>=2.6.1",
+]

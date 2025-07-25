@@ -7,7 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastmcp",
     "fastmcp-agents-library-mcp",
-    "fastmcp-ai-agent-bridge-pydantic-ai>=0.1.0",
+    "fastmcp_agents.bridge.pydantic_ai>=0.1.0",
     "gitpython>=3.1.44",
     "pydantic>=2.11.7",
     "pydantic-ai>=0.4.4",
@@ -26,7 +26,7 @@ allow-direct-references = true
 
 [tool.uv.sources]
 fastmcp-agents-library-mcp = { workspace = true }
-
+fastmcp-agents-bridge-pydantic-ai = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
