@@ -4,13 +4,18 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
+from fastmcp_agents.library.agents.shared.logging import configure_console_logging
+from pydantic import BaseModel
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.messages import ModelMessage
 from pydantic_evals import Dataset
 from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 from pydantic_evals.reporting import EvaluationReport, ReportCaseAggregate
+from rich.pretty import pprint
 
 set_default_judge_model(model="google-gla:gemini-2.5-flash")
+configure_console_logging()
 
 
 def assert_passed(evaluation_report: EvaluationReport, print_report: bool = True) -> None:
@@ -18,11 +23,34 @@ def assert_passed(evaluation_report: EvaluationReport, print_report: bool = True
     avg_score = list(agg_score.scores.values())
     if print_report:
         print(f"Evaluation report for {evaluation_report.name}:")
-        evaluation_report.print(include_averages=False, include_output=True, width=120)
+        for case in evaluation_report.cases:
+            print(f"Case: {case.name}")
+            print("===Inputs===")
+            print(pprint(case.inputs))
+            print("===Output===")
+            output = case.output
+            if isinstance(output, AgentRunResult):
+                run_result_output: Any = output.output  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+                if isinstance(run_result_output, BaseModel):
+                    print(yaml.safe_dump(run_result_output.model_dump()))
+                else:
+                    pprint(run_result_output)
+            else:
+                pprint(output)
+
+            print("===Assertions===")
+            for assertion_name, assertion_result in case.assertions.items():
+                print(f"{assertion_name}: {assertion_result.reason}")
+
+        evaluation_report.print(include_averages=False, width=120)
     assert all(score > 0.9 for score in avg_score)
 
 
-async def run_evaluation[T](name: str, dataset: Dataset, task: Callable[..., Awaitable[AgentRunResult[T]]]) -> EvaluationReport:
+async def run_evaluation[T](
+    name: str,
+    dataset: Dataset,
+    task: Callable[..., Awaitable[AgentRunResult[T]]],
+) -> EvaluationReport:
     async def evaluation_wrapper(input_dict: dict[str, Any]) -> tuple[T, list[ModelMessage]]:
         result: AgentRunResult[T] = await task(**input_dict)
 
@@ -74,3 +102,9 @@ def split_dataset(dataset: Dataset) -> tuple[list[str], list[Dataset[Any, Any, A
         datasets.append(Dataset(cases=[case], evaluators=dataset.evaluators))
 
     return names, datasets
+
+
+class TestCase(BaseModel):
+    user_prompt: str
+    deps: Any
+    rubric: str

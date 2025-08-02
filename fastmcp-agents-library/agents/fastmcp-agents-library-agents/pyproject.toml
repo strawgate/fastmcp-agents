@@ -11,6 +11,7 @@ dependencies = [
     "fastmcp-agents-library-mcp",
     "fastmcp_agents.bridge.pydantic_ai>=0.1.2",
     "gitpython>=3.1.44",
+    "pydantic-ai",
 ]
 
 [project.scripts]
@@ -25,6 +26,7 @@ module-name = "fastmcp_agents.library.agents"
 [tool.uv.sources]
 fastmcp-agents-library-mcp = { workspace = true }
 fastmcp-agents-bridge-pydantic-ai = { workspace = true }
+pydantic-ai = { git = "https://github.com/strawgate/pydantic-ai.git", branch = "dynamic-toolset" }
 
 [build-system]
 requires = ["uv_build>=0.8.2,<0.9.0"]

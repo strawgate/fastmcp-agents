@@ -5,113 +5,108 @@ This agent is used to perform GitHub tasks.
 """
 
 import os
-from collections.abc import Sequence
-from typing import Any
+from pathlib import Path
 
-import yaml
-from fastmcp import FastMCP
-from fastmcp.tools import Tool
-from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPToolset
-from fastmcp_agents.library.agents.github.models import GitHubIssueSummary
+from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
+from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPServerToolset
+from fastmcp_agents.library.agents.github.models import (
+    GitHubIssue,
+    GitHubIssueSummary,
+)
 from fastmcp_agents.library.agents.github.prompts import (
+    GATHER_INSTRUCTIONS,
+    INVESTIGATION_INSTRUCTIONS,
     REPORTING_CONFIDENCE,
     RESPONSE_FORMAT,
     WHO_YOU_ARE,
     YOUR_GOAL,
     YOUR_MINDSET,
 )
-from fastmcp_agents.library.mcp.github.github import repo_restricted_github_mcp
-from pydantic import BaseModel
-from pydantic_ai import Agent
-from pydantic_ai.agent import AgentRunResult
+from fastmcp_agents.library.agents.shared.models import Failure
+from fastmcp_agents.library.agents.simple_code.agents import code_investigation_agent
+from fastmcp_agents.library.mcp.github import (
+    repo_restrict_github_mcp,
+)
+from fastmcp_agents.library.mcp.github.github import REPLY_ISSUE_TOOLS
+from git.repo import Repo
+from gitdb.db.loose import tempfile
+from pydantic_ai.agent import (
+    Agent,
+    RunContext,  # pyright: ignore[reportPrivateImportUsage]
+)
 
-gather_background_agent = Agent(
-    model=os.getenv("MODEL"),
-    system_prompt=WHO_YOU_ARE
-    + YOUR_GOAL
-    + YOUR_MINDSET
-    + """You will perform multiple searches against the repository across issues, pull requests, and discussions to identify
-and relevant information for the issue. If you find a relevant related item, you will review the comments or discussion
-under that item to determine if it is related to the issue and how it might be related.
+InvestigateIssue = GitHubIssue
+ReplyToIssue = GitHubIssue
 
-Your goal is to "connect the dots", and gather all related information to assist the maintainer in investigating the issue."""
-    + REPORTING_CONFIDENCE
-    + RESPONSE_FORMAT,
+
+def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]]) -> str:  # pyright: ignore[reportUnusedFunction]
+    issue: GitHubIssue = ctx.deps[0]
+    return f"""Gather context about GitHub issue {issue.issue_number} in {issue.owner}/{issue.repo}."""
+
+
+async def github_triage_toolset(
+    ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]],
+) -> FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]]:
+    investigate_issue, reply_to_issue = ctx.deps
+
+    github_mcp_server = repo_restrict_github_mcp(
+        owner=investigate_issue.owner,
+        repo=investigate_issue.repo,
+        issues=True,
+        pull_requests=True,
+        discussions=True,
+        repository=True,
+        read_tools=True,
+        write_tools=False,
+    )
+
+    if reply_to_issue:
+        for tool_name in REPLY_ISSUE_TOOLS:
+            github_mcp_server.tools[tool_name] = ToolTransformConfig(
+                arguments={
+                    "owner": ArgTransformConfig(default=reply_to_issue.owner, hide=True),
+                    "repo": ArgTransformConfig(default=reply_to_issue.repo, hide=True),
+                    "issue_number": ArgTransformConfig(default=reply_to_issue.issue_number, hide=True),
+                },
+                tags=github_mcp_server.include_tags or set(),
+            )
+
+    return FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]].from_mcp_server(name="github", mcp_server=github_mcp_server)
+
+
+github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
+    model=os.getenv("MODEL_RESEARCH_GITHUB_ISSUE") or os.getenv("MODEL"),
+    system_prompt=[
+        WHO_YOU_ARE,
+        YOUR_GOAL,
+        YOUR_MINDSET,
+    ],
+    instructions=[
+        GATHER_INSTRUCTIONS,
+        REPORTING_CONFIDENCE,
+        research_github_issue_instructions,
+        INVESTIGATION_INSTRUCTIONS,
+        RESPONSE_FORMAT,
+    ],
+    deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
+    toolsets=[github_triage_toolset],
+    output_type=[GitHubIssueSummary, Failure],
 )
 
 
-async def gather_github_issue_background_raw(owner: str, repo: str, issue_number: int) -> AgentRunResult[GitHubIssueSummary]:
-    """Perform a read-only investigation of the codebase. Returning the raw Agent Run Result."""
+@github_triage_agent.tool
+async def investigate_code_base(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]], task: str):  # pyright: ignore[reportUnusedFunction]
+    """Investigate the code base of the repository in relation to the issue."""
 
-    toolset: FastMCPToolset[Any] = FastMCPToolset.from_mcp_server(
-        name="github",
-        mcp_server=repo_restricted_github_mcp(owner=owner, repo=repo, read_only=True),
-    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        clone: Repo = Repo.clone_from(url=str(ctx.deps[0].repository_git_url()), to_path=temp_dir, depth=1, single_branch=True)
+        clone_path: Path = Path(clone.working_dir)
 
-    async with gather_background_agent as agent:
-        return await agent.run(
-            user_prompt=f"The issue number to gather background information for is {issue_number}.",
-            toolsets=[toolset],
-            output_type=GitHubIssueSummary,
-        )
-
-
-async def gather_github_issue_background(owner: str, repo: str, issue_number: int) -> GitHubIssueSummary:
-    return (await gather_github_issue_background_raw(owner=owner, repo=repo, issue_number=issue_number)).output
-
-
-gather_background_tool = Tool.from_function(fn=gather_github_issue_background)
-
-
-issue_response_agent = Agent[Any, str](
-    model=os.environ.get("MODEL"),
-    system_prompt=WHO_YOU_ARE
-    + YOUR_GOAL
-    + YOUR_MINDSET
-    + REPORTING_CONFIDENCE
-    + """Your response should include a summary + recommendations section alongside a very detailed findings section. All referenced
-issues should be links and all code should be either 1) a permalink or 2) a code block.
-
-Your goal is to reflect all of the details of the triage and background while producing a nicely formatted markdown response
-in the GitHub comment. When you complete the task and report success include the body of the reponse of the comment."""
-    + RESPONSE_FORMAT,
-    output_type=str,
-)
-
-
-async def comment_on_github_issue_raw(owner: str, repo: str, issue_number: int, information: Sequence[BaseModel]) -> AgentRunResult[str]:
-    toolset: FastMCPToolset[Any] = FastMCPToolset.from_mcp_server(
-        name="github",
-        mcp_server=repo_restricted_github_mcp(
-            owner=owner,
-            repo=repo,
-            read_only=False,
-            issues=True,
-            pull_requests=False,
-            discussions=False,
-            repository=False,
-        ),
-    )
-
-    async with issue_response_agent as agent:
-        task = f"We have gathered the following information related to issue {issue_number} and it's time to formulate a reply:"
-        for model in information:
-            task += f"\n\n{yaml.safe_dump(model.model_dump(), indent=2)}"
-        return await agent.run(user_prompt=task, toolsets=[toolset], output_type=str)
-
-
-async def comment_on_github_issue(owner: str, repo: str, issue_number: int, information: Sequence[BaseModel]) -> str:
-    return (await comment_on_github_issue_raw(owner=owner, repo=repo, issue_number=issue_number, information=information)).output
-
-
-comment_on_github_issue_tool = Tool.from_function(fn=comment_on_github_issue)
-
-server = FastMCP[None](name="github-issue-triage", tools=[gather_background_tool, comment_on_github_issue_tool])
-
-
-def run():
-    server.run()
-
-
-def run_sse():
-    server.run(transport="sse")
+        # Invoke the Code Agent, passing in the message history from the research agent
+        return (
+            await code_investigation_agent.run(
+                user_prompt=task,
+                message_history=ctx.messages,
+                deps=clone_path,
+            )
+        ).output
