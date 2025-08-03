@@ -18,7 +18,7 @@ jobs:
           .github/scripts/list-projects.sh
 
   test:
-    name: Run Tests - ${{ matrix.project-name }}
+    name: ${{ matrix.project-name }} - Tests
     runs-on: ubuntu-latest
     needs: [list-projects]
     permissions:
@@ -49,5 +49,6 @@ jobs:
         working-directory: ${{ matrix.pyproject }}
         env:
           GEMINI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MODEL: ${{ vars.MODEL }}
           MODEL_PROVIDER: gemini

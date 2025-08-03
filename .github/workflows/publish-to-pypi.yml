@@ -35,7 +35,7 @@ jobs:
       matrix: 
         include: ${{fromJson(needs.list-projects.outputs.matrix)}}
 
-    name: ${{ matrix.project-name }} - Publish to PyPI
+    name: ${{ matrix.project-name }} - Publish
 
     steps:
       - name: Checkout
