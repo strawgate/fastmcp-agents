@@ -11,13 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.set-matrix.outputs.projects }}
+      project-names: ${{ steps.set-matrix.outputs.project-names }}
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo "projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+        run: |
+          # Find all pyproject.toml files and extract project names
+          echo "projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          echo "project-names=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec sh -c 'echo "{}" | xargs grep -h "^name = " | sed "s/name = //g" | sed "s/\"//g"' \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
 
   test:
-    name: Run Tests
+    name: Run Tests - ${{ matrix.project-name }}
     runs-on: ubuntu-latest
     needs: [list-projects]
     permissions:
@@ -26,6 +30,7 @@ jobs:
       fail-fast: false 
       matrix: 
         pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
+        project-name: ${{fromJson(needs.list-projects.outputs.project-names)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,7 +41,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Sync
-        run: uv sync --dev --all-groups
+        run: uv sync --dev --all-groups --all-packages
         working-directory: ${{ matrix.pyproject }}
 
       - name: Build
