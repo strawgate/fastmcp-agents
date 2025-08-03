@@ -51,7 +51,7 @@ done <<< "$all_projects"
 
 # Convert to JSON array
 if [ -n "$matrix_data" ]; then
-  matrix_json=$(echo "$matrix_data" | jq -R -s -c 'split("\n")[:-1]')
+  matrix_json=$(echo "$matrix_data" | jq -s -c '.')
 else
   matrix_json="[]"
 fi
