@@ -56,10 +56,18 @@ else
   matrix_json="[]"
 fi
 
-echo "matrix=$matrix_json"
+echo "matrix_json=$matrix_json"
+
 
 # If --changed-only flag is set, also output the list of changed projects for debugging
 if [ "$CHANGED_ONLY" = true ]; then
   echo "Changed projects:"
   echo "$changed_projects"
 fi 
+
+# if GITHUB_OUTPUT exists, echo the matrix to it
+if [ -n "$GITHUB_OUTPUT" ]; then
+  echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+else
+  echo "No GITHUB_OUTPUT environment variable found. Exiting."
+fi

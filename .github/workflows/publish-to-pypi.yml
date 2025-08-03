@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
       - id: set-matrix
         run: |
-          .github/scripts/list-projects.sh --changed-only >> $GITHUB_OUTPUT
+          .github/scripts/list-projects.sh --changed-only
       
   publish:
     continue-on-error: true
