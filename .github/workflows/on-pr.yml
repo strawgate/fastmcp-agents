@@ -10,15 +10,12 @@ jobs:
     name: List Projects
     runs-on: ubuntu-latest
     outputs:
-      projects: ${{ steps.set-matrix.outputs.projects }}
-      project-names: ${{ steps.set-matrix.outputs.project-names }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
         run: |
-          # Find all pyproject.toml files and extract project names
-          echo "projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
-          echo "project-names=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec sh -c 'echo "{}" | xargs grep -h "^name = " | sed "s/name = //g" | sed "s/\"//g"' \; | jq -R -s -c 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+          .github/scripts/list-projects.sh >> $GITHUB_OUTPUT
 
   test:
     name: Run Tests - ${{ matrix.project-name }}
@@ -29,8 +26,7 @@ jobs:
     strategy: 
       fail-fast: false 
       matrix: 
-        pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
-        project-name: ${{fromJson(needs.list-projects.outputs.project-names)}}
+        include: ${{fromJson(needs.list-projects.outputs.matrix)}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

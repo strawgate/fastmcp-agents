@@ -14,52 +14,14 @@ jobs:
     name: List Projects
     runs-on: ubuntu-latest
     outputs:
-      projects: ${{ steps.set-matrix.outputs.projects }}
-      project-names: ${{ steps.set-matrix.outputs.project-names }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - id: set-matrix
         run: |
-          # Find all projects with pyproject.toml
-          all_projects=$(find . -name "pyproject.toml" -not -path "*/.venv/*" -exec dirname {} \;)
-          
-          # Filter to only projects that have changed
-          changed_projects=""
-          changed_project_names=""
-          while IFS= read -r project; do
-            if [ -n "$project" ]; then
-              # Check if any files in this project directory have changed
-              if git diff --name-only HEAD~1 HEAD | grep -q "^${project#./}/"; then
-                if [ -z "$changed_projects" ]; then
-                  changed_projects="$project"
-                  # Extract project name from pyproject.toml
-                  project_name=$(grep -h "^name = " "$project/pyproject.toml" | sed "s/name = //g" | sed "s/\"//g")
-                  changed_project_names="$project_name"
-                else
-                  changed_projects="$changed_projects"$'\n'"$project"
-                  # Extract project name from pyproject.toml
-                  project_name=$(grep -h "^name = " "$project/pyproject.toml" | sed "s/name = //g" | sed "s/\"//g")
-                  changed_project_names="$changed_project_names"$'\n'"$project_name"
-                fi
-              fi
-            fi
-          done <<< "$all_projects"
-          
-          # Convert to JSON arrays
-          if [ -n "$changed_projects" ]; then
-            projects_json=$(echo "$changed_projects" | jq -R -s -c 'split("\n")[:-1]')
-            project_names_json=$(echo "$changed_project_names" | jq -R -s -c 'split("\n")[:-1]')
-          else
-            projects_json="[]"
-            project_names_json="[]"
-          fi
-          
-          echo "projects=$projects_json" >> $GITHUB_OUTPUT
-          echo "project-names=$project_names_json" >> $GITHUB_OUTPUT
-          echo "Changed projects:"
-          echo "$changed_projects"
+          .github/scripts/list-projects.sh --changed-only >> $GITHUB_OUTPUT
       
   publish:
     continue-on-error: true
@@ -71,8 +33,7 @@ jobs:
     strategy: 
       fail-fast: false 
       matrix: 
-        pyproject: ${{fromJson(needs.list-projects.outputs.projects)}}
-        project-name: ${{fromJson(needs.list-projects.outputs.project-names)}}
+        include: ${{fromJson(needs.list-projects.outputs.matrix)}}
 
     name: ${{ matrix.project-name }} - Publish to PyPI
 
