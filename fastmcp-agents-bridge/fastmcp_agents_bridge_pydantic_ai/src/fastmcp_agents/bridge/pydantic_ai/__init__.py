@@ -1,3 +1,3 @@
-from .toolset import FastMCPToolset
+from .toolset import FastMCPClientToolset, FastMCPServerToolset
 
-__all__ = ["FastMCPToolset"]
+__all__ = ["FastMCPClientToolset", "FastMCPServerToolset"]

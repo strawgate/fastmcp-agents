@@ -15,9 +15,6 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "fastmcp_agents.library.mcp"
 
-[tool.uv.sources]
-fastmcp = { git = "https://github.com/jlowin/fastmcp" }
-
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",

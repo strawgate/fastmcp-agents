@@ -5,7 +5,11 @@ from fastmcp.tools import Tool as FastMCPTool
 from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
 
 
-def github_mcp() -> TransformingStdioMCPServer:
+def github_mcp(
+    tools: dict[str, ToolTransformConfig] | None = None,
+    include_tags: set[str] | None = None,
+    exclude_tags: set[str] | None = None,
+) -> TransformingStdioMCPServer:
     return TransformingStdioMCPServer(
         command="docker",
         args=[
@@ -17,7 +21,9 @@ def github_mcp() -> TransformingStdioMCPServer:
             "ghcr.io/github/github-mcp-server",
         ],
         env=dict(os.environ.copy()),
-        tools={},
+        tools=tools or {},
+        include_tags=include_tags,
+        exclude_tags=exclude_tags,
     )
 
 
@@ -26,6 +32,10 @@ READ_ISSUE_TOOLS = {
     "get_issue_comments",
     "list_issues",
     "search_issues",
+}
+
+REPLY_ISSUE_TOOLS = {
+    "add_issue_comment",
 }
 
 WRITE_ISSUE_TOOLS = {
@@ -89,58 +99,115 @@ WRITE_REPOSITORY_TOOLS = {
 REPOSITORY_TOOLS = READ_REPOSITORY_TOOLS | WRITE_REPOSITORY_TOOLS
 
 
-def repo_restricted_github_mcp(
-    owner: str,
-    repo: str,
-    issues: bool = True,
-    pull_requests: bool = True,
-    discussions: bool = True,
-    repository: bool = True,
-    read_only: bool = False,
+def github_tools(
+    issues: bool = False,
+    pull_requests: bool = False,
+    discussions: bool = False,
+    repository: bool = False,
+    read_tools: bool = True,
+    write_tools: bool = True,
+) -> set[str]:
+    tools: set[str] = set()
+
+    if read_tools:
+        if issues:
+            tools.update(READ_ISSUE_TOOLS)
+        if pull_requests:
+            tools.update(READ_PULL_REQUEST_TOOLS)
+        if discussions:
+            tools.update(READ_DISCUSSION_TOOLS)
+        if repository:
+            tools.update(READ_REPOSITORY_TOOLS)
+    if write_tools:
+        if issues:
+            tools.update(WRITE_ISSUE_TOOLS)
+        if pull_requests:
+            tools.update(WRITE_PULL_REQUEST_TOOLS)
+        if discussions:
+            tools.update(WRITE_DISCUSSION_TOOLS)
+        if repository:
+            tools.update(WRITE_REPOSITORY_TOOLS)
+
+    return tools
+
+
+def restrict_github_mcp_server(
+    github_mcp_server: TransformingStdioMCPServer | None = None,
+    issues: bool = False,
+    pull_requests: bool = False,
+    discussions: bool = False,
+    repository: bool = False,
+    read_tools: bool = True,
+    write_tools: bool = True,
 ) -> TransformingStdioMCPServer:
-    arg_transforms = {
-        "owner": ArgTransformConfig(
-            default=owner,
-            hide=True,
+    if not github_mcp_server:
+        github_mcp_server = github_mcp()
+
+    tools = github_tools(
+        issues=issues,
+        pull_requests=pull_requests,
+        discussions=discussions,
+        repository=repository,
+        read_tools=read_tools,
+        write_tools=write_tools,
+    )
+
+    tool_transformations: dict[str, ToolTransformConfig] = dict.fromkeys(
+        tools,
+        ToolTransformConfig(
+            tags={"restricted"},
         ),
-        "repo": ArgTransformConfig(
-            default=repo,
-            hide=True,
-        ),
-    }
+    )
 
-    restricted_github_mcp = github_mcp()
+    github_mcp_server.tools = tool_transformations
+    github_mcp_server.include_tags = {"restricted"}
 
-    tools_to_restrict: set[str] = set()
-    if read_only:
-        if issues:
-            tools_to_restrict.update(READ_ISSUE_TOOLS)
-        if pull_requests:
-            tools_to_restrict.update(READ_PULL_REQUEST_TOOLS)
-        if discussions:
-            tools_to_restrict.update(READ_DISCUSSION_TOOLS)
-        if repository:
-            tools_to_restrict.update(READ_REPOSITORY_TOOLS)
-    else:
-        if issues:
-            tools_to_restrict.update(ISSUE_TOOLS)
-        if pull_requests:
-            tools_to_restrict.update(PULL_REQUEST_TOOLS)
-        if discussions:
-            tools_to_restrict.update(DISCUSSION_TOOLS)
-        if repository:
-            tools_to_restrict.update(REPOSITORY_TOOLS)
+    return github_mcp_server
 
-    for tool in tools_to_restrict:
-        restricted_github_mcp.tools[tool] = ToolTransformConfig(
-            name=tool,
+
+def repo_restrict_github_mcp(
+    github_mcp_server: TransformingStdioMCPServer | None = None,
+    owner: str | None = None,
+    repo: str | None = None,
+    issues: bool = False,
+    pull_requests: bool = False,
+    discussions: bool = False,
+    repository: bool = False,
+    read_tools: bool = True,
+    write_tools: bool = True,
+) -> TransformingStdioMCPServer:
+    """Restrict a GitHub MCP server to a specific repository."""
+
+    if not github_mcp_server:
+        github_mcp_server = github_mcp()
+
+    arg_transforms: dict[str, ArgTransformConfig] = {}
+
+    if owner is not None:
+        arg_transforms["owner"] = ArgTransformConfig(default=owner, hide=True)
+    if repo is not None:
+        arg_transforms["repo"] = ArgTransformConfig(default=repo, hide=True)
+
+    tools = github_tools(
+        issues=issues,
+        pull_requests=pull_requests,
+        discussions=discussions,
+        repository=repository,
+        read_tools=read_tools,
+        write_tools=write_tools,
+    )
+
+    github_mcp_server.tools = dict.fromkeys(
+        tools,
+        ToolTransformConfig(
             tags={"restricted"},
             arguments=arg_transforms,
-        )
+        ),
+    )
 
-    restricted_github_mcp.include_tags = {"restricted"}
+    github_mcp_server.include_tags = {"restricted"}
 
-    return restricted_github_mcp
+    return github_mcp_server
 
 
 def github_search_syntax_tool() -> FastMCPTool:

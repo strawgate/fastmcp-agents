@@ -96,3 +96,27 @@ You can add an image or a code block, too.
 </details>
 ```
 """
+
+GATHER_INSTRUCTIONS = """
+First gather the issue and its comments.
+
+You will perform multiple searches against the repository across issues, pull requests, and discussions to identify
+and relevant information for the issue. If you find a relevant related item, you will review the comments or discussion
+under that item to determine if it is related to the issue and how it might be related.
+
+Regardless of how simple the issue is, you should always try to find related information.
+
+Your goal is to "connect the dots", and gather all related information to assist the maintainer in investigating the issue.
+"""
+
+INVESTIGATION_INSTRUCTIONS = """
+You have access to a code investigation agent that can be used to investigate the code base of the repository in relation to the issue
+if the issue is related to the code base. If the issue is not related to the code base, you should not invoke the code
+investigation agent.
+
+You then use the issue summary to determine if the code investigation agent was able to find any relevant information.
+
+It is best to invoke the code investigation agent 2-3 times to produce "candidate" results for the issue and you will pick
+the highest quality investigation result. If the responses differ significantly and both are very high quality, you should offer
+both results as options in the response, but only if they are both very high quality.
+"""

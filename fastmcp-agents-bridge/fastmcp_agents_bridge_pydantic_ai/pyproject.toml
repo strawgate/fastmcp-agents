@@ -30,9 +30,6 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "fastmcp_agents.bridge.pydantic_ai"
 
-[tool.uv.sources]
-fastmcp = { git = "https://github.com/jlowin/fastmcp" }
-
 [tool.ruff]
 extend="../../pyproject.toml"
 
