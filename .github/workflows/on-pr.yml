@@ -45,15 +45,15 @@ jobs:
         working-directory: ${{ matrix.pyproject }}
 
       - name: Ruff Format
-        run: uv run ruff format --check
+        run: uv run ruff format --check .
         working-directory: ${{ matrix.pyproject }}
 
       - name: Ruff Check
-        run: uv run ruff check
+        run: uv run ruff check .
         working-directory: ${{ matrix.pyproject }}
 
       - name: Type Check
-        run: uv run basedpyright
+        run: uv run basedpyright .
         working-directory: ${{ matrix.pyproject }}
 
       - name: Test
