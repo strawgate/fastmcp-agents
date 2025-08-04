@@ -460,7 +460,7 @@ wheels = [
 
 [[package]]
 name = "fastmcp-agents"
-version = "0.5.7"
+version = "0.5.9"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -491,7 +491,7 @@ lint = [{ name = "ruff" }]
 
 [[package]]
 name = "fastmcp-agents-bridge-pydantic-ai"
-version = "0.1.4"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" }
 dependencies = [
     { name = "fastmcp" },
@@ -530,7 +530,7 @@ lint = [{ name = "ruff" }]
 
 [[package]]
 name = "fastmcp-agents-cli"
-version = "0.5.8"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-cli" }
 dependencies = [
     { name = "cyclopts" },
@@ -563,7 +563,7 @@ dev = [
 
 [[package]]
 name = "fastmcp-agents-library-agents"
-version = "0.1.1"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agents" }
 dependencies = [
     { name = "fastmcp-agents-bridge-pydantic-ai" },
@@ -590,7 +590,7 @@ dev = [{ name = "pygithub", specifier = ">=2.6.1" }]
 
 [[package]]
 name = "fastmcp-agents-library-mcp"
-version = "0.5.7"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" }
 dependencies = [
     { name = "fastmcp" },
