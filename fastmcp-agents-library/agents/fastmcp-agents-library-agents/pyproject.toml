@@ -15,8 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-github = "fastmcp_agents.library.agents.github.agents:run"
-github-triage = "fastmcp_agents.library.agents.flows.triage_github_issue:run"
+github-triage = "fastmcp_agents.library.agents.github.server:run"
 simple-code = "fastmcp_agents.library.agent.simple_code.agents:run"
 
 
