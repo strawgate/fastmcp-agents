@@ -44,6 +44,26 @@ def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, R
     return f"""Gather context about GitHub issue {issue.issue_number} in {issue.owner}/{issue.repo}."""
 
 
+
+github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
+    model=os.getenv("MODEL_RESEARCH_GITHUB_ISSUE") or os.getenv("MODEL"),
+    system_prompt=[
+        WHO_YOU_ARE,
+        YOUR_GOAL,
+        YOUR_MINDSET,
+    ],
+    instructions=[
+        GATHER_INSTRUCTIONS,
+        REPORTING_CONFIDENCE,
+        research_github_issue_instructions,
+        INVESTIGATION_INSTRUCTIONS,
+        RESPONSE_FORMAT,
+    ],
+    deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
+    output_type=[GitHubIssueSummary, Failure],
+)
+
+@github_triage_agent.toolset(per_run_step=False)
 async def github_triage_toolset(
     ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]],
 ) -> FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]]:
@@ -72,26 +92,6 @@ async def github_triage_toolset(
             )
 
     return FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]].from_mcp_server(name="github", mcp_server=github_mcp_server)
-
-
-github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
-    model=os.getenv("MODEL_RESEARCH_GITHUB_ISSUE") or os.getenv("MODEL"),
-    system_prompt=[
-        WHO_YOU_ARE,
-        YOUR_GOAL,
-        YOUR_MINDSET,
-    ],
-    instructions=[
-        GATHER_INSTRUCTIONS,
-        REPORTING_CONFIDENCE,
-        research_github_issue_instructions,
-        INVESTIGATION_INSTRUCTIONS,
-        RESPONSE_FORMAT,
-    ],
-    deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
-    toolsets=[github_triage_toolset],
-    output_type=[GitHubIssueSummary, Failure],
-)
 
 
 @github_triage_agent.tool

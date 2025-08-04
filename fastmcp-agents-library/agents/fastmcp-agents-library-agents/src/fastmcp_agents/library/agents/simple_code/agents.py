@@ -64,7 +64,7 @@ code_implementation_agent = Agent[Path, ImplementationResponse | Failure](
 )
 
 
-@code_implementation_agent.toolset
+@code_implementation_agent.toolset(per_run_step=False)
 async def read_write_filesystem_toolset_func(ctx: RunContext[Path]) -> FastMCPServerToolset[Path]:
     return FastMCPServerToolset[Path].from_mcp_server(name="filesystem", mcp_server=read_write_filesystem_mcp(root_dir=ctx.deps))
 
