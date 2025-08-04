@@ -4,6 +4,7 @@
 This agent is used to perform GitHub tasks.
 """
 
+from textwrap import dedent
 import os
 from pathlib import Path
 
@@ -31,6 +32,7 @@ from fastmcp_agents.library.agents.github.prompts import (
 )
 from fastmcp_agents.library.agents.shared.models import Failure
 from fastmcp_agents.library.agents.simple_code.agents import code_investigation_agent
+from fastmcp_agents.library.agents.simple_code.models import InvestigationResult
 from fastmcp_agents.library.mcp.github import (
     repo_restrict_github_mcp,
 )
@@ -41,8 +43,21 @@ ReplyToIssue = GitHubIssue
 
 
 def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]]) -> str:  # pyright: ignore[reportUnusedFunction]
-    issue: GitHubIssue = ctx.deps[0]
-    return f"""Gather context about GitHub issue {issue.issue_number} in {issue.owner}/{issue.repo}."""
+    investigate_issue, reply_to_issue = ctx.deps
+
+    text: list[str] = [
+        f"This task is related to GitHub issue `{investigate_issue.issue_number}` in `{investigate_issue.owner}/{investigate_issue.repo}`.",
+    ]
+
+    if reply_to_issue:
+        text.append(
+            dedent(
+                text=f"""Once you have finished the task, post your findings as a comment to
+                GitHub Issue `{reply_to_issue.issue_number}` in `{reply_to_issue.owner}/{reply_to_issue.repo}`."""
+            )
+        )
+
+    return "\n".join(text)
 
 
 github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
@@ -96,7 +111,7 @@ async def github_triage_toolset(
 
 
 @github_triage_agent.tool
-async def investigate_code_base(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]], task: str):  # pyright: ignore[reportUnusedFunction]
+async def investigate_code_base(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]], task: str) -> InvestigationResult | Failure:  # pyright: ignore[reportUnusedFunction]
     """Investigate the code base of the repository in relation to the issue."""
 
     with tempfile.TemporaryDirectory() as temp_dir:

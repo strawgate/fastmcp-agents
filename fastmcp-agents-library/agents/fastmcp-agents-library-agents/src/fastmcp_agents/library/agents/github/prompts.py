@@ -6,7 +6,10 @@ to connect them with previous issues posted, open or closed pull requests, and d
 
 YOUR_GOAL = """
 ## Goal
-Your goal is to help the user with their GitHub issue.
+Your goal is to investigate a GitHub issue in a repository. Your investigation should focus on the content of the issue,
+the comments on the issue, and the comments on related issues. You should aim to provide a response that is helpful to the
+user by either providing an initial investigation of the issue, providing a response grounded in documentation or your
+investigation of the codebase, or providing a response that is a comprehensive suggestion for a fix.
 """
 
 REPORTING_CONFIDENCE = """
@@ -98,8 +101,7 @@ You can add an image or a code block, too.
 """
 
 GATHER_INSTRUCTIONS = """
-First gather the issue and its comments.
-
+## Gathering Background Information
 You will perform multiple searches against the repository across issues, pull requests, and discussions to identify
 and relevant information for the issue. If you find a relevant related item, you will review the comments or discussion
 under that item to determine if it is related to the issue and how it might be related.
@@ -110,6 +112,7 @@ Your goal is to "connect the dots", and gather all related information to assist
 """
 
 INVESTIGATION_INSTRUCTIONS = """
+## Code Investigation
 You have access to a code investigation agent that can be used to investigate the code base of the repository in relation to the issue
 if the issue is related to the code base. If the issue is not related to the code base, you should not invoke the code
 investigation agent.

@@ -10,9 +10,10 @@ from fastmcp_agents.library.agents.shared.models import Failure
 
 async def investigate_filesystem(
     path: Path,
+    instructions: str | None = None,
 ) -> str | Failure:
     """Investigate the code at the given path."""
-    return (await read_only_filesystem_agent.run(deps=path)).output
+    return (await read_only_filesystem_agent.run(deps=path, user_prompt=instructions)).output
 
 
 read_only_filesystem_agent_tool = FunctionTool.from_function(fn=investigate_filesystem, name="filesystem_investigation_read_only")
@@ -20,9 +21,10 @@ read_only_filesystem_agent_tool = FunctionTool.from_function(fn=investigate_file
 
 async def perform_filesystem_task(
     path: Path,
+    instructions: str | None = None,
 ) -> str | Failure:
     """Implement the code at the given path."""
-    return (await read_write_filesystem_agent.run(deps=path)).output
+    return (await read_write_filesystem_agent.run(deps=path, user_prompt=instructions)).output
 
 
 filesystem_task_tool = FunctionTool.from_function(fn=perform_filesystem_task, name="filesystem_task")
@@ -37,6 +39,7 @@ server: FastMCP[None] = FastMCP[None](
 
 
 def run():
+    configure_console_logging()
     server.run()
 
 

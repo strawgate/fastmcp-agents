@@ -11,9 +11,10 @@ from fastmcp_agents.library.agents.simple_code.models import ImplementationRespo
 
 async def investigate_code(
     path: Path,
+    instructions: str | None = None,
 ) -> InvestigationResult | Failure:
     """Investigate the code at the given path."""
-    return (await code_investigation_agent.run(deps=path)).output
+    return (await code_investigation_agent.run(deps=path, user_prompt=instructions)).output
 
 
 code_investigation_agent_tool = FunctionTool.from_function(fn=investigate_code, name="code_investigation_agent")
@@ -21,9 +22,10 @@ code_investigation_agent_tool = FunctionTool.from_function(fn=investigate_code, 
 
 async def implement_code(
     path: Path,
+    instructions: str | None = None,
 ) -> ImplementationResponse | Failure:
     """Implement the code at the given path."""
-    return (await code_implementation_agent.run(deps=path)).output
+    return (await code_implementation_agent.run(deps=path, user_prompt=instructions)).output
 
 
 code_agent_tool = FunctionTool.from_function(fn=implement_code, name="code_agent")
@@ -38,6 +40,7 @@ server: FastMCP[None] = FastMCP[None](
 
 
 def run():
+    configure_console_logging()
     server.run()
 
 
