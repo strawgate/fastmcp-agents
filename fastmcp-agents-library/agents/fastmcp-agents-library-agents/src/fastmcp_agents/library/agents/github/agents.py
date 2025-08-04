@@ -8,6 +8,13 @@ import os
 from pathlib import Path
 
 from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
+from git.repo import Repo
+from gitdb.db.loose import tempfile
+from pydantic_ai.agent import (
+    Agent,
+    RunContext,  # pyright: ignore[reportPrivateImportUsage]
+)
+
 from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPServerToolset
 from fastmcp_agents.library.agents.github.models import (
     GitHubIssue,
@@ -28,12 +35,6 @@ from fastmcp_agents.library.mcp.github import (
     repo_restrict_github_mcp,
 )
 from fastmcp_agents.library.mcp.github.github import REPLY_ISSUE_TOOLS
-from git.repo import Repo
-from gitdb.db.loose import tempfile
-from pydantic_ai.agent import (
-    Agent,
-    RunContext,  # pyright: ignore[reportPrivateImportUsage]
-)
 
 InvestigateIssue = GitHubIssue
 ReplyToIssue = GitHubIssue
@@ -42,7 +43,6 @@ ReplyToIssue = GitHubIssue
 def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]]) -> str:  # pyright: ignore[reportUnusedFunction]
     issue: GitHubIssue = ctx.deps[0]
     return f"""Gather context about GitHub issue {issue.issue_number} in {issue.owner}/{issue.repo}."""
-
 
 
 github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
@@ -62,6 +62,7 @@ github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHub
     deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
     output_type=[GitHubIssueSummary, Failure],
 )
+
 
 @github_triage_agent.toolset(per_run_step=False)
 async def github_triage_toolset(

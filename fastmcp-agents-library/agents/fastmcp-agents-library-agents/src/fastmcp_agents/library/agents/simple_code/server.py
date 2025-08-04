@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastmcp.server import FastMCP
 from fastmcp.tools import FunctionTool
+
 from fastmcp_agents.library.agents.shared.logging import configure_console_logging
 from fastmcp_agents.library.agents.shared.models import Failure
 from fastmcp_agents.library.agents.simple_code.agents import code_implementation_agent, code_investigation_agent

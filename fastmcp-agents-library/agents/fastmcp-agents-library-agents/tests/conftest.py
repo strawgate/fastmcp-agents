@@ -5,7 +5,6 @@ from typing import Any
 
 import pytest
 import yaml
-from fastmcp_agents.library.agents.shared.logging import configure_console_logging
 from pydantic import BaseModel
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.messages import ModelMessage
@@ -13,6 +12,8 @@ from pydantic_evals import Dataset
 from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 from pydantic_evals.reporting import EvaluationReport, ReportCaseAggregate
 from rich.pretty import pprint
+
+from fastmcp_agents.library.agents.shared.logging import configure_console_logging
 
 set_default_judge_model(model="google-gla:gemini-2.5-flash")
 configure_console_logging()

@@ -1,12 +1,3 @@
-from fastmcp.mcp_config import TransformingStdioMCPServer
-from fastmcp.tools.tool_transform import ToolTransformConfig
-
-from fastmcp_agents.library.mcp.strawgate.elasticsearch import elasticsearch_mcp
-from fastmcp_agents.library.mcp.strawgate.knowledge_base import (
-    SeedKnowledgeBaseRequest,
-    seed_knowledge_base,
-)
-
 esql_instructions = """
 When you are asked to perform a task that requires you to perform an ESQL query.
 
@@ -99,27 +90,18 @@ Provide answers in Markdown and explain each part of the query with links to doc
 """
 
 
-def esql_elasticsearch_mcp() -> TransformingStdioMCPServer:
-    mcp = elasticsearch_mcp()
-    mcp.tools = {
-        "indices_data_streams_stats": ToolTransformConfig(
-            name="get_data_streams",
-            tags={"data_streams"},
-        ),
-    }
-    mcp.include_tags = {"esql", "summarize", "tips"}
-    return mcp
+elasticsearch_instructions = """
+You have access to the Elasticsearch MCP Server to perform queries so you can verify the indices, fields, mappings and more:
+1. Call indices_data_streams_stats to get a list of data streams
+2. For interesting datastreams, call summarize_data_stream, providing the list of datastreams you're interested in more information about
+    This will provide a summary of fields along with sample data for each field and some sample documents.
+3. Before writing any queries, call the `tips` tools to get tips on how to write ES|QL and Elasticsearch DSL Queries.
 
+You should always run any ES|QL query you write for a task and make sure it works. In addition to answering the specific question asked,
+you should always provide a markdown formatted response with a small set of actual results of the query for the user to see. When providing
+this small set of actual results, you should include the results as a markdown formatted table as they were returned from the query without
+removing any fields.
 
-async def prepare_knowledge_base(knowledge_base_mcp: TransformingStdioMCPServer) -> None:
-    await seed_knowledge_base(
-        kb_mcp=knowledge_base_mcp,
-        knowledge_base_requests=[
-            SeedKnowledgeBaseRequest(
-                knowledge_base="ESQL", seed_urls=["https://www.elastic.co/docs/reference/query-languages/esql/"], overwrite=True
-            ),
-            SeedKnowledgeBaseRequest(
-                knowledge_base="Elastic Common Schema", seed_urls=["https://www.elastic.co/docs/reference/ecs/"], overwrite=True
-            ),
-        ],
-    )
+If the user asks you a specific question, like how many of X are there, you should run a query to get the answer but you should
+also provide the full query, explanation, documentation links, and results in your response unless specifically asked not to.
+"""

@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agents"
-version = "0.1.1"
+version = "0.5.9"
 description = "Agents with no dependencies on other libraries"
 readme = "README.md"
 authors = [
@@ -35,3 +35,9 @@ build-backend = "uv_build"
 dev = [
     "pygithub>=2.6.1",
 ]
+
+[tool.ruff]
+extend="../../../pyproject.toml"
+
+[tool.pyright]
+extends = "../../../pyproject.toml"

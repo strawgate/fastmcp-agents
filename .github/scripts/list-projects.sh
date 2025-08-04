@@ -29,6 +29,11 @@ changed_projects=""
 
 while IFS= read -r project; do
   if [ -n "$project" ]; then
+    # Skip the root project (namespace package only)
+    if [ "$project" = "." ]; then
+      continue
+    fi
+    
     # If --changed-only flag is set, check if project has changed
     if [ "$CHANGED_ONLY" = true ]; then
       if ! git diff --name-only HEAD~1 HEAD | grep -q "^${project#./}/"; then

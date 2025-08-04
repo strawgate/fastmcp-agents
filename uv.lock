@@ -7,9 +7,6 @@ members = [
     "fastmcp-agents",
     "fastmcp-agents-bridge-pydantic-ai",
     "fastmcp-agents-cli",
-    "fastmcp-agents-library-agent-documentation-maintainer",
-    "fastmcp-agents-library-agent-elasticsearch",
-    "fastmcp-agents-library-agent-filesystem-operations",
     "fastmcp-agents-library-agents",
     "fastmcp-agents-library-mcp",
 ]
@@ -110,15 +107,15 @@ wheels = [
 
 [[package]]
 name = "anyio"
-version = "4.9.0"
+version = "4.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "idna" },
     { name = "sniffio" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/95/7d/4c1bd541d4dffa1b52bd83fb8527089e097a106fc90b467a7313b105f840/anyio-4.9.0.tar.gz", hash = "sha256:673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028", size = 190949, upload-time = "2025-03-17T00:02:54.77Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f1/b4/636b3b65173d3ce9a38ef5f0522789614e590dab6a8d505340a4efe4c567/anyio-4.10.0.tar.gz", hash = "sha256:3f3fae35c96039744587aa5b8371e7e8e603c0702999535961dd336026973ba6", size = 213252, upload-time = "2025-08-04T08:54:26.451Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a1/ee/48ca1a7c89ffec8b6a0c5d02b89c305671d5ffd8d3c94acf8b8c408575bb/anyio-4.9.0-py3-none-any.whl", hash = "sha256:9f76d541cad6e36af7beb62e978876f3b41e3e04f2c1fbf0884604c0a9c4d93c", size = 100916, upload-time = "2025-03-17T00:02:52.713Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/12/e5e0282d673bb9746bacfb6e2dba8719989d3660cdb2ea79aee9a9651afb/anyio-4.10.0-py3-none-any.whl", hash = "sha256:60e474ac86736bbfd6f210f7a61218939c318f43f9972497381f1c5e930ed3d1", size = 107213, upload-time = "2025-08-04T08:54:24.882Z" },
 ]
 
 [[package]]
@@ -153,14 +150,14 @@ wheels = [
 
 [[package]]
 name = "basedpyright"
-version = "1.31.0"
+version = "1.31.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodejs-wheel-binaries" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/23/6dc0df43c62fdec401b1ec3aea698ba50c5abfca25259e9f0208b34d7abe/basedpyright-1.31.0.tar.gz", hash = "sha256:900a573a525a0f66f884075c2a98711bb9478e44dc60ffdf182ef681bf8e2c76", size = 22062384, upload-time = "2025-07-16T11:37:29.189Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/39/e2870a3739dce055a5b7822d027843c9ba9b3453dcb4b226d9b0e9d486f4/basedpyright-1.31.1.tar.gz", hash = "sha256:4e4d922a385f45dc93e50738d1131ec4533fee5d338b700ef2d28e2e0412e642", size = 22067890, upload-time = "2025-08-03T13:41:15.405Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5a/85/cb46707458c514ae959fe139135d8f7231d95faf1c383a56979a3436b965/basedpyright-1.31.0-py3-none-any.whl", hash = "sha256:d7460ddcd3a2332b1c3fd738735d18bf2966d49aed67237efa1f19635199d414", size = 11538999, upload-time = "2025-07-16T11:37:26.446Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/cc/8bca3b3a48d6a03a4b857a297fb1473ed1b9fa111be2d20c01f11112e75c/basedpyright-1.31.1-py3-none-any.whl", hash = "sha256:8b647bf07fff929892db4be83a116e6e1e59c13462ecb141214eb271f6785ee5", size = 11540576, upload-time = "2025-08-03T13:41:11.571Z" },
 ]
 
 [[package]]
@@ -202,11 +199,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2025.7.14"
+version = "2025.8.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995", size = 163981, upload-time = "2025-07-14T03:29:28.449Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dc/67/960ebe6bf230a96cda2e0abcf73af550ec4f090005363542f0765df162e0/certifi-2025.8.3.tar.gz", hash = "sha256:e564105f78ded564e3ae7c923924435e1daa7463faeab5bb932bc53ffae63407", size = 162386, upload-time = "2025-08-03T03:07:47.08Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2", size = 162722, upload-time = "2025-07-14T03:29:26.863Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/48/1549795ba7742c948d2ad169c1c8cdbae65bc450d6cd753d124b17c8cd32/certifi-2025.8.3-py3-none-any.whl", hash = "sha256:f6c12493cfb1b06ba2ff328595af9350c65d6644968e5d3a2ffd78699af217a5", size = 161216, upload-time = "2025-08-03T03:07:45.777Z" },
 ]
 
 [[package]]
@@ -255,19 +252,19 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.2.2"
+version = "8.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/87/105111999772ec9730e3d4d910c723ea9763ece2ec441533a5cea1e87e3c/click-8.2.2.tar.gz", hash = "sha256:068616e6ef9705a07b6db727cb9c248f4eb9dae437a30239f56fa94b18b852ef", size = 263977, upload-time = "2025-08-02T02:23:41.102Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/6c/8ca2efa64cf75a977a0d7fac081354553ebe483345c734fb6b6515d96bbc/click-8.2.1.tar.gz", hash = "sha256:27c491cc05d968d271d5a1db13e3b5a184636d9d930f148c50b038f0d0646202", size = 286342, upload-time = "2025-05-20T23:19:49.832Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/85/e7297e34133ae1cfde3bffd30c24e1ef055248251baa877834e048687a28/click-8.2.2-py3-none-any.whl", hash = "sha256:52e1e9f5d3db8c85aa76968c7c67ed41ddbacb167f43201511c8fd61eb5ba2ca", size = 103900, upload-time = "2025-08-02T02:23:39.299Z" },
+    { url = "https://files.pythonhosted.org/packages/85/32/10bb5764d90a8eee674e9dc6f4db6a0ab47c8c4d0d83c27f7c39ac415a4d/click-8.2.1-py3-none-any.whl", hash = "sha256:61a3265b914e850b85317d0b3109c7f8cd35a670f963866005d6ef1d5175a12b", size = 102215, upload-time = "2025-05-20T23:19:47.796Z" },
 ]
 
 [[package]]
 name = "cohere"
-version = "5.16.1"
+version = "5.16.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastavro" },
@@ -280,9 +277,9 @@ dependencies = [
     { name = "types-requests" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/c7/fd1e4c61cf3f0aac9d9d73fce63a766c9778e1270f7a26812eb289b4851d/cohere-5.16.1.tar.gz", hash = "sha256:02aa87668689ad0fbac2cda979c190310afdb99fb132552e8848fdd0aff7cd40", size = 162300, upload-time = "2025-07-09T20:47:36.348Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/c0/dcbbef24aea47b7fa58887dd3e002fa378a04cef19ad0207a90c2eadfee8/cohere-5.16.2.tar.gz", hash = "sha256:30febd58168983647b4125831a6ac2a8db4643d222cf04373e53b9959c8d05f9", size = 163976, upload-time = "2025-08-04T13:06:37.004Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/c6/72309ac75f3567425ca31a601ad394bfee8d0f4a1569dfbc80cbb2890d07/cohere-5.16.1-py3-none-any.whl", hash = "sha256:37e2c1d69b1804071b5e5f5cb44f8b74127e318376e234572d021a1a729c6baa", size = 291894, upload-time = "2025-07-09T20:47:34.919Z" },
+    { url = "https://files.pythonhosted.org/packages/46/8a/3fbe81a41673d320acbc721eb4a050bef15c8bafa251b10eeddfe0cf9f61/cohere-5.16.2-py3-none-any.whl", hash = "sha256:c2c877dd6fd0bdbc8686b390322a340ad736e1cc65e3e0b6b0cbdc339bfeadbc", size = 294027, upload-time = "2025-08-04T13:06:35.325Z" },
 ]
 
 [[package]]
@@ -441,8 +438,8 @@ wheels = [
 
 [[package]]
 name = "fastmcp"
-version = "2.11.1.dev3+5a87a47"
-source = { git = "https://github.com/jlowin/fastmcp#5a87a4787daf184aef9fc63157afa6acf3ec46d1" }
+version = "2.11.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "authlib" },
     { name = "cyclopts" },
@@ -456,10 +453,14 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "rich" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/92/89/d100073d15cdfa5fa029107b44ef55916b04ed6010ff2b0f7bed92a35ed9/fastmcp-2.11.1.tar.gz", hash = "sha256:2b5af21b093d4926fef17a9a162d5729a2fcb46f3b195699762fa01f61ac3c60", size = 2672724, upload-time = "2025-08-04T15:39:29.623Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/9f/f3703867a8be93f2a139f6664fa7ff46c5c844e28998ce288f7b919ed197/fastmcp-2.11.1-py3-none-any.whl", hash = "sha256:9f0b6a3f61dcf6f688a0a24b8b507be24bfae051a00b7d590c01395d63da8c00", size = 256573, upload-time = "2025-08-04T15:39:27.594Z" },
+]
 
 [[package]]
 name = "fastmcp-agents"
-version = "0.5.7"
+version = "0.5.9"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -490,7 +491,7 @@ lint = [{ name = "ruff" }]
 
 [[package]]
 name = "fastmcp-agents-bridge-pydantic-ai"
-version = "0.1.4"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" }
 dependencies = [
     { name = "fastmcp" },
@@ -512,7 +513,7 @@ lint = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fastmcp", git = "https://github.com/jlowin/fastmcp" },
+    { name = "fastmcp" },
     { name = "logfire", specifier = ">=3.25.0" },
     { name = "pydantic-ai", specifier = ">=0.4.4" },
 ]
@@ -529,7 +530,7 @@ lint = [{ name = "ruff" }]
 
 [[package]]
 name = "fastmcp-agents-cli"
-version = "0.5.8"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-cli" }
 dependencies = [
     { name = "cyclopts" },
@@ -561,107 +562,8 @@ dev = [
 ]
 
 [[package]]
-name = "fastmcp-agents-library-agent-documentation-maintainer"
-version = "0.5.7"
-source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-documentation-maintainer" }
-dependencies = [
-    { name = "fastmcp" },
-    { name = "fastmcp-agents-bridge-pydantic-ai" },
-    { name = "fastmcp-agents-library-mcp" },
-    { name = "gitpython" },
-    { name = "pydantic" },
-    { name = "pydantic-ai" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp" },
-    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
-    { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "gitpython", specifier = ">=3.1.44" },
-    { name = "pydantic", specifier = ">=2.11.7" },
-    { name = "pydantic-ai", specifier = ">=0.4.4" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.24.0" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
-name = "fastmcp-agents-library-agent-elasticsearch"
-version = "0.5.7"
-source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-elasticsearch" }
-dependencies = [
-    { name = "fastmcp-agents-bridge-pydantic-ai" },
-    { name = "fastmcp-agents-library-mcp" },
-    { name = "gitpython" },
-    { name = "pydantic" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
-    { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-    { name = "gitpython", specifier = ">=3.1.44" },
-    { name = "pydantic", specifier = ">=2.11.7" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.24.0" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
-name = "fastmcp-agents-library-agent-filesystem-operations"
-version = "0.5.7"
-source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agent-filesystem-operations" }
-dependencies = [
-    { name = "fastmcp-agents-bridge-pydantic-ai" },
-    { name = "fastmcp-agents-library-mcp" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastmcp-agents-bridge-pydantic-ai", editable = "fastmcp-agents-bridge/fastmcp_agents_bridge_pydantic_ai" },
-    { name = "fastmcp-agents-library-mcp", editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.3.4" },
-    { name = "pytest-asyncio", specifier = ">=0.24.0" },
-    { name = "ruff", specifier = ">=0.12.4" },
-]
-
-[[package]]
 name = "fastmcp-agents-library-agents"
-version = "0.1.1"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-library/agents/fastmcp-agents-library-agents" }
 dependencies = [
     { name = "fastmcp-agents-bridge-pydantic-ai" },
@@ -688,7 +590,7 @@ dev = [{ name = "pygithub", specifier = ">=2.6.1" }]
 
 [[package]]
 name = "fastmcp-agents-library-mcp"
-version = "0.5.7"
+version = "0.5.9"
 source = { editable = "fastmcp-agents-library/mcp/fastmcp-agents-library-mcp" }
 dependencies = [
     { name = "fastmcp" },
@@ -702,7 +604,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastmcp", git = "https://github.com/jlowin/fastmcp" }]
+requires-dist = [{ name = "fastmcp" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1096,7 +998,7 @@ wheels = [
 
 [[package]]
 name = "logfire"
-version = "4.0.1"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "executing" },
@@ -1107,18 +1009,18 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/b2/51b436ec87575aea6f5e73a2161067f4b05c1c3b1f16359d1db351a03e50/logfire-4.0.1.tar.gz", hash = "sha256:79b04bc8a48669373c892e011ad47f789d99af3d7178f0fa093053f20fdbd8c1", size = 512638, upload-time = "2025-07-31T16:05:24.189Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/92/9b34af3414f31d335751b7e634d5163d1ad97296136ef81db666c4616194/logfire-4.1.0.tar.gz", hash = "sha256:c0a30ed05740193a465b3cd3e0c162a72c9baa53b297dd6757c3f833c7feaa7b", size = 513660, upload-time = "2025-08-04T11:51:19.714Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/8b/2a5f3fbcd1dedf4db6cefba2fdc1ead8a40f823ef6375c9c5fd1ccf1b9f9/logfire-4.0.1-py3-none-any.whl", hash = "sha256:6aab85dcdb8a8050ed46b2265c406ae59d24d9e7086405406bf01c2789e500ca", size = 211574, upload-time = "2025-07-31T16:05:20.61Z" },
+    { url = "https://files.pythonhosted.org/packages/5a/63/4c61a3327ce7242cc4e7b08191f9e75a7a5d73744b1451d7cabb88986062/logfire-4.1.0-py3-none-any.whl", hash = "sha256:474032a2f941a0cf854a78d6c09fde1c9903f9069dacc22f8baff72bf7733a8f", size = 212236, upload-time = "2025-08-04T11:51:16.31Z" },
 ]
 
 [[package]]
 name = "logfire-api"
-version = "4.0.1"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/85/db/445d1168d1fde30ecd1c25424e1f2c70a55f73b9b92c4c1fed422008b964/logfire_api-4.0.1.tar.gz", hash = "sha256:ddf84590274e9d2231c59271e5177551983f6669c8d5e011ccd6ae7086dd5016", size = 52116, upload-time = "2025-07-31T16:05:25.325Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/73/9d522d920511771f4880808f2f17e7243ee3c910ed976114c1df119f7ab3/logfire_api-4.1.0.tar.gz", hash = "sha256:4182e6bc70c7a93ae96682ce572b5991189c6f17617a3a10ae637e1c61b44554", size = 52456, upload-time = "2025-08-04T11:51:21.04Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/3e/a5895f0aa4db380e1f83e4454dcd8585ccfa32b1fc3136efbd7b4b13b589/logfire_api-4.0.1-py3-none-any.whl", hash = "sha256:bfc389ae0bf2c3709109d1ce173ff935d0f53ff96caec99b3a20ce4ab728ff4e", size = 87438, upload-time = "2025-07-31T16:05:22.699Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/e9/900d96e5cfc7fca91a3c4f592da717d261a5b5e2d5200dab6eba4cafa3e5/logfire_api-4.1.0-py3-none-any.whl", hash = "sha256:dea6dbb75f6c75692957d45e91479fe04a74ed4a5947c6e01d54fc7a69289e27", size = 87773, upload-time = "2025-08-04T11:51:18.249Z" },
 ]
 
 [[package]]
@@ -1608,16 +1510,16 @@ email = [
 
 [[package]]
 name = "pydantic-ai"
-version = "0.4.5.dev75+5e0e39b"
-source = { git = "https://github.com/strawgate/pydantic-ai.git?branch=dynamic-toolset#5e0e39b51e6caffb34f845f2d83e877ddc1b53d5" }
+version = "0.4.5.dev80+a0c1856"
+source = { git = "https://github.com/strawgate/pydantic-ai.git?branch=dynamic-toolset#a0c1856f41add2d684fdf3bfdd3fb64ed9380cc2" }
 dependencies = [
     { name = "pydantic-ai-slim", extra = ["ag-ui", "anthropic", "bedrock", "cli", "cohere", "evals", "google", "groq", "huggingface", "mcp", "mistral", "openai", "retries", "vertexai"] },
 ]
 
 [[package]]
 name = "pydantic-ai-slim"
-version = "0.4.5.dev75+5e0e39b"
-source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_ai_slim&branch=dynamic-toolset#5e0e39b51e6caffb34f845f2d83e877ddc1b53d5" }
+version = "0.4.5.dev80+a0c1856"
+source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_ai_slim&branch=dynamic-toolset#a0c1856f41add2d684fdf3bfdd3fb64ed9380cc2" }
 dependencies = [
     { name = "eval-type-backport" },
     { name = "griffe" },
@@ -1706,8 +1608,8 @@ wheels = [
 
 [[package]]
 name = "pydantic-evals"
-version = "0.4.5.dev75+5e0e39b"
-source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_evals&branch=dynamic-toolset#5e0e39b51e6caffb34f845f2d83e877ddc1b53d5" }
+version = "0.4.5.dev80+a0c1856"
+source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_evals&branch=dynamic-toolset#a0c1856f41add2d684fdf3bfdd3fb64ed9380cc2" }
 dependencies = [
     { name = "anyio" },
     { name = "logfire-api" },
@@ -1719,8 +1621,8 @@ dependencies = [
 
 [[package]]
 name = "pydantic-graph"
-version = "0.4.5.dev75+5e0e39b"
-source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_graph&branch=dynamic-toolset#5e0e39b51e6caffb34f845f2d83e877ddc1b53d5" }
+version = "0.4.5.dev80+a0c1856"
+source = { git = "https://github.com/strawgate/pydantic-ai.git?subdirectory=pydantic_graph&branch=dynamic-toolset#a0c1856f41add2d684fdf3bfdd3fb64ed9380cc2" }
 dependencies = [
     { name = "httpx" },
     { name = "logfire-api" },
