@@ -7,6 +7,9 @@ This agent is used to perform simple code tasks.
 import os
 from pathlib import Path
 
+from pydantic_ai import Agent
+from pydantic_ai.tools import RunContext
+
 from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPServerToolset
 from fastmcp_agents.library.agents.shared.models import Failure
 from fastmcp_agents.library.agents.simple_code.models import (
@@ -25,8 +28,6 @@ from fastmcp_agents.library.agents.simple_code.prompts import (
     YOUR_GOAL,
 )
 from fastmcp_agents.library.mcp.strawgate.filesystem_operations import read_only_filesystem_mcp, read_write_filesystem_mcp
-from pydantic_ai import Agent
-from pydantic_ai.tools import RunContext
 
 
 def add_repo_structure(ctx: RunContext[Path]) -> str:  # pyright: ignore[reportUnusedFunction]
@@ -78,6 +79,8 @@ code_investigation_agent = Agent[Path, InvestigationResult | Failure](
     instructions=[
         GATHER_INFORMATION,
         READ_ONLY_FILESYSTEM_TOOLS,
+        """You cannot change anything on the filesystem and you should never imply
+        that you have literally changed files during your investigation.""",
         COMPLETION_VERIFICATION,
         RESPONSE_FORMAT,
         add_branch_info,

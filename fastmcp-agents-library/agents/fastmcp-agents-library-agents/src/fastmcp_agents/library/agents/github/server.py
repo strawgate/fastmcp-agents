@@ -1,5 +1,6 @@
 from fastmcp.server import FastMCP
 from fastmcp.tools import FunctionTool
+
 from fastmcp_agents.library.agents.github.agents import github_triage_agent
 from fastmcp_agents.library.agents.github.models import GitHubIssue, GitHubIssueSummary
 from fastmcp_agents.library.agents.shared.logging import configure_console_logging

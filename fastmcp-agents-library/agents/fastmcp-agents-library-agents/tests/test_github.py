@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from fastmcp_agents.library.agents.github.agents import github_triage_agent
-from fastmcp_agents.library.agents.github.models import GitHubIssue, GitHubIssueSummary
-from fastmcp_agents.library.agents.shared.models import Failure
 from pydantic_ai.agent import AgentRunResult
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import LLMJudge
+
+from fastmcp_agents.library.agents.github.agents import github_triage_agent
+from fastmcp_agents.library.agents.github.models import GitHubIssue, GitHubIssueSummary
+from fastmcp_agents.library.agents.shared.models import Failure
 
 from .conftest import assert_passed, evaluation_rubric, split_dataset
 

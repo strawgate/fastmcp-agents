@@ -1,1 +1,0 @@
-An agent for interacting with Elasticsearch.

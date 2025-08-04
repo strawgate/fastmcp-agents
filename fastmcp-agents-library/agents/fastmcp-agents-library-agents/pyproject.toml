@@ -35,3 +35,9 @@ build-backend = "uv_build"
 dev = [
     "pygithub>=2.6.1",
 ]
+
+[tool.ruff]
+extend="../../../pyproject.toml"
+
+[tool.pyright]
+extends = "../../../pyproject.toml"
