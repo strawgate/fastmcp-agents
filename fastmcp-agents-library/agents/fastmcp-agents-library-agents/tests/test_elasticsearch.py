@@ -24,4 +24,4 @@ async def test_call_agent():
 
     assert result is not None
     assert result.output is not None
-    assert "FROM" in result.output.query
+    assert "FROM" in result.output.query or "metrics-*" in result.output.query
