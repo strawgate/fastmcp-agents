@@ -4,13 +4,14 @@
 This agent is used to perform GitHub tasks.
 """
 
-from textwrap import dedent
 import os
 from pathlib import Path
+from typing import Annotated
 
 from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
 from git.repo import Repo
 from gitdb.db.loose import tempfile
+from pydantic import Field
 from pydantic_ai.agent import (
     Agent,
     RunContext,  # pyright: ignore[reportPrivateImportUsage]
@@ -56,18 +57,17 @@ def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, R
 
 
 github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
+    name="github-triage-agent",
     model=os.getenv("MODEL_RESEARCH_GITHUB_ISSUE") or os.getenv("MODEL"),
-    system_prompt=[
+    instructions=[
         WHO_YOU_ARE,
         YOUR_GOAL,
         YOUR_MINDSET,
-    ],
-    instructions=[
         GATHER_INSTRUCTIONS,
         REPORTING_CONFIDENCE,
-        research_github_issue_instructions,
         INVESTIGATION_INSTRUCTIONS,
         RESPONSE_FORMAT,
+        research_github_issue_instructions,
     ],
     deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
     output_type=[GitHubIssueSummary, Failure],
@@ -106,7 +106,10 @@ async def github_triage_toolset(
 
 
 @github_triage_agent.tool
-async def investigate_code_base(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]], task: str) -> InvestigationResult | Failure:  # pyright: ignore[reportUnusedFunction]
+async def investigate_code_base(
+    ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]],
+    task: Annotated[str, Field(description="A detailed description of the goals of the investigation.")],
+) -> InvestigationResult | Failure:  # pyright: ignore[reportUnusedFunction]
     """Investigate the code base of the repository in relation to the issue."""
 
     with tempfile.TemporaryDirectory() as temp_dir:

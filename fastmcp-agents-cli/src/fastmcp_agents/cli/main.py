@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Annotated, Any
 import yaml
 from cyclopts import App
 from cyclopts.parameter import Parameter
-from fastmcp import Client, FastMCP
-from fastmcp.client.transports import FastMCPTransport
+from fastmcp import Client
+from fastmcp.client.transports import MCPConfigTransport
 from fastmcp.mcp_config import MCPConfig, StdioMCPServer, TransformingStdioMCPServer
 from rich import print as rich_print
 from rich.pretty import pprint as rich_pprint
@@ -16,7 +16,6 @@ from fastmcp_agents.cli.utils import rich_table_from_tools
 
 if TYPE_CHECKING:
     from fastmcp.client.client import CallToolResult
-    from fastmcp.server.proxy import FastMCPProxy
     from mcp.types import Tool
 
 
@@ -46,7 +45,7 @@ app.command(call_app := App(name="call"))
 app.command(list_app := App(name="list"))
 
 
-def get_client(config: Path | None) -> Client[FastMCPTransport]:
+def get_client(config: Path | None) -> Client[MCPConfigTransport]:
     config = try_config(config=config)
 
     config_text: str = config.read_text()
@@ -59,9 +58,9 @@ def get_client(config: Path | None) -> Client[FastMCPTransport]:
         if isinstance(mcp_server_config, TransformingStdioMCPServer | StdioMCPServer):
             mcp_server_config.env = dict(os.environ.copy())
 
-    server: FastMCPProxy = FastMCP.as_proxy(backend=mcp_config)
+    # server: FastMCPProxy = FastMCP.as_proxy(backend=mcp_config)
 
-    client: Client[FastMCPTransport] = Client(server)
+    client: Client[MCPConfigTransport] = Client[MCPConfigTransport](mcp_config)
 
     return client
 

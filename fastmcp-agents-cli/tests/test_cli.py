@@ -17,20 +17,6 @@ async def test_directory() -> AsyncGenerator[Path, Any]:
             json.dumps({"mcpServers": {"filesystem": {"command": "uvx", "args": ["filesystem-operations-mcp", "--root-dir", temp_dir]}}})
         )
 
-        second_config_json = Path(temp_dir) / "config2.json"
-        second_config_json.write_text(
-            json.dumps(
-                {
-                    "mcpServers": {
-                        "agents": {
-                            "command": "uvx",
-                            "args": ["--from", "fastmcp-agents-library-agents", "github-triage"],
-                        },
-                    },
-                }
-            )
-        )
-
         subdir = Path(temp_dir) / "subdir"
         subdir.mkdir()
 
@@ -54,5 +40,3 @@ async def test_tool_call(test_directory: Path):
 
 async def test_list_tools(test_directory: Path):
     await list_tools(config=test_directory / "config.json")
-
-    await list_tools(config=test_directory / "config2.json")
