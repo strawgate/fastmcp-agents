@@ -91,7 +91,7 @@ code_investigation_agent = Agent[Path, InvestigationResult | Failure](
 )
 
 
-@code_investigation_agent.toolset
+@code_investigation_agent.toolset(per_run_step=False)
 async def read_only_filesystem_toolset_func(ctx: RunContext[Path]) -> FastMCPServerToolset[Path]:
     return FastMCPServerToolset[Path].from_mcp_server(name="filesystem", mcp_server=read_only_filesystem_mcp(root_dir=ctx.deps))
 

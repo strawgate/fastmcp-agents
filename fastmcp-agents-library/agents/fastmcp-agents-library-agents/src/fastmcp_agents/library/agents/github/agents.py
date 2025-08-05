@@ -50,12 +50,7 @@ def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, R
     ]
 
     if reply_to_issue:
-        text.append(
-            dedent(
-                text=f"""Once you have finished the task, post your findings as a comment to
-                GitHub Issue `{reply_to_issue.issue_number}` in `{reply_to_issue.owner}/{reply_to_issue.repo}`."""
-            )
-        )
+        text.append("Before calling the final_result tool, use the `add_issue_comment` tool to post your investigation to the issue.")
 
     return "\n".join(text)
 
