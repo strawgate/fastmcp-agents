@@ -14,6 +14,7 @@ async def research_github_issue(
     reply_to_issue_owner: str | None = None,
     reply_to_issue_repo: str | None = None,
     reply_to_issue_number: int | None = None,
+    instructions: str | None = None,
 ) -> GitHubIssueSummary | Failure:
     """Research a GitHub issue, optionally restricting the investigation to a specific owner or repository.
 
@@ -40,7 +41,7 @@ async def research_github_issue(
             issue_number=reply_to_issue_number,
         )
 
-    return (await github_triage_agent.run(deps=(investigate_issue, reply_to_issue))).output
+    return (await github_triage_agent.run(deps=(investigate_issue, reply_to_issue), user_prompt=instructions)).output
 
 
 research_github_issue_tool = FunctionTool.from_function(fn=research_github_issue)
@@ -52,13 +53,14 @@ server: FastMCP[None] = FastMCP[None](
 
 
 def run():
+    configure_console_logging()
     server.run()
 
 
 def run_http():
+    configure_console_logging()
     server.run(transport="http")
 
 
 if __name__ == "__main__":
-    configure_console_logging()
     run_http()

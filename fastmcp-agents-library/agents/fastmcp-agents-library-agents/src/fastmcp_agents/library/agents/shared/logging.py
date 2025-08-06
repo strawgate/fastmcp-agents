@@ -1,4 +1,5 @@
 import json
+import sys
 from datetime import UTC, datetime
 
 import logfire
@@ -62,12 +63,21 @@ def get_picked_tools_from_span(span: ReadableSpan) -> list[str]:
 ADDT_FORMAT_SPAN_NAMES = {"running tool"}
 
 
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+RESET = "\033[0m"
+
+
 def format_span(span: ReadableSpan) -> str:
-    timestamp: datetime | None = datetime.fromtimestamp(span.start_time / 1_000_000_000, tz=UTC) if span.start_time else None
+    timestamp: str | None = (
+        datetime.fromtimestamp(span.start_time / 1_000_000_000, tz=UTC).strftime("[%m/%d/%y %H:%M:%S]") if span.start_time else None
+    )
 
     span_message = span.name
 
-    message = "{timestamp} - {span_message}\n"
+    message = BLUE + "{timestamp}" + " SPAN     " + RESET + "{span_message}" + "\n"
     default_message = message.format(timestamp=timestamp, span_message=span_message)
     model_name: str | None = None
 
@@ -84,13 +94,16 @@ def format_span(span: ReadableSpan) -> str:
             tool_arguments: str | None = str(span.attributes.get("tool_arguments"))
             tool_response: str | None = str(span.attributes.get("tool_response"))
 
-            span_message = f"Model called {tool_name} with arguments: {tool_arguments} returned: {tool_response[:200]}"
+            span_message = (
+                f"Model called {GREEN}{tool_name}{RESET}"
+                + f" with arguments: {GREEN}{tool_arguments}{RESET}"
+                + f" returned: {GREEN}{tool_response[:200]}{RESET}"
+            )
 
         case _ if span.name.startswith("chat "):
             model_name = str(span.attributes.get("gen_ai.request.model"))
-            # tool_names: list[str] = get_tool_names_from_span(span)
             picked_tools: list[str] = get_picked_tools_from_span(span)
-            span_message = f"Model: {model_name} -- Picked tools: {picked_tools}"
+            span_message = f"Model: {YELLOW}{model_name}{RESET} -- Picked tools: [{GREEN}{', '.join(picked_tools)}{RESET}]"
 
         case _:
             span_message = span.name
@@ -104,11 +117,5 @@ def configure_console_logging():
     _ = logfire.configure(
         send_to_logfire=False,
         console=ConsoleOptions(),
-        additional_span_processors=[
-            SimpleSpanProcessor(
-                span_exporter=ConsoleSpanExporter(
-                    formatter=format_span,
-                )
-            )
-        ],
+        additional_span_processors=[SimpleSpanProcessor(span_exporter=ConsoleSpanExporter(formatter=format_span, out=sys.stderr))],
     )

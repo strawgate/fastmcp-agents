@@ -25,6 +25,7 @@ server: FastMCP[None] = FastMCP[None](
 
 
 def run():
+    configure_console_logging()
     server.run()
 
 
