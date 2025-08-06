@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-mcp"
-version = "0.5.9"
+version = "0.5.10"
 description = "MCP Library for FastMCP Agents"
 readme = "README.md"
 requires-python = ">=3.13"

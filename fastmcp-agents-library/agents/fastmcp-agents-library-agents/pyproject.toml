@@ -1,6 +1,6 @@
 [project]
 name = "fastmcp-agents-library-agents"
-version = "0.5.9"
+version = "0.5.10"
 description = "Agents with no dependencies on other libraries"
 readme = "README.md"
 authors = [
