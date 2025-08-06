@@ -114,7 +114,7 @@ async def investigate_code_base(
 
     with tempfile.TemporaryDirectory() as temp_dir:
         clone: Repo = Repo.clone_from(url=str(ctx.deps[0].repository_git_url()), to_path=temp_dir, depth=1, single_branch=True)
-        clone_path: Path = Path(clone.working_dir)
+        clone_path: Path = Path(clone.working_dir).resolve()
 
         # Invoke the Code Agent, passing in the message history from the research agent
         return (
