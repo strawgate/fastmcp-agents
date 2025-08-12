@@ -5,18 +5,19 @@ This agent is used to perform simple code tasks.
 """
 
 import os
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from pydantic_ai import Agent
+from pydantic_ai.agent import Agent
 from pydantic_ai.tools import RunContext
 
 from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPServerToolset
+from fastmcp_agents.library.agents.github.tools import git_diff
 from fastmcp_agents.library.agents.shared.models import Failure
 from fastmcp_agents.library.agents.simple_code.models import (
     BranchInfo,
+    CodeAgentInput,
+    CodeAgentResponse,
     DirectoryStructure,
-    ImplementationResponse,
-    InvestigationResult,
 )
 from fastmcp_agents.library.agents.simple_code.prompts import (
     COMPLETION_VERIFICATION,
@@ -27,104 +28,80 @@ from fastmcp_agents.library.agents.simple_code.prompts import (
     WHO_YOU_ARE,
     YOUR_GOAL,
 )
+from fastmcp_agents.library.mcp.modelcontextprotocol.git import repo_path_restricted_git_mcp_server
 from fastmcp_agents.library.mcp.strawgate.filesystem_operations import read_only_filesystem_mcp, read_write_filesystem_mcp
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-def add_repo_structure(ctx: RunContext[Path]) -> str:  # pyright: ignore[reportUnusedFunction]
-    structure: DirectoryStructure = DirectoryStructure.from_dir(directory=ctx.deps)
-
-    return f"The basic structure of the codebase is: {structure}."
-
-
-def add_branch_info(ctx: RunContext[Path]) -> str:  # pyright: ignore[reportUnusedFunction]
-    branch_info: BranchInfo | None = BranchInfo.from_dir(directory=ctx.deps)
-
-    if branch_info is None:
-        return "Could not determine the Git branch information."
-
-    return f"The Branch is: {branch_info.name} and the commit SHA is: {branch_info.commit_sha}."
+    from fastmcp.mcp_config import TransformingStdioMCPServer
 
 
-code_implementation_agent = Agent[Path, ImplementationResponse | Failure](
+def report_completion(
+    run_context: RunContext[CodeAgentInput],
+    summary: str,
+) -> CodeAgentResponse:
+    code_base: Path = run_context.deps.code_base
+    code_diff: str = git_diff(code_base=code_base)
+
+    return CodeAgentResponse(summary=summary, code_diff=code_diff)
+
+
+code_agent: Agent[CodeAgentInput, CodeAgentResponse | Failure] = Agent[CodeAgentInput, CodeAgentResponse | Failure](
     model=os.getenv("MODEL_CODE_IMPLEMENTATION_AGENT") or os.getenv("MODEL"),
-    system_prompt=[
+    instructions=[
         WHO_YOU_ARE,
         YOUR_GOAL,
-    ],
-    instructions=[
         GATHER_INFORMATION,
-        READ_ONLY_FILESYSTEM_TOOLS,
-        READ_WRITE_FILESYSTEM_TOOLS,
         COMPLETION_VERIFICATION,
         RESPONSE_FORMAT,
-        add_branch_info,
-        add_repo_structure,
     ],
-    deps_type=Path,
-    output_type=[ImplementationResponse, Failure],
+    deps_type=CodeAgentInput,
+    output_type=[report_completion, Failure],
 )
 
 
-@code_implementation_agent.toolset(per_run_step=False)
-async def read_write_filesystem_toolset_func(ctx: RunContext[Path]) -> FastMCPServerToolset[Path]:
-    return FastMCPServerToolset[Path].from_mcp_server(name="filesystem", mcp_server=read_write_filesystem_mcp(root_dir=ctx.deps))
+@code_agent.instructions()
+async def filesystem_tool_instructions(ctx: RunContext[CodeAgentInput]) -> str:
+    instructions = [READ_ONLY_FILESYSTEM_TOOLS]
+
+    if branch_info := BranchInfo.from_dir(directory=ctx.deps.code_base):
+        instructions.append(f"The Branch is: {branch_info.name} and the commit SHA is: {branch_info.commit_sha}.")
+
+    if structure := DirectoryStructure.from_dir(directory=ctx.deps.code_base):
+        instructions.append(f"The basic structure of the codebase is: {structure}.")
+
+    if not ctx.deps.read_only:
+        instructions.append(READ_WRITE_FILESYSTEM_TOOLS)
+
+    return "\n".join(instructions)
 
 
-code_investigation_agent = Agent[Path, InvestigationResult | Failure](
-    model=os.getenv("MODEL_CODE_IMPLEMENTATION_AGENT") or os.getenv("MODEL"),
-    system_prompt=[
-        WHO_YOU_ARE,
-        YOUR_GOAL,
-    ],
-    instructions=[
-        GATHER_INFORMATION,
-        READ_ONLY_FILESYSTEM_TOOLS,
-        """You cannot change anything on the filesystem and you should never imply
-        that you have literally changed files during your investigation.""",
-        COMPLETION_VERIFICATION,
-        RESPONSE_FORMAT,
-        add_branch_info,
-        add_repo_structure,
-    ],
-    deps_type=Path,
-    output_type=[InvestigationResult, Failure],
-)
+@code_agent.toolset(per_run_step=False)
+async def filesystem_tools(ctx: RunContext[CodeAgentInput]) -> FastMCPServerToolset[CodeAgentInput]:  # pyright: ignore[reportUnusedParameter]
+    path: Path = ctx.deps.code_base
+
+    mcp_server: TransformingStdioMCPServer = (
+        read_only_filesystem_mcp(root_dir=path)  # No Folding
+        if ctx.deps.read_only
+        else read_write_filesystem_mcp(root_dir=path)
+    )
+
+    return FastMCPServerToolset[CodeAgentInput].from_mcp_server(
+        name="filesystem",
+        mcp_server=mcp_server,
+    )
 
 
-@code_investigation_agent.toolset(per_run_step=False)
-async def read_only_filesystem_toolset_func(ctx: RunContext[Path]) -> FastMCPServerToolset[Path]:
-    return FastMCPServerToolset[Path].from_mcp_server(name="filesystem", mcp_server=read_only_filesystem_mcp(root_dir=ctx.deps))
+@code_agent.toolset(per_run_step=False)
+async def git_tools(ctx: RunContext[CodeAgentInput]) -> FastMCPServerToolset[CodeAgentInput]:  # pyright: ignore[reportUnusedParameter]  # noqa: ARG001
+    git_mcp_server: TransformingStdioMCPServer = repo_path_restricted_git_mcp_server(
+        repo_path=ctx.deps.code_base,
+        repository=True,
+        commit=True,
+        branching=True,
+        read_tools=True,
+        write_tools=True,
+    )
 
-
-# def code_investigation_agent_factory(
-#     extra_system_prompt: Sequence[str] | None = None,
-#     extra_toolsets: Sequence[AbstractToolset[Path]] | None = None,
-# ) -> Agent[Path, InvestigationResult | Failure]:
-#     extra_system_prompt = [] if extra_system_prompt is None else extra_system_prompt
-#     extra_toolsets = [] if extra_toolsets is None else extra_toolsets
-
-
-# def code_agent_factory(
-#     extra_system_prompt: Sequence[str] | None = None,
-#     extra_toolsets: Sequence[AbstractToolset[Path]] | None = None,
-# ) -> Agent[Path, ImplementationResponse | Failure]:
-#     extra_system_prompt = [] if extra_system_prompt is None else extra_system_prompt
-#     extra_toolsets = [] if extra_toolsets is None else extra_toolsets
-
-#     return Agent[Path, ImplementationResponse | Failure](
-#         model=os.getenv("MODEL_CODE_IMPLEMENTATION_AGENT") or os.getenv("MODEL"),
-#         system_prompt=[
-#             WHO_YOU_ARE,
-#             YOUR_GOAL,
-#             GATHER_INFORMATION,
-#             READ_ONLY_FILESYSTEM_TOOLS,
-#             READ_WRITE_FILESYSTEM_TOOLS,
-#             COMPLETION_VERIFICATION,
-#             RESPONSE_FORMAT,
-#             *extra_system_prompt,
-#         ],
-#         instructions=[add_branch_info, add_repo_structure],
-#         deps_type=Path,
-#             toolsets=[FilesystemToolset(), *extra_toolsets],
-#         output_type=[ImplementationResponse, Failure],
-#     )
+    return FastMCPServerToolset[CodeAgentInput].from_mcp_server(name="git", mcp_server=git_mcp_server)

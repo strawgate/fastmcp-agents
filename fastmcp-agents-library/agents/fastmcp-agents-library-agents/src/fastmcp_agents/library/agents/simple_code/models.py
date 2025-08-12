@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal, Self
 
 from git.repo import Repo
-from pydantic import AnyHttpUrl, BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field
 
 
 class FileLine(BaseModel):
@@ -125,26 +125,13 @@ class PotentialFlaw(BaseModel):
     lines: list[FileLine] = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
 
 
-class ImplementationResponse(BaseModel):
+class CodeAgentResponse(BaseModel):
     """A response from the implementation agent."""
 
     summary: str
-    confidence: Literal["low", "medium", "high"]
-    potential_flaws: list[PotentialFlaw] = Field(
-        default=..., description="A list of potential flaws in the code that a reviewer should review before merging."
-    )
+    code_diff: str
 
 
 class CodeAgentInput(BaseModel):
-    local_directory: Path | None = None
-    git_repository: AnyHttpUrl | None = None
-
-    @model_validator(mode="after")
-    def validate_input(self) -> Self:
-        if self.local_directory is None and self.git_repository is None:
-            msg = "Either local_directory or git_repository must be provided."
-            raise ValueError(msg)
-        if self.local_directory is not None and self.git_repository is not None:
-            msg = "Only one of local_directory or git_repository must be provided."
-            raise ValueError(msg)
-        return self
+    code_base: Path = Field(default_factory=Path.cwd, description="The code base to use for the Agent.")
+    read_only: bool = Field(default=True, description="Whether the code Agent is allowed to write to the filesystem.")

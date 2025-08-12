@@ -5,22 +5,19 @@ This agent is used to perform GitHub tasks.
 """
 
 import os
-from pathlib import Path
-from typing import Annotated
+from textwrap import dedent
+from typing import TYPE_CHECKING
 
-from fastmcp.tools.tool_transform import ArgTransformConfig, ToolTransformConfig
-from git.repo import Repo
-from gitdb.db.loose import tempfile
-from pydantic import Field
 from pydantic_ai.agent import (
     Agent,
     RunContext,  # pyright: ignore[reportPrivateImportUsage]
 )
+from pydantic_ai.tools import ToolDefinition
 
 from fastmcp_agents.bridge.pydantic_ai.toolset import FastMCPServerToolset
 from fastmcp_agents.library.agents.github.models import (
     GitHubIssue,
-    GitHubIssueSummary,
+    IssueDrivenAgentInput,
 )
 from fastmcp_agents.library.agents.github.prompts import (
     GATHER_INSTRUCTIONS,
@@ -31,34 +28,66 @@ from fastmcp_agents.library.agents.github.prompts import (
     YOUR_GOAL,
     YOUR_MINDSET,
 )
+from fastmcp_agents.library.agents.github.tools import (
+    create_initial_comment,
+    get_issue,
+    get_issue_comments,
+    progress_update_toolset,
+    report_completion,
+    report_failure,
+)
 from fastmcp_agents.library.agents.shared.models import Failure
-from fastmcp_agents.library.agents.simple_code.agents import code_investigation_agent
-from fastmcp_agents.library.agents.simple_code.models import InvestigationResult
+from fastmcp_agents.library.agents.simple_code.agents import code_agent
+from fastmcp_agents.library.agents.simple_code.models import CodeAgentInput, CodeAgentResponse
 from fastmcp_agents.library.mcp.github import (
     repo_restrict_github_mcp,
 )
-from fastmcp_agents.library.mcp.github.github import REPLY_ISSUE_TOOLS
+
+if TYPE_CHECKING:
+    from fastmcp.mcp_config import TransformingStdioMCPServer
 
 InvestigateIssue = GitHubIssue
 ReplyToIssue = GitHubIssue
+ReplyWithPullRequest = bool
+
+PLANNING_INTERVAL = 5
+
+async def force_agent_tools(ctx: RunContext[IssueDrivenAgentInput], tool_defs: list[ToolDefinition]) -> list[ToolDefinition] | None:
+    """At certain steps, force the Agent to pick from a subset of the tools."""
+
+    keep_tools: list[str] = []
+
+    if ctx.run_step == 0:
+        comment_id = create_initial_comment(
+            owner=ctx.deps.investigate_issue.owner,
+            repo=ctx.deps.investigate_issue.repo,
+            issue_number=ctx.deps.investigate_issue.issue_number,
+            new_comment="Starting investigation of issue. I will update this comment as I work on the issue!",
+        )
+        ctx.deps.comment_id = comment_id
+
+    if ctx.run_step in {0, 1}:
+        keep_tools.extend(["add_to_checklist"])
+
+    elif ctx.run_step >= PLANNING_INTERVAL and ctx.run_step % PLANNING_INTERVAL == 0:
+        keep_tools.extend(
+            [
+                "report_progress",
+                "report_issue_encountered",
+                "add_to_checklist",
+                "check_off_items",
+                "add_related_issue",
+                "add_related_file",
+            ]
+        )
+
+    return [tool_def for tool_def in tool_defs if tool_def.name in keep_tools] if keep_tools else tool_defs
 
 
-def research_github_issue_instructions(ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]]) -> str:  # pyright: ignore[reportUnusedFunction]
-    investigate_issue, reply_to_issue = ctx.deps
 
-    text: list[str] = [
-        f"This task is related to GitHub issue `{investigate_issue.issue_number}` in `{investigate_issue.owner}/{investigate_issue.repo}`.",
-    ]
-
-    if reply_to_issue:
-        text.append("Before calling the final_result tool, use the `add_issue_comment` tool to post your investigation to the issue.")
-
-    return "\n".join(text)
-
-
-github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHubIssueSummary | Failure](
-    name="github-triage-agent",
-    model=os.getenv("MODEL_RESEARCH_GITHUB_ISSUE") or os.getenv("MODEL"),
+issue_driven_agent: Agent[IssueDrivenAgentInput, str | Failure] = Agent[IssueDrivenAgentInput, str | Failure](
+    name="issue-driven-agent",
+    model=os.getenv("MODEL_ISSUE_DRIVEN_AGENT") or os.getenv("MODEL"),
     instructions=[
         WHO_YOU_ARE,
         YOUR_GOAL,
@@ -67,20 +96,55 @@ github_triage_agent = Agent[tuple[InvestigateIssue, ReplyToIssue | None], GitHub
         REPORTING_CONFIDENCE,
         INVESTIGATION_INSTRUCTIONS,
         RESPONSE_FORMAT,
-        research_github_issue_instructions,
     ],
-    deps_type=tuple[InvestigateIssue, ReplyToIssue | None],
-    output_type=[GitHubIssueSummary, Failure],
+    toolsets=[progress_update_toolset],
+    prepare_tools=force_agent_tools,
+    deps_type=IssueDrivenAgentInput,
+    output_type=[report_completion, report_failure],
 )
 
 
-@github_triage_agent.toolset(per_run_step=False)
-async def github_triage_toolset(
-    ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]],
-) -> FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]]:
-    investigate_issue, reply_to_issue = ctx.deps
+@issue_driven_agent.instructions
+async def issue_driven_agent_instructions(
+    ctx: RunContext[IssueDrivenAgentInput],
+) -> str:
+    github_issue: GitHubIssue = ctx.deps.investigate_issue
 
-    github_mcp_server = repo_restrict_github_mcp(
+    issue_body = get_issue(owner=github_issue.owner, repo=github_issue.repo, issue_number=github_issue.issue_number)
+    issue_comments = get_issue_comments(owner=github_issue.owner, repo=github_issue.repo, issue_number=github_issue.issue_number)
+
+    formatted_issue_comments = "\n\n".join(
+        [
+            f"**{comment.user.role_name} {comment.user.login} at {comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}**\n{comment.body}"
+            for comment in issue_comments
+        ]
+    )
+
+    return dedent(
+        text=f"""The issue for this task is:
+    {github_issue.owner}/{github_issue.repo}#{github_issue.issue_number}
+
+    The issue body is:
+    ``````````````````````
+    {issue_body.body}
+    ``````````````````````
+
+    The issue comments are:
+    ``````````````````````
+    {formatted_issue_comments}
+    ``````````````````````
+    """
+    )
+
+
+@issue_driven_agent.toolset(per_run_step=False)
+async def restricted_github_toolset(
+    ctx: RunContext[IssueDrivenAgentInput],
+) -> FastMCPServerToolset[IssueDrivenAgentInput]:
+    issue_driven_agent_input: IssueDrivenAgentInput = ctx.deps
+    investigate_issue: GitHubIssue = issue_driven_agent_input.investigate_issue
+
+    github_mcp_server: TransformingStdioMCPServer = repo_restrict_github_mcp(
         owner=investigate_issue.owner,
         repo=investigate_issue.repo,
         issues=True,
@@ -91,36 +155,22 @@ async def github_triage_toolset(
         write_tools=False,
     )
 
-    if reply_to_issue:
-        for tool_name in REPLY_ISSUE_TOOLS:
-            github_mcp_server.tools[tool_name] = ToolTransformConfig(
-                arguments={
-                    "owner": ArgTransformConfig(default=reply_to_issue.owner, hide=True),
-                    "repo": ArgTransformConfig(default=reply_to_issue.repo, hide=True),
-                    "issue_number": ArgTransformConfig(default=reply_to_issue.issue_number, hide=True),
-                },
-                tags=github_mcp_server.include_tags or set(),
-            )
-
-    return FastMCPServerToolset[tuple[InvestigateIssue, ReplyToIssue | None]].from_mcp_server(name="github", mcp_server=github_mcp_server)
+    return FastMCPServerToolset[IssueDrivenAgentInput].from_mcp_server(name="github", mcp_server=github_mcp_server)
 
 
-@github_triage_agent.tool
-async def investigate_code_base(
-    ctx: RunContext[tuple[InvestigateIssue, ReplyToIssue | None]],
-    task: Annotated[str, Field(description="A detailed description of the goals of the investigation.")],
-) -> InvestigationResult | Failure:  # pyright: ignore[reportUnusedFunction]
-    """Investigate the code base of the repository in relation to the issue."""
+@issue_driven_agent.tool()
+async def handoff_to_code_agent(ctx: RunContext[IssueDrivenAgentInput]) -> CodeAgentResponse | Failure:
+    """Handoff to the code agent."""
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        clone: Repo = Repo.clone_from(url=str(ctx.deps[0].repository_git_url()), to_path=temp_dir, depth=1, single_branch=True)
-        clone_path: Path = Path(clone.working_dir).resolve()
+    code_agent_input = CodeAgentInput(
+        code_base=ctx.deps.options.code_base,
+        read_only=False,
+    )
 
-        # Invoke the Code Agent, passing in the message history from the research agent
-        return (
-            await code_investigation_agent.run(
-                user_prompt=task,
-                message_history=ctx.messages,
-                deps=clone_path,
-            )
-        ).output
+    return (
+        await code_agent.run(
+            user_prompt="",
+            deps=code_agent_input,
+            message_history=ctx.messages,
+        )
+    ).output

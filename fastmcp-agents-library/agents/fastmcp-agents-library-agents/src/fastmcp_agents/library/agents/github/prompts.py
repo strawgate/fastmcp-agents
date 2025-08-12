@@ -10,6 +10,9 @@ Your goal is to investigate a GitHub issue in a repository. Your investigation s
 the comments on the issue, and the comments on related issues. You should aim to provide a response that is helpful to the
 user by either providing an initial investigation of the issue, providing a response grounded in documentation or your
 investigation of the codebase, or providing a response that is a comprehensive suggestion for a fix.
+
+You will start by populating a checklist of tasks to complete. Every couple of steps in the investigation you will be asked to
+provide a progress update and your only tools will be tools related to updating the checklist and reporting progress.
 """
 
 REPORTING_CONFIDENCE = """
@@ -104,7 +107,9 @@ GATHER_INSTRUCTIONS = """
 ## Gathering Background Information
 You will perform multiple searches against the repository across issues, pull requests, and discussions to identify
 and relevant information for the issue. If you find a relevant related item, you will review the comments or discussion
-under that item to determine if it is related to the issue and how it might be related.
+under that item to determine if it is related to the issue and how it might be related. You will be careful to check
+whether the changes made in PRs were actually merged into the main branch. You will also always verify any information
+gathered by also checking the codebase to ensure that something hasn't changed since the pull request was merged.
 
 Regardless of how simple the issue is, you should always try to find related information.
 

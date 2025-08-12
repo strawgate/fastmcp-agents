@@ -5,8 +5,8 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import LLMJudge
 
-from fastmcp_agents.library.agents.github.agents import github_triage_agent
-from fastmcp_agents.library.agents.github.models import GitHubIssue, GitHubIssueSummary
+from fastmcp_agents.library.agents.github.agents import issue_driven_agent
+from fastmcp_agents.library.agents.github.models import GitHubIssue, IssueDrivenAgentInput, IssueDrivenAgentOptions
 from fastmcp_agents.library.agents.shared.models import Failure
 
 from .conftest import assert_passed, evaluation_rubric, split_dataset
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def test_init_agents():
-    assert github_triage_agent is not None
+    assert issue_driven_agent is not None
 
 
 @pytest.mark.asyncio
@@ -27,16 +27,16 @@ async def test_call_agent():
         repo="fastmcp-agents-tests-e2e",
     )
 
-    result: AgentRunResult[GitHubIssueSummary | Failure] = await github_triage_agent.run(
-        user_prompt="The issue number to gather background information for is 1.",
-        deps=(investigate_issue, None),
+    issue_driven_agent_input = IssueDrivenAgentInput(investigate_issue=investigate_issue, options=IssueDrivenAgentOptions())
+
+    result: AgentRunResult[str | Failure] = await issue_driven_agent.run(
+        user_prompt="Please gather background information for the issue.",
+        deps=issue_driven_agent_input,
     )
 
     assert result is not None
     assert result.output is not None
-    assert isinstance(result.output, GitHubIssueSummary)
-    assert result.output.title is not None
-    assert result.output.detailed_summary is not None
+    assert isinstance(result.output, str)
 
 
 class CaseInput(GitHubIssue):
@@ -76,13 +76,21 @@ dataset_names, datasets = split_dataset(dataset)
 
 @pytest.mark.parametrize("dataset", datasets, ids=dataset_names)
 async def test_investigation_cases(dataset: Dataset):
-    async def run_gather_background(case_input: CaseInput) -> AgentRunResult[GitHubIssueSummary | Failure]:
-        return await github_triage_agent.run(
+    async def run_gather_background(case_input: CaseInput) -> AgentRunResult[str | Failure]:
+        investigate_issue = GitHubIssue(
+            issue_number=case_input.issue_number,
+            owner=case_input.owner,
+            repo=case_input.repo,
+        )
+        return await issue_driven_agent.run(
             user_prompt=f"The issue number to gather background information for is {case_input.issue_number}.",
-            deps=(case_input, None),
+            deps=IssueDrivenAgentInput(
+                investigate_issue=investigate_issue,
+                options=IssueDrivenAgentOptions(),
+            ),
         )
 
-    evaluation: EvaluationReport[GitHubIssueSummary | Failure, Any, Any] = await dataset.evaluate(
+    evaluation: EvaluationReport[str | Failure, Any, Any] = await dataset.evaluate(
         task=run_gather_background,
         name="GitHub Agent",
     )

@@ -8,11 +8,8 @@ from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import LLMJudge
 
 from fastmcp_agents.library.agents.shared.models import Failure
-from fastmcp_agents.library.agents.simple_code.agents import (
-    code_implementation_agent,
-    code_investigation_agent,
-)
-from fastmcp_agents.library.agents.simple_code.models import ImplementationResponse, InvestigationResult
+from fastmcp_agents.library.agents.simple_code.agents import code_agent
+from fastmcp_agents.library.agents.simple_code.models import CodeAgentInput, CodeAgentResponse
 
 from .conftest import assert_passed, evaluation_rubric, split_dataset
 
@@ -21,9 +18,7 @@ if TYPE_CHECKING:
 
 
 def test_init_agents():
-    assert code_implementation_agent is not None
-
-    assert code_investigation_agent is not None
+    assert code_agent is not None
 
 
 calculator_code_base = """
@@ -86,12 +81,12 @@ dataset_names, datasets = split_dataset(dataset)
 async def test_investigation_cases(dataset: Dataset, temp_dir: Path):
     code_path: Path = temp_dir / "sample_code.py"
 
-    async def run_code_investigation_agent(case_input: CaseInput) -> AgentRunResult[InvestigationResult | Failure]:
+    async def run_code_investigation_agent(case_input: CaseInput) -> AgentRunResult[CodeAgentResponse | Failure]:
         case_input.write_to_file(code_path)
 
-        return await code_investigation_agent.run(user_prompt=case_input.user_prompt, deps=temp_dir)
+        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir))
 
-    evaluation: EvaluationReport[InvestigationResult | Failure, Any, Any] = await dataset.evaluate(
+    evaluation: EvaluationReport[CodeAgentResponse | Failure, Any, Any] = await dataset.evaluate(
         task=run_code_investigation_agent,
         name="GitHub Agent",
     )
@@ -103,12 +98,12 @@ async def test_investigation_cases(dataset: Dataset, temp_dir: Path):
 async def test_implementation_cases(dataset: Dataset, temp_dir: Path):
     code_path: Path = temp_dir / "sample_code.py"
 
-    async def run_code_agent(case_input: CaseInput) -> AgentRunResult[ImplementationResponse | Failure]:
+    async def run_code_agent(case_input: CaseInput) -> AgentRunResult[CodeAgentResponse | Failure]:
         case_input.write_to_file(code_path)
 
-        return await code_implementation_agent.run(user_prompt=case_input.user_prompt, deps=temp_dir)
+        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir))
 
-    evaluation: EvaluationReport[ImplementationResponse | Failure, Any, Any] = await dataset.evaluate(
+    evaluation: EvaluationReport[CodeAgentResponse | Failure, Any, Any] = await dataset.evaluate(
         task=run_code_agent,
         name="GitHub Agent",
     )
