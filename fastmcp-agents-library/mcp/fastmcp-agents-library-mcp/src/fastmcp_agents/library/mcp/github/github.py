@@ -27,9 +27,68 @@ def github_mcp(
     )
 
 
-READ_ISSUE_TOOLS = {
+GET_ISSUE_TOOL = ToolTransformConfig(
+    tags={"verb: get", "object: issue", "scope: read"},
+    arguments={
+        "owner": ArgTransformConfig(),
+        "repo": ArgTransformConfig(),
+        "issue_number": ArgTransformConfig(),
+    },
+)
+
+GET_ISSUE_COMMENTS_TOOL = ToolTransformConfig(
+    tags={"verb: get", "object: issue_comment", "scope: read"},
+    arguments={
+        "owner": ArgTransformConfig(),
+        "repo": ArgTransformConfig(),
+        "issue_number": ArgTransformConfig(),
+        "page": ArgTransformConfig(),
+        "per_page": ArgTransformConfig(),
+    },
+)
+
+LIST_ISSUE_TYPES_TOOL = ToolTransformConfig(
+    tags={"verb: list", "object: issue_type", "scope: read"},
+    arguments={
+        "owner": ArgTransformConfig(),
+    },
+)
+
+LIST_ISSUES_TOOL = ToolTransformConfig(
+    tags={"verb: list", "object: issue", "scope: read"},
+    arguments={
+        "owner": ArgTransformConfig(),
+        "repo": ArgTransformConfig(),
+        "after": ArgTransformConfig(),
+        "direction": ArgTransformConfig(),
+        "labels": ArgTransformConfig(),
+        "orderBy": ArgTransformConfig(),
+        "perPage": ArgTransformConfig(),
+        "since": ArgTransformConfig(),
+        "state": ArgTransformConfig(),
+    },
+)
+
+SEARCH_ISSUES_TOOL = ToolTransformConfig(
+    tags={"verb: search", "object: issue", "scope: read"},
+    arguments={
+        "owner": ArgTransformConfig(),
+        "repo": ArgTransformConfig(),
+        "order": ArgTransformConfig(),
+        "page": ArgTransformConfig(),
+        "perPage": ArgTransformConfig(),
+        "query": ArgTransformConfig(),
+        "sort": ArgTransformConfig(),
+    },
+)
+
+
+READ_ISSUE_TOOLS: set[str] = {
     "get_issue",
     "get_issue_comments",
+}
+
+SEARCH_ISSUE_TOOLS = {
     "list_issues",
     "search_issues",
 }
@@ -44,7 +103,7 @@ WRITE_ISSUE_TOOLS = {
     "update_issue",
 }
 
-ISSUE_TOOLS = READ_ISSUE_TOOLS | WRITE_ISSUE_TOOLS
+ISSUE_TOOLS = READ_ISSUE_TOOLS | WRITE_ISSUE_TOOLS | SEARCH_ISSUE_TOOLS
 
 READ_PULL_REQUEST_TOOLS = {
     "get_pull_request",
@@ -53,6 +112,9 @@ READ_PULL_REQUEST_TOOLS = {
     "get_pull_request_files",
     "get_pull_request_reviews",
     "get_pull_request_status",
+}
+
+SEARCH_PULL_REQUEST_TOOLS = {
     "list_pull_requests",
     "search_pull_requests",
 }
@@ -66,22 +128,36 @@ WRITE_PULL_REQUEST_TOOLS = {
     "submit_pending_pull_request_review",
 }
 
-PULL_REQUEST_TOOLS = READ_PULL_REQUEST_TOOLS | WRITE_PULL_REQUEST_TOOLS
+PULL_REQUEST_TOOLS = READ_PULL_REQUEST_TOOLS | WRITE_PULL_REQUEST_TOOLS | SEARCH_PULL_REQUEST_TOOLS
 
 READ_DISCUSSION_TOOLS = {
     "get_discussion",
     "get_discussion_comments",
-    "list_discussion_categories",
+}
+
+SEARCH_DISCUSSION_TOOLS = {
     "list_discussions",
+    "list_discussion_categories",
 }
 
 WRITE_DISCUSSION_TOOLS: set[str] = set()
 
-DISCUSSION_TOOLS = READ_DISCUSSION_TOOLS | WRITE_DISCUSSION_TOOLS
+DISCUSSION_TOOLS = READ_DISCUSSION_TOOLS | WRITE_DISCUSSION_TOOLS | SEARCH_DISCUSSION_TOOLS
+
+READ_FILE_TOOLS = {
+    "get_file_contents",
+}
+
+WRITE_FILE_TOOLS = {
+    "create_or_update_file",
+    "delete_file",
+}
+
+FILE_TOOLS = READ_FILE_TOOLS | WRITE_FILE_TOOLS
+
 
 READ_REPOSITORY_TOOLS = {
     "get_commit",
-    "get_file_contents",
     "get_tag",
     "list_branches",
     "list_commits",
@@ -90,13 +166,141 @@ READ_REPOSITORY_TOOLS = {
 
 WRITE_REPOSITORY_TOOLS = {
     "create_branch",
-    "create_or_update_file",
-    "delete_file",
     "fork_repository",
     "push_files",
 }
 
 REPOSITORY_TOOLS = READ_REPOSITORY_TOOLS | WRITE_REPOSITORY_TOOLS
+
+
+def file_tools(
+    owner: str | None = None,
+    repository: str | None = None,
+    read_tools: bool = False,
+    write_tools: bool = False,
+) -> dict[str, ToolTransformConfig]:
+    """Get the tools for a GitHub file."""
+
+    def arg_transform() -> dict[str, ArgTransformConfig]:
+        arg_transforms: dict[str, ArgTransformConfig] = {}
+
+        if owner is not None:
+            arg_transforms["owner"] = ArgTransformConfig(default=owner, hide=True)
+        if repository is not None:
+            arg_transforms["repository"] = ArgTransformConfig(default=repository, hide=True)
+
+        return arg_transforms
+
+    tools: set[str] = set()
+
+    if read_tools:
+        tools.update(READ_FILE_TOOLS)
+    if write_tools:
+        tools.update(WRITE_FILE_TOOLS)
+
+    return {
+        tool: ToolTransformConfig(
+            tags={"allowed"},
+            arguments=arg_transform(),
+        )
+        for tool in tools
+    }
+
+
+def issue_tools(
+    owner: str | None = None,
+    repository: str | None = None,
+    read_tools: bool = False,
+    write_tools: bool = False,
+    search_tools: bool = False,
+) -> dict[str, ToolTransformConfig]:
+    """Get the tools for a GitHub issue."""
+
+    def arg_transform() -> dict[str, ArgTransformConfig]:
+        arg_transforms: dict[str, ArgTransformConfig] = {}
+
+        if owner is not None:
+            arg_transforms["owner"] = ArgTransformConfig(default=owner, hide=True)
+        if repository is not None:
+            arg_transforms["repository"] = ArgTransformConfig(default=repository, hide=True)
+
+        return arg_transforms
+
+    tools: set[str] = set()
+
+    if read_tools:
+        tools.update(READ_ISSUE_TOOLS)
+    if write_tools:
+        tools.update(WRITE_ISSUE_TOOLS)
+    if search_tools:
+        tools.update(SEARCH_ISSUE_TOOLS)
+
+    return {
+        tool: ToolTransformConfig(
+            tags={"allowed"},
+            arguments=arg_transform(),
+        )
+        for tool in tools
+    }
+
+
+def github_read_tools(
+    issues: bool = False,
+    pull_requests: bool = False,
+    files: bool = False,
+    discussions: bool = False,
+    repository: bool = False,
+) -> set[str]:
+    tools: set[str] = set()
+
+    if issues:
+        tools.update(READ_ISSUE_TOOLS)
+    if pull_requests:
+        tools.update(READ_PULL_REQUEST_TOOLS)
+    if discussions:
+        tools.update(READ_DISCUSSION_TOOLS)
+    if repository:
+        tools.update(READ_REPOSITORY_TOOLS)
+    if files:
+        tools.update(READ_FILE_TOOLS)
+    return tools
+
+
+def github_write_tools(
+    issues: bool = False,
+    pull_requests: bool = False,
+    discussions: bool = False,
+    repository: bool = False,
+) -> set[str]:
+    tools: set[str] = set()
+
+    if issues:
+        tools.update(WRITE_ISSUE_TOOLS)
+    if pull_requests:
+        tools.update(WRITE_PULL_REQUEST_TOOLS)
+    if discussions:
+        tools.update(WRITE_DISCUSSION_TOOLS)
+    if repository:
+        tools.update(WRITE_REPOSITORY_TOOLS)
+
+    return tools
+
+
+def github_search_tools(
+    issues: bool = False,
+    pull_requests: bool = False,
+    discussions: bool = False,
+) -> set[str]:
+    tools: set[str] = set()
+
+    if issues:
+        tools.update(SEARCH_ISSUE_TOOLS)
+    if pull_requests:
+        tools.update(SEARCH_PULL_REQUEST_TOOLS)
+    if discussions:
+        tools.update(SEARCH_DISCUSSION_TOOLS)
+
+    return tools
 
 
 def github_tools(
@@ -106,27 +310,16 @@ def github_tools(
     repository: bool = False,
     read_tools: bool = True,
     write_tools: bool = True,
+    search_tools: bool = True,
 ) -> set[str]:
     tools: set[str] = set()
 
     if read_tools:
-        if issues:
-            tools.update(READ_ISSUE_TOOLS)
-        if pull_requests:
-            tools.update(READ_PULL_REQUEST_TOOLS)
-        if discussions:
-            tools.update(READ_DISCUSSION_TOOLS)
-        if repository:
-            tools.update(READ_REPOSITORY_TOOLS)
+        tools.update(github_read_tools(issues, pull_requests, discussions, repository))
     if write_tools:
-        if issues:
-            tools.update(WRITE_ISSUE_TOOLS)
-        if pull_requests:
-            tools.update(WRITE_PULL_REQUEST_TOOLS)
-        if discussions:
-            tools.update(WRITE_DISCUSSION_TOOLS)
-        if repository:
-            tools.update(WRITE_REPOSITORY_TOOLS)
+        tools.update(github_write_tools(issues, pull_requests, discussions, repository))
+    if search_tools:
+        tools.update(github_search_tools(issues, pull_requests, discussions))
 
     return tools
 
@@ -139,6 +332,7 @@ def restrict_github_mcp_server(
     repository: bool = False,
     read_tools: bool = True,
     write_tools: bool = True,
+    search_tools: bool = True,
 ) -> TransformingStdioMCPServer:
     if not github_mcp_server:
         github_mcp_server = github_mcp()
@@ -150,6 +344,7 @@ def restrict_github_mcp_server(
         repository=repository,
         read_tools=read_tools,
         write_tools=write_tools,
+        search_tools=search_tools,
     )
 
     tool_transformations: dict[str, ToolTransformConfig] = dict.fromkeys(
@@ -175,18 +370,22 @@ def repo_restrict_github_mcp(
     repository: bool = False,
     read_tools: bool = True,
     write_tools: bool = True,
+    search_tools: bool = True,
 ) -> TransformingStdioMCPServer:
     """Restrict a GitHub MCP server to a specific repository."""
 
     if not github_mcp_server:
         github_mcp_server = github_mcp()
 
-    arg_transforms: dict[str, ArgTransformConfig] = {}
+    def arg_transform() -> dict[str, ArgTransformConfig]:
+        arg_transforms: dict[str, ArgTransformConfig] = {}
 
-    if owner is not None:
-        arg_transforms["owner"] = ArgTransformConfig(default=owner, hide=True)
-    if repo is not None:
-        arg_transforms["repo"] = ArgTransformConfig(default=repo, hide=True)
+        if owner is not None:
+            arg_transforms["owner"] = ArgTransformConfig(default=owner, hide=True)
+        if repo is not None:
+            arg_transforms["repo"] = ArgTransformConfig(default=repo, hide=True)
+
+        return arg_transforms
 
     tools = github_tools(
         issues=issues,
@@ -195,15 +394,16 @@ def repo_restrict_github_mcp(
         repository=repository,
         read_tools=read_tools,
         write_tools=write_tools,
+        search_tools=search_tools,
     )
 
-    github_mcp_server.tools = dict.fromkeys(
-        tools,
-        ToolTransformConfig(
+    github_mcp_server.tools = {
+        tool: ToolTransformConfig(
             tags={"restricted"},
-            arguments=arg_transforms,
-        ),
-    )
+            arguments=arg_transform(),
+        )
+        for tool in tools
+    }
 
     github_mcp_server.include_tags = {"restricted"}
 

@@ -7,7 +7,7 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import LLMJudge
 
-from fastmcp_agents.library.agents.shared.models import Failure
+from fastmcp_agents.library.agents.shared.models.status import Failure
 from fastmcp_agents.library.agents.simple_code.agents import code_agent
 from fastmcp_agents.library.agents.simple_code.models import CodeAgentInput, CodeAgentResponse
 

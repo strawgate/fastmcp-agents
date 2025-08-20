@@ -13,10 +13,7 @@ from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 from pydantic_evals.reporting import EvaluationReport, ReportCaseAggregate
 from rich.pretty import pprint
 
-from fastmcp_agents.library.agents.shared.logging import configure_console_logging
-
 set_default_judge_model(model="google-gla:gemini-2.5-flash")
-configure_console_logging()
 
 
 def assert_passed(evaluation_report: EvaluationReport, print_report: bool = True) -> None:
@@ -109,3 +106,10 @@ class TestCase(BaseModel):
     user_prompt: str
     deps: Any
     rubric: str
+
+
+@pytest.fixture(autouse=True)
+def auto_instrument_agents():
+    from fastmcp_agents.library.agents.shared.logging import configure_console_logging
+
+    configure_console_logging()

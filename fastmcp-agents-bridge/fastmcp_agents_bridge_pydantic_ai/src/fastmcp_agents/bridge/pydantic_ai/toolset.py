@@ -46,6 +46,10 @@ class BaseFastMCPToolset[AgentDepsT](AbstractToolset[AgentDepsT], ABC):
     def __init__(self, tool_retries: int = 2):
         self._tool_retries = tool_retries
 
+    @property
+    def id(self) -> str | None:
+        return None
+
 
 class FastMCPClientToolset(BaseFastMCPToolset[AgentDepsT]):
     """A toolset that uses a FastMCP client as the underlying toolset."""
@@ -95,6 +99,9 @@ class FastMCPClientToolset(BaseFastMCPToolset[AgentDepsT]):
     async def call_tool(self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]) -> Any:  # pyright: ignore[reportAny]
         call_tool_result: CallToolResult = await self.fastmcp_client.call_tool(name=name, arguments=tool_args)
 
+        if call_tool_result.is_error:
+            raise ModelRetry(message=str(call_tool_result.content))
+
         return call_tool_result.data or call_tool_result.structured_content or _map_fastmcp_tool_results(parts=call_tool_result.content)
 
 
@@ -128,7 +135,7 @@ class FastMCPServerToolset(BaseFastMCPToolset[AgentDepsT], ABC):
         fastmcp_tools: dict[str, FastMCPTool] = await self._fastmcp_server.get_tools()
 
         if not (matching_tool := fastmcp_tools.get(name)):
-            msg = f"Tool {name} not found in toolset {self.name}"
+            msg = f"Tool {name} not found in toolset {self._fastmcp_server.name}"
             raise ValueError(msg)
 
         try:

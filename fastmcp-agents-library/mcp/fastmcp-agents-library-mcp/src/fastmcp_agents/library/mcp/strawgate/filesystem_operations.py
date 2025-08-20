@@ -4,7 +4,7 @@ from fastmcp.mcp_config import TransformingStdioMCPServer
 from fastmcp.tools.tool_transform import ToolTransformConfig
 
 
-def read_write_filesystem_mcp(root_dir: Path | None = None) -> TransformingStdioMCPServer:
+def read_write_filesystem_mcp(root_dir: Path | None = None, bulk_tools: bool = True) -> TransformingStdioMCPServer:
     """Create a read/write Filesystem MCP server.
 
     If root_dir is provided, the filesystem operations will be limited to the root directory.
@@ -14,10 +14,24 @@ def read_write_filesystem_mcp(root_dir: Path | None = None) -> TransformingStdio
     if root_dir is not None:
         _ = additional_args.append(f"--root-dir={root_dir}")
 
+    tools: dict[str, ToolTransformConfig] = {}
+
+    if not bulk_tools:
+        tools["read_file_lines_bulk"] = ToolTransformConfig(
+            tags={"blocked_tools"},
+        )
+        tools["replace_file_lines_bulk"] = ToolTransformConfig(
+            tags={"blocked_tools"},
+        )
+        tools["insert_file_lines_bulk"] = ToolTransformConfig(
+            tags={"blocked_tools"},
+        )
+
     return TransformingStdioMCPServer(
         command="uvx",
         args=["filesystem-operations-mcp", *additional_args],
-        tools={},
+        tools=tools,
+        exclude_tags={"blocked_tools"},
     )
 
 

@@ -109,9 +109,8 @@ class InvestigationResult(BaseModel):
     """An investigation result."""
 
     summary: str = Field(default=..., description="A summary of the findings. Under 1 page.")
-    branch_info: BranchInfo | None = Field(default=None, description="The branch info of the repository.")
     confidence: Literal["high", "medium", "low"] = Field(default=..., description="The confidence of the findings.")
-    findings: list[InvestigationFinding]
+    findings: list[InvestigationFinding] = Field(default=..., description="The findings of the Agent.")
     recommendations: list[InvestigationRecommendation] = Field(
         default=..., description="Recommendations for next steps based on the findings."
     )
@@ -125,11 +124,19 @@ class PotentialFlaw(BaseModel):
     lines: list[FileLine] = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
 
 
+class CodeChange(BaseModel):
+    """A code change."""
+
+    file_path: str = Field(description="The path to the file that is being changed.")
+    description: str = Field(description="A friendly description of the change or finding.")
+
+
 class CodeAgentResponse(BaseModel):
     """A response from the implementation agent."""
 
     summary: str
-    code_diff: str
+    code_diff: str | None = Field(default=None, description="The code diff that was made by the Agent.")
+    code_changes: list[CodeChange] | None = Field(default=None, description="The code changes that were made by the Agent.")
 
 
 class CodeAgentInput(BaseModel):

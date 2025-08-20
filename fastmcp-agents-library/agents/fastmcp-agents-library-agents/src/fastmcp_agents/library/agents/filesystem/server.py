@@ -5,7 +5,7 @@ from fastmcp.tools import FunctionTool
 
 from fastmcp_agents.library.agents.filesystem.agents import read_only_filesystem_agent, read_write_filesystem_agent
 from fastmcp_agents.library.agents.shared.logging import configure_console_logging
-from fastmcp_agents.library.agents.shared.models import Failure
+from fastmcp_agents.library.agents.shared.models.status import Failure
 
 
 async def investigate_filesystem(

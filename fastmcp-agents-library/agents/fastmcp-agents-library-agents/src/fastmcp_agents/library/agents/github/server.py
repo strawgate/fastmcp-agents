@@ -4,10 +4,13 @@ from fastmcp.server import FastMCP
 from fastmcp.tools import FunctionTool
 from pydantic import Field
 
-from fastmcp_agents.library.agents.github.agents import issue_driven_agent
-from fastmcp_agents.library.agents.github.models import GitHubIssue, IssueDrivenAgentInput, IssueDrivenAgentOptions
+from fastmcp_agents.library.agents.github.agents.issue_driven_agent import (
+    IssueDrivenAgentInput,
+    IssueTriageAgentSettings,
+    issue_driven_agent,
+)
+from fastmcp_agents.library.agents.github.dependencies.result import AgentResult
 from fastmcp_agents.library.agents.shared.logging import configure_console_logging
-from fastmcp_agents.library.agents.shared.models import Failure
 
 
 async def triage_github_issue(
@@ -15,23 +18,18 @@ async def triage_github_issue(
     issue_repo: Annotated[str, Field(description="The name of the repository.")],
     issue_number: Annotated[int, Field(description="The number of the issue.")],
     instructions: Annotated[str | None, Field(description="The instructions for the investigation.")] = None,
-) -> str | Failure:
-    """Triage a GitHub issue, optionally restricting the investigation to a specific owner or repository.
+    settings: Annotated[IssueTriageAgentSettings | None, Field(description="The settings for the issue driven agent.")] = None,
+) -> AgentResult:
+    """Triage a GitHub issue, optionally restricting the investigation to a specific owner or repository."""
 
-    If `reply_to_issue` is provided, the investigation will be posted as a comment to the issue specified as the reply_to_issue. If you
-    intend to do additional work based on the investigation, you should not have this tool reply to the issue.
-    """
+    if not settings:
+        settings = IssueTriageAgentSettings()
 
     github_triage_input = IssueDrivenAgentInput(
-        investigate_issue=GitHubIssue(
-            owner=issue_owner,
-            repo=issue_repo,
-            issue_number=issue_number,
-        ),
-        options=IssueDrivenAgentOptions(),
+        issue_owner=issue_owner, issue_repo=issue_repo, issue_number=issue_number, agent_settings=settings
     )
 
-    return (await issue_driven_agent.run(deps=github_triage_input, user_prompt=instructions)).output
+    return (await issue_driven_agent.run(deps=github_triage_input.to_deps(), user_prompt=instructions)).output
 
 
 triage_github_issue_tool = FunctionTool.from_function(fn=triage_github_issue)
