@@ -8,7 +8,7 @@ from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import LLMJudge
 
 from fastmcp_agents.library.agents.shared.models.status import Failure
-from fastmcp_agents.library.agents.simple_code.agents import code_agent
+from fastmcp_agents.library.agents.simple_code.agents.write_code_agent import code_agent
 from fastmcp_agents.library.agents.simple_code.models import CodeAgentInput, CodeAgentResponse
 
 from .conftest import assert_passed, evaluation_rubric, split_dataset
@@ -84,7 +84,7 @@ async def test_investigation_cases(dataset: Dataset, temp_dir: Path):
     async def run_code_investigation_agent(case_input: CaseInput) -> AgentRunResult[CodeAgentResponse | Failure]:
         case_input.write_to_file(code_path)
 
-        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir))
+        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir, read_only=False))
 
     evaluation: EvaluationReport[CodeAgentResponse | Failure, Any, Any] = await dataset.evaluate(
         task=run_code_investigation_agent,
@@ -101,7 +101,7 @@ async def test_implementation_cases(dataset: Dataset, temp_dir: Path):
     async def run_code_agent(case_input: CaseInput) -> AgentRunResult[CodeAgentResponse | Failure]:
         case_input.write_to_file(code_path)
 
-        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir))
+        return await code_agent.run(user_prompt=case_input.user_prompt, deps=CodeAgentInput(code_base=temp_dir, read_only=False))
 
     evaluation: EvaluationReport[CodeAgentResponse | Failure, Any, Any] = await dataset.evaluate(
         task=run_code_agent,

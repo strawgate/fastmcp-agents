@@ -70,4 +70,3 @@ def filter_tools(
         and (blocked_objects is None or get_object_tag(tool_config) not in blocked_objects)
         and (required_arguments is None or required_arguments.issubset(tool_config.arguments.keys()))
     }
-

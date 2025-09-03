@@ -418,10 +418,10 @@ def github_search_syntax_tool() -> FastMCPTool:
 
 def github_search_syntax() -> str:
     """Returns a helpful syntax guide for searching GitHub issues and pull requests."""
-    return github_search_syntax_help
+    return GITHUB_SEARCH_SYNTAX_HELP
 
 
-github_search_syntax_help = """
+GITHUB_SEARCH_SYNTAX_HELP = """
 # GitHub Issue and Pull Request Search Syntax Summary
 
 *   **Case Insensitivity**: Search is not case sensitive.
@@ -433,6 +433,13 @@ github_search_syntax_help = """
 *   **Nesting Filters**: Use parentheses `()` to group qualifiers for more complex filters (up to five levels deep). Example: `(type:"Bug" AND assignee:octocat) OR (type:"Feature" AND assignee:hubot)`
 *   **Date Formatting**: Dates follow ISO8601 standard: `YYYY-MM-DD`. Optional time: `THH:MM:SS+00:00`.
 *   **Range Qualifiers**: Use `>`, `<`, `>=`, `<=`, `..` for numerical and date ranges (e.g., `comments:>100`, `created:<2011-01-01`, `comments:500..1000`).
+
+By default, search terms are ANDed together, if you want to match any of the search terms, use the OR operator.
+
+For example, if you search with `is:pr is:open tomato potato cucumber`, the only results will be pull requests that contain
+all of the words `tomato`, `potato`, and `cucumber`. If you want to match any of the search terms, use the OR operator.
+For example, if you search with `is:pr is:open tomato OR potato OR cucumber`, the results will be pull requests that contain
+any of the words `tomato`, `potato`, or `cucumber`.
 
 ## Key Qualifiers
 
@@ -534,4 +541,84 @@ github_search_syntax_help = """
         over 50 comments created since Jan 1, 2023.
 *   `is:issue no:assignee no:milestone`: Issues with no assignee and no milestone.
 *   `team:myorg/frontend-team is:open is:pr`: Open pull requests mentioning the `myorg/frontend-team`.
+"""  # noqa: E501
+
+GITHUB_CODE_SEARCH_SYNTAX_HELP = """
+# GitHub Code Search Syntax Summary
+
+*   **Case Insensitivity**: Search is not case sensitive by default.
+*   **Multi-word Terms**: Use double quotes around multi-word search terms (e.g., `"sparse index"`).
+*   **Boolean Operators**:
+    *   `AND`: Returns results where both statements are true (e.g., `sparse AND index`). A space between terms is treated as `AND`.
+    *   `OR`: Returns results where either statement is true (e.g., `sparse OR index`).
+    *   `NOT`: Excludes files from search results (e.g., `"fatal error" NOT path:__testing__`).
+*   **Nesting Filters**: Use parentheses `()` to group qualifiers for more complex filters (e.g., `(language:ruby OR language:python) AND NOT path:"/tests/"`).
+*   **Regular Expressions**: Surround regex patterns in slashes (e.g., `/sparse.*index/`).
+
+By default, search terms are ANDed together. For example, `sparse index` will find files containing both terms.
+
+## Key Qualifiers
+
+### Repository and Organization
+
+*   `repo:_OWNER/REPOSITORY_`: Search within a specific repository (e.g., `repo:github-linguist/linguist`).
+*   `org:_ORGNAME_`: Search within an organization (e.g., `org:github`).
+*   `user:_USERNAME_`: Search within a personal account (e.g., `user:octocat`).
+
+### Language and Content
+
+*   `language:_LANGUAGE_`: Filter by programming language (e.g., `language:ruby`, `language:cpp`).
+*   `content:_TERM_`: Restrict search to file content only, not file paths.
+*   `path:_PATTERN_`: Search within file paths using glob patterns or regex.
+
+### Path Patterns
+
+*   `path:*.txt`: Files with .txt extension.
+*   `path:src/*.js`: JavaScript files in src directory.
+*   `path:/src/*.js`: JavaScript files directly in src directory (anchored).
+*   `path:/src/**/*.js`: JavaScript files in src and subdirectories.
+*   `path:*.a?c`: Files matching pattern like file.aac or file.abc.
+*   `path:"file?"`: Literal filename containing special characters.
+
+### Symbol Search
+
+*   `symbol:_SYMBOL_`: Search for function/class definitions (e.g., `language:go symbol:WithContext`).
+*   **Supported Languages**: Bash, C, C#, C++, CodeQL, Elixir, Go, JSX, Java, JavaScript, Lua, PHP, Protocol Buffers, Python, R, Ruby, Rust, Scala, Starlark, Swift, TypeScript.
+
+### Repository Properties
+
+*   `is:archived`: Search in archived repositories.
+*   `is:fork`: Search in forked repositories.
+*   `is:vendored`: Search in vendored content.
+*   `is:generated`: Search in generated content.
+
+## Search Techniques
+
+### Exact String Matching
+
+*   `"sparse index"`: Search for exact phrase including whitespace.
+*   `path:git language:"protocol buffers"`: Use quoted strings in qualifiers.
+
+### Regular Expressions
+
+*   `/sparse.*index/`: Basic regex pattern matching.
+*   `/^App\\/src\\//`: Escaped forward slashes in regex.
+*   `/(?-i)True/`: Case-sensitive regex search.
+*   **Escape Sequences**: `\n` (newline), `\t` (tab)
+
+### Boolean Logic
+
+*   `sparse AND index`: Explicit AND operator.
+*   `sparse OR index`: Either term.
+*   `"fatal error" NOT path:__testing__`: Exclude specific paths.
+*   `(language:ruby OR language:python) AND NOT path:"/tests/"`: Complex nested logic.
+
+## Example Queries
+
+*   `language:javascript path:src/*.js`: JavaScript files in src directory.
+*   `repo:github-linguist/linguist language:ruby`: Ruby code in specific repository.
+*   `symbol:WithContext language:go`: Go function definitions named WithContext.
+*   `"error handling" NOT path:test/`: Error handling code excluding test files.
+*   `path:/src/**/*.py language:python`: Python files in src and subdirectories.
+*   `is:archived language:c`: C code in archived repositories.
 """  # noqa: E501

@@ -1,19 +1,24 @@
 import tempfile
-from collections.abc import Awaitable, Callable, Generator
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 import yaml
-from pydantic import BaseModel
-from pydantic_ai.agent import AgentRunResult
-from pydantic_ai.messages import ModelMessage
-from pydantic_evals import Dataset
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic_ai.agent import Agent
+from pydantic_ai.output import OutputDataT
+from pydantic_ai.run import AgentRunResult
+from pydantic_ai.tools import AgentDepsT
+from pydantic_evals.dataset import Case, Dataset
+from pydantic_evals.evaluators import LLMJudge
 from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 from pydantic_evals.reporting import EvaluationReport, ReportCaseAggregate
 from rich.pretty import pprint
 
-set_default_judge_model(model="google-gla:gemini-2.5-flash")
+TESTING_MODEL = "google-gla:gemini-2.5-flash"
+
+set_default_judge_model(model=TESTING_MODEL)
 
 
 def assert_passed(evaluation_report: EvaluationReport, print_report: bool = True) -> None:
@@ -44,72 +49,133 @@ def assert_passed(evaluation_report: EvaluationReport, print_report: bool = True
     assert all(score > 0.9 for score in avg_score)
 
 
-async def run_evaluation[T](
-    name: str,
-    dataset: Dataset,
-    task: Callable[..., Awaitable[AgentRunResult[T]]],
-) -> EvaluationReport:
-    async def evaluation_wrapper(input_dict: dict[str, Any]) -> tuple[T, list[ModelMessage]]:
-        result: AgentRunResult[T] = await task(**input_dict)
+class AgentRunInput[AgentDepsT](BaseModel):
+    """An input for an agent run."""
 
-        return result.output, result.all_messages()
+    model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
-    evaluation: EvaluationReport[Any, Any, Any] = await dataset.evaluate(task=evaluation_wrapper, name=name)
+    deps: AgentDepsT
 
-    # assert_passed(evaluation_report=evaluation)
+    user_prompt: str | None = None
+    kwargs: dict[str, Any] = Field(default_factory=dict)
 
-    return evaluation
+    async def run(self, agent: Agent[AgentDepsT, OutputDataT]) -> AgentRunResult[OutputDataT]:
+        """Run the agent."""
+        agent_run_result: AgentRunResult[OutputDataT] = await agent.run(
+            model=TESTING_MODEL,
+            user_prompt=self.user_prompt,
+            deps=self.deps,
+            **self.kwargs,
+        )
+
+        return agent_run_result
+
+    def to_case(self, name: str) -> Case["AgentRunInput[AgentDepsT]", Any, Any]:
+        """Convert the input to a case."""
+        return Case[AgentRunInput[AgentDepsT], Any, Any](
+            name=name,
+            inputs=self,
+        )
 
 
-async def run_multi_agent_evaluation[T](
-    name: str, dataset: Dataset, task: Callable[..., Awaitable[tuple[AgentRunResult[T], ...]]]
-) -> EvaluationReport:
-    async def evaluation_wrapper(input_dict: dict[str, Any]) -> list[tuple[T, list[ModelMessage]]]:
-        results: tuple[AgentRunResult[T], ...] = await task(**input_dict)
+async def evaluate_agent_cases(
+    agent: Agent[AgentDepsT, OutputDataT],
+    cases: list[Case[AgentRunInput[AgentDepsT], Any, Any]],
+    criteria: str | None = None,
+) -> list[EvaluationReport[Any, Any, Any]]:
+    """Run an evaluation for a given task."""
 
-        return [(result.output, result.all_messages()) for result in results]
+    judge: tuple[LLMJudge] = (
+        LLMJudge(
+            score={"evaluation_name": "investigation", "include_reason": True},
+            include_input=True,
+            rubric=evaluation_rubric(
+                criteria=criteria,
+            ),
+        ),
+    )
 
-    evaluation: EvaluationReport[Any, Any, Any] = await dataset.evaluate(task=evaluation_wrapper, name=name)
+    evaluations: list[EvaluationReport[Any, Any, Any]] = []
 
-    return evaluation
+    for case in cases:
+        case.inputs = case.inputs or {}
+
+        dataset: Dataset[AgentRunInput[AgentDepsT], Any, Any] = Dataset(
+            evaluators=judge,
+            cases=cases,
+        )
+
+        async with agent:
+
+            async def run_agent(case_input: AgentRunInput[AgentDepsT]) -> AgentRunResult[OutputDataT]:
+                return await case_input.run(agent=agent)
+
+            evaluation: EvaluationReport[AgentRunInput[AgentDepsT], Any, Any] = await dataset.evaluate(
+                max_concurrency=1,
+                task=run_agent,
+                name="Evaluate Agent Task",
+            )
+
+        assert_passed(evaluation_report=evaluation)
+
+        evaluations.append(evaluation)
+
+    return evaluations
 
 
-def evaluation_rubric(criteria: str) -> str:
+async def evaluate_agent_case(
+    agent: Agent[AgentDepsT, OutputDataT],
+    case: Case[AgentRunInput[AgentDepsT], Any, Any],
+    criteria: str | None = None,
+) -> EvaluationReport[Any, Any, Any]:
+    """Run an evaluation for a given task."""
+
+    return (
+        await evaluate_agent_cases(
+            agent=agent,
+            cases=[case],
+            criteria=criteria,
+        )
+    )[0]
+
+
+def evaluation_rubric(criteria: str | None = None) -> str:
     base_criteria = """Evaluate the task on both the final result as well as the tool calls and their responses to ensure
     that each item of the final result is based off of information gathered during a "tool call" or from the "user prompt" =
     in the conversation history. The evaluation should fail if there were excessive unnecessary tool calls or if the result
     includes information fabricated after a tool call failed. Every piece of information the Agent provides should be traceable
     back to a tool call response or the user prompt."""
+
     return base_criteria + f"\n\n{criteria}"
 
 
 @pytest.fixture(name="temp_dir")
-def temporary_directory() -> Generator[Path]:
+async def temporary_directory() -> AsyncGenerator[Path, Any]:
     with tempfile.TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)
 
 
-def split_dataset(dataset: Dataset) -> tuple[list[str], list[Dataset[Any, Any, Any]]]:
-    """Splits the cases of a dataset into their own datasets."""
+# def split_dataset(dataset: Dataset) -> tuple[list[str], list[Dataset[Any, Any, Any]]]:
+#     """Splits the cases of a dataset into their own datasets."""
 
-    names: list[str] = []
-    datasets: list[Dataset[Any, Any, Any]] = []
+#     names: list[str] = []
+#     datasets: list[Dataset[Any, Any, Any]] = []
 
-    for case in dataset.cases:
-        names.append(case.name or "case")
-        datasets.append(Dataset(cases=[case], evaluators=dataset.evaluators))
+#     for case in dataset.cases:
+#         names.append(case.name or "case")
+#         datasets.append(Dataset(cases=[case], evaluators=dataset.evaluators))
 
-    return names, datasets
+#     return names, datasets
 
 
-class TestCase(BaseModel):
-    user_prompt: str
-    deps: Any
-    rubric: str
+# class TestCase(BaseModel):
+#     user_prompt: str
+#     deps: Any
+#     rubric: str
 
 
 @pytest.fixture(autouse=True)
-def auto_instrument_agents():
+async def auto_instrument_agents():
     from fastmcp_agents.library.agents.shared.logging import configure_console_logging
 
     configure_console_logging()

@@ -32,9 +32,7 @@ class AgentResult(BaseModel):
 
     success: bool = Field(
         default=False,
-        description=(
-            "Whether you succeeded in completing the task as requested."
-        ),
+        description=("Whether you succeeded in completing the task as requested."),
     )
 
     tldr: str = Field(description=RESULT_TLDR_DESCRIPTION)
@@ -77,7 +75,7 @@ class ResultDependency(BaseModel):
     def set_result(self, result: AgentResult) -> None:
         """Set the result."""
         self.result = result
-        #self.on_result_update(result)
+        # self.on_result_update(result)
 
     def on_result_update(self, result: AgentResult) -> None:
         """Report an update to the issue."""

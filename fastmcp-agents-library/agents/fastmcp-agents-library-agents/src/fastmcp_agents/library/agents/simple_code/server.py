@@ -1,53 +1,53 @@
-from pathlib import Path
+# from pathlib import Path
 
-from fastmcp.server import FastMCP
-from fastmcp.tools import FunctionTool
+# from fastmcp.server import FastMCP
+# from fastmcp.tools import FunctionTool
 
-from fastmcp_agents.library.agents.shared.logging import configure_console_logging
-from fastmcp_agents.library.agents.shared.models.status import Failure
-from fastmcp_agents.library.agents.simple_code.agents import code_agent
-from fastmcp_agents.library.agents.simple_code.models import CodeAgentInput, CodeAgentResponse
-
-
-async def investigate_code(
-    path: Path,
-    instructions: str | None = None,
-) -> CodeAgentResponse | Failure:
-    """Investigate the code at the given path."""
-    return (await code_agent.run(deps=CodeAgentInput(code_base=path), user_prompt=instructions)).output
+# from fastmcp_agents.library.agents.shared.logging import configure_console_logging
+# from fastmcp_agents.library.agents.shared.models.status import Failure
+# from fastmcp_agents.library.agents.simple_code.agents.code_agent import code_agent
+# from fastmcp_agents.library.agents.simple_code.models import CodeAgentResponse
 
 
-code_investigation_agent_tool = FunctionTool.from_function(fn=investigate_code, name="code_investigation_agent")
+# async def investigate_code(
+#     path: Path,
+#     instructions: str | None = None,
+# ) -> CodeAgentResponse | Failure:
+#     """Investigate the code at the given path."""
+#     return (await code_agent.run(deps=CodeAgentInput(code_base=path), user_prompt=instructions)).output
 
 
-async def implement_code(
-    path: Path,
-    instructions: str | None = None,
-) -> CodeAgentResponse | Failure:
-    """Implement the code at the given path."""
-    return (await code_agent.run(deps=CodeAgentInput(code_base=path), user_prompt=instructions)).output
+# code_investigation_agent_tool = FunctionTool.from_function(fn=investigate_code, name="code_investigation_agent")
 
 
-code_agent_tool = FunctionTool.from_function(fn=implement_code, name="code_agent")
-
-server: FastMCP[None] = FastMCP[None](
-    name="Code Agent",
-    tools=[
-        code_investigation_agent_tool,
-        code_agent_tool,
-    ],
-)
+# async def implement_code(
+#     path: Path,
+#     instructions: str | None = None,
+# ) -> CodeAgentResponse | Failure:
+#     """Implement the code at the given path."""
+#     return (await code_agent.run(deps=CodeAgentInput(code_base=path), user_prompt=instructions)).output
 
 
-def run():
-    configure_console_logging()
-    server.run()
+# code_agent_tool = FunctionTool.from_function(fn=implement_code, name="code_agent")
+
+# server: FastMCP[None] = FastMCP[None](
+#     name="Code Agent",
+#     tools=[
+#         code_investigation_agent_tool,
+#         code_agent_tool,
+#     ],
+# )
 
 
-def run_sse():
-    configure_console_logging()
-    server.run(transport="sse")
+# def run():
+#     configure_console_logging()
+#     server.run()
 
 
-if __name__ == "__main__":
-    run_sse()
+# def run_sse():
+#     configure_console_logging()
+#     server.run(transport="sse")
+
+
+# if __name__ == "__main__":
+#     run_sse()

@@ -68,7 +68,8 @@ REPOSITORY_TOOLS: dict[str, ToolTransformConfig] = {
             "ref": ArgTransformConfig(
                 description=(
                     "A Git ref in the form of `refs/tags/{tag}`, `refs/heads/{branch}` or `refs/pull/{pr_number}/head`. "
-                    "If not provided, the default branch will be used. Do not provide a plain branch name or tag name."
+                    "If not provided, the default branch will be used. Do not provide a plain branch name or tag name. "
+                    "If you want to get the contents from a specific commit, do not provide `ref`, instead provide `sha`."
                 )
             ),
             "repo": ArgTransformConfig(),

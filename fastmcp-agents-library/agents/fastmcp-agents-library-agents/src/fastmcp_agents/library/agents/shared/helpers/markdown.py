@@ -164,6 +164,7 @@ class MarkdownList(MarkdownComponent):
         """Render the list as a string."""
         return "\n".join([item.render() for item in self.items])
 
+
 class MarkdownHorizontalRule(MarkdownComponent):
     """A horizontal rule in markdown."""
 

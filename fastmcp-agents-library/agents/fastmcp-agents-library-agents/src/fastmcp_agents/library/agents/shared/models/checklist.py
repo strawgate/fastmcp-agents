@@ -174,9 +174,7 @@ class Checklist(BaseModel):
         Items that already exist in the checklist will be skipped."""
 
         if before and not self.items_by_description.get(before):
-            raise ModelRetry(
-                message=f"Item {before} not found in checklist. The checklist contains the following items: {self.as_yaml()}"
-            )
+            raise ModelRetry(message=f"Item {before} not found in checklist. The checklist contains the following items: {self.as_yaml()}")
 
         for item in items:
             if self.items_by_description.get(item.description):

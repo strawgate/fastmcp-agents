@@ -1,8 +1,10 @@
 import os
 from collections.abc import Callable, Sequence
 from functools import cached_property
+from textwrap import dedent
 from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Self
 
+import yaml
 from github import Auth, Github
 from github.ContentFile import ContentFile
 from github.GithubObject import GithubObject, NotSet
@@ -76,6 +78,11 @@ class GitHubClientDependency(BaseModel):
 
     github_client: Github = Field(default_factory=get_github_client, description="The GitHub client to use for the Agent.")
 
+    @classmethod
+    def create_github_client(cls) -> Github:
+        """Create a GitHub client."""
+        return get_github_client()
+
 
 # class BroadSearchResult(BaseModel):
 #     """A result from a broad search."""
@@ -96,54 +103,96 @@ class GitHubClientDependency(BaseModel):
 #     repo: str = Field(description="The repository of the issue.")
 #     issue_number: int = Field(description="The number of the issue.")
 
-    # def is_pull_request(self, client: Github) -> bool:
-    #     """Check if the issue is a pull request."""
-    #     return self.get_issue(client=client).pull_request is not None
+# def is_pull_request(self, client: Github) -> bool:
+#     """Check if the issue is a pull request."""
+#     return self.get_issue(client=client).pull_request is not None
 
-    # def get_issue(self, client: Github) -> Issue:
-    #     """Get the issue."""
-    #     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number)
+# def get_issue(self, client: Github) -> Issue:
+#     """Get the issue."""
+#     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number)
 
-    # def get_comments(self, client: Github) -> list[IssueComment]:
-    #     """Get the comments."""
-    #     return list(client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comments())
+# def get_comments(self, client: Github) -> list[IssueComment]:
+#     """Get the comments."""
+#     return list(client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comments())
 
-    # def get_comment(self, client: Github, comment_id: int) -> IssueComment:
-    #     """Get the comment."""
-    #     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comment(id=comment_id)
+# def get_comment(self, client: Github, comment_id: int) -> IssueComment:
+#     """Get the comment."""
+#     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comment(id=comment_id)
 
-    # def new_comment(self, client: Github, comment: str) -> IssueComment:
-    #     """Create a new comment."""
-    #     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).create_comment(body=comment)
+# def new_comment(self, client: Github, comment: str) -> IssueComment:
+#     """Create a new comment."""
+#     return client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).create_comment(body=comment)
 
-    # def edit_comment(self, client: Github, comment_id: int, body: str) -> IssueComment:
-    #     """Edit a comment."""
-    #     comment: IssueComment = (
-    #         client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comment(id=comment_id)
-    #     )
-    #     comment.edit(body=body)
-    #     return comment
+# def edit_comment(self, client: Github, comment_id: int, body: str) -> IssueComment:
+#     """Edit a comment."""
+#     comment: IssueComment = (
+#         client.get_repo(full_name_or_id=f"{self.owner}/{self.repo}").get_issue(number=self.issue_number).get_comment(id=comment_id)
+#     )
+#     comment.edit(body=body)
+#     return comment
 
-    # def as_markdown(self, client: Github) -> str:
-    #     github_issue: Issue = self.get_issue(client=client)
+# def as_markdown(self, client: Github) -> str:
+#     github_issue: Issue = self.get_issue(client=client)
 
-    #     owner_repo_number: str = f"{github_issue.repository.owner.login}/{github_issue.repository.name}#{github_issue.number}"
+#     owner_repo_number: str = f"{github_issue.repository.owner.login}/{github_issue.repository.name}#{github_issue.number}"
 
-    #     type_str: str = "pull request" if github_issue.pull_request else "issue"
+#     type_str: str = "pull request" if github_issue.pull_request else "issue"
 
-    #     github_issue_comments: list[IssueComment] = self.get_comments(client=client)
-    #     formatted_issue_comments: str = "\n\n".join(
-    #         [
-    #             f"**{comment.user.role_name} {comment.user.login} at {comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}**\n{comment.body}"
-    #             for comment in github_issue_comments
-    #         ]
-    #     )
+#     github_issue_comments: list[IssueComment] = self.get_comments(client=client)
+#     formatted_issue_comments: str = "\n\n".join(
+#         [
+#             f"**{comment.user.role_name} {comment.user.login} at {comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}**\n{comment.body}"
+#             for comment in github_issue_comments
+#         ]
+#     )
 
-    #     return (
-    #         f"The {type_str} for this task is: {owner_repo_number}\n"
-    #         f"The {type_str} body is:\n```{github_issue.body}```\n"
-    #         f"The {type_str} comments are:\n```{formatted_issue_comments}```"
-    #     )
+#     return (
+#         f"The {type_str} for this task is: {owner_repo_number}\n"
+#         f"The {type_str} body is:\n```{github_issue.body}```\n"
+#         f"The {type_str} comments are:\n```{formatted_issue_comments}```"
+#     )
+
+MAX_STRING_LENGTH = 2048
+
+
+def reduce_github_object(item: dict[str, Any]) -> dict[str, Any]:
+    """Recursively remove `null` values and all keys which end in `_url` from the dictionary."""
+    new_dict: dict[str, Any] = {}
+
+
+    for k, v in item.items():
+        if v is None:
+            continue
+
+        if k == "labels":
+            new_dict[k] = reduce_github_labels(labels=v)  # pyright: ignore[reportUnknownArgumentType]
+
+        if k == "requested_reviewers":
+            new_dict[k] = reduce_requested_reviewers(requested_reviewers=v)  # pyright: ignore[reportUnknownArgumentType]
+
+        if k.endswith("_url"):
+            continue
+
+        if isinstance(v, dict):
+            new_dict[k] = reduce_github_object(item=v)  # pyright: ignore[reportUnknownArgumentType]
+
+        if isinstance(v, str) and len(v) > MAX_STRING_LENGTH:
+            new_dict[k] = v[:MAX_STRING_LENGTH] + "... (truncated, get the item directly to see the full text)"
+
+        else:
+            new_dict[k] = v
+
+    return new_dict
+
+
+def reduce_github_labels(labels: list[dict[str, Any]]) -> list[str]:
+    """Reduce a list of GitHub labels to a list of strings."""
+    return [label["name"] for label in labels]
+
+
+def reduce_requested_reviewers(requested_reviewers: list[dict[str, Any]]) -> list[str]:
+    """Reduce a list of GitHub requested reviewers to a list of strings."""
+    return [reviewer["login"] for reviewer in requested_reviewers]
 
 
 class ResearchGitHubIssueDependency(GitHubClientDependency):
@@ -153,9 +202,16 @@ class ResearchGitHubIssueDependency(GitHubClientDependency):
 
     research_issue: Issue = Field(description="The issue to research.")
 
+    @field_serializer("research_issue", when_used="unless-none")
+    def serialize_research_issue(self, research_issue: Issue) -> dict[str, Any]:
+        return reduce_github_object(item=research_issue.raw_data)
+
     @classmethod
-    def from_issue(cls, owner: str, repo: str, issue_number: int) -> Self:
-        return cls(research_issue=cls.github_client.get_repo(full_name_or_id=f"{owner}/{repo}").get_issue(number=issue_number))
+    def from_issue(cls, owner: str, repo: str, issue_number: int, github_client: Github | None = None) -> Self:
+        if github_client is None:
+            github_client = cls.create_github_client()
+
+        return cls(research_issue=github_client.get_repo(full_name_or_id=f"{owner}/{repo}").get_issue(number=issue_number))
 
     @cached_property
     def pull_request_branch(self) -> str | None:
@@ -189,19 +245,29 @@ class ResearchGitHubIssueDependency(GitHubClientDependency):
 
         type_str: str = "pull request" if self.research_issue.pull_request else "issue"
 
-        github_issue_comments: list[IssueComment] = self.target_issue_comments
-        formatted_issue_comments: str = "\n\n".join(
-            [
-                f"**{comment.user.role_name} {comment.user.login} at {comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}**\n{comment.body}"
-                for comment in github_issue_comments
-            ]
-        )
+        issue_comments: list[dict[str, int | str]] = [
+            {
+                "{type_str}_id": self.research_issue.number,
+                "comment_id": github_issue_comment.id,
+                "user_role": github_issue_comment.user.role_name,
+                "user_login": github_issue_comment.user.login,
+                "created_at": github_issue_comment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "body": github_issue_comment.body,
+            }
+            for github_issue_comment in self.target_issue_comments
+        ]
 
-        return (
-            f"The {type_str} for this task is: {owner_repo_number}\n"
-            f"The {type_str} body is:\n```{self.research_issue.body}```\n"
-            f"The {type_str} comments are:\n```{formatted_issue_comments}```"
-        )
+        content: str = f"""
+        The body of {type_str} {owner_repo_number} is:
+        ```
+        {self.research_issue.body}
+        ```
+
+        The current conversation includes the following comments:
+        {yaml.safe_dump_all(issue_comments)}
+        """
+
+        return dedent(text=content.strip())
 
 
 class GitHubRelatedItemMixin(BaseModel):
@@ -215,9 +281,19 @@ class GitHubRelatedItemMixin(BaseModel):
 
     relation_reason: str = Field(
         description=(
-            "The reason you believe there is a relation between the related issue and the current issue. "
-            "Specifically outlining the reason you chose the confidence level and not something lower or higher."
+            "The details of the relation and the reason you believe there is a relation between the related issue and "
+            "the current issue. Also outline the reason you chose the confidence level and not something lower or higher."
         )
+    )
+
+    notes: str | None = Field(
+        default=None,
+        description=(
+            "Any additional notes about the item. For example, if the related item is a pull request, "
+            "you might note that the pull request is a work in progress, that it is a draft, or that the description does not "
+            "match the changes in the pull request. If the related item is an issue comment, you might note what part of the comment "
+            "is relevant to the current task."
+        ),
     )
 
     def relation_as_markdown_tooltip(self) -> MarkdownTooltip:
@@ -263,6 +339,10 @@ class RelatedIssue(GitHubRelatedItemMixin):
 
     issue: Issue = Field(description="The issue that is related to the current issue.")
 
+    @field_serializer("issue", when_used="unless-none")
+    def serialize_issue(self, issue: Issue) -> dict[str, Any]:
+        return reduce_github_object(item=issue.raw_data)
+
     @classmethod
     def markdown_headers(cls) -> list[str]:
         return ["Issue", "Title", "Confidence"]
@@ -279,39 +359,40 @@ class RelatedIssue(GitHubRelatedItemMixin):
             ]
         )
 
-    @field_serializer("issue")
-    def serialize_issue(self, issue: Issue) -> dict[str, Any]:
-        return issue.raw_data
-
 
 class RelatedIssueComment(GitHubRelatedItemMixin):
     """A related issue comment to the current issue."""
 
-    comment: IssueComment = Field(description="The comment that is related to the current issue.")
+    owner: str = Field(description="The owner of the issue comment.")
 
-    context: str = Field(description="The relevant context from the comment.")
+    repo: str = Field(description="The repository of the issue comment.")
+
+    issue_number: int = Field(description="The number of the issue comment.")
+
+    comment: IssueComment = Field(description="The comment that is related to the current issue.")
 
     @classmethod
     def markdown_headers(cls) -> list[str]:
-        return ["Comment", "Context", "Confidence"]
+        return ["Issue", "Comment", "Context", "Confidence"]
 
     def as_markdown(self) -> MarkdownTableRow:
         markdown_link: MarkdownLink = MarkdownLink(text=self.comment.user.login, url=self.comment.html_url)
         return MarkdownTableRow(
             cells=[
+                MarkdownTableCell(text=self.comment.issue_url),
                 MarkdownTableCell(text=markdown_link.render()),
-                MarkdownTableCell(text=self.context),
+                MarkdownTableCell(text=self.notes or ""),
                 MarkdownTableCell(text=self.relation_as_markdown_tooltip().render()),
             ]
         )
 
-    @field_serializer("comment")
+    @field_serializer("comment", when_used="unless-none")
     def serialize_comment(self, comment: IssueComment) -> dict[str, Any]:
-        return comment.raw_data
+        return reduce_github_object(item=comment.raw_data)
 
 
 class RelatedPullRequest(GitHubRelatedItemMixin):
-    """A related pull request to the current issue."""
+    """A pull request that is related to the current task the Agent is performing."""
 
     pull_request: PullRequest = Field(description="The pull request that is related to the current issue.")
 
@@ -320,22 +401,23 @@ class RelatedPullRequest(GitHubRelatedItemMixin):
 
     @classmethod
     def markdown_headers(cls) -> list[str]:
-        return ["Pull Request", "Title", "Confidence"]
+        return ["Repository", "Pull Request", "Title", "Confidence"]
 
     def as_markdown(self) -> MarkdownTableRow:
         as_issue: Issue = self.as_issue()
         markdown_link: MarkdownLink = MarkdownLink(text=as_issue.title, url=self.pull_request.html_url)
         return MarkdownTableRow(
             cells=[
+                MarkdownTableCell(text=as_issue.repository.full_name),
                 MarkdownTableCell(text=markdown_link.render()),
                 MarkdownTableCell(text=as_issue.title),
                 MarkdownTableCell(text=self.relation_as_markdown_tooltip().render()),
             ]
         )
 
-    @field_serializer("pull_request")
+    @field_serializer("pull_request", when_used="unless-none")
     def serialize_pull_request(self, pull_request: PullRequest) -> dict[str, Any]:
-        return pull_request.raw_data
+        return reduce_github_object(item=pull_request.raw_data)
 
 
 class FileLineRange(BaseModel):
@@ -345,7 +427,7 @@ class FileLineRange(BaseModel):
     line_end: int | None = Field(default=None, description="The line number of the end of the range.")
 
     def to_line_range_link_str(self) -> str:
-        return f"L{self.line_start}"
+        return f"L{self.to_line_range_str()}"
 
     def to_line_range_str(self) -> str:
         if self.line_start and not self.line_end:
@@ -365,7 +447,7 @@ class RelatedFile(GitHubRelatedItemMixin):
 
     @classmethod
     def markdown_headers(cls) -> list[str]:
-        return ["File", "Confidence", "Sections"]
+        return ["Repository", "File", "Confidence", "Sections"]
 
     def as_markdown(self) -> MarkdownTableRow:
         markdown_link: MarkdownLink = MarkdownLink(text=self.file.name, url=self.file.html_url)
@@ -376,15 +458,22 @@ class RelatedFile(GitHubRelatedItemMixin):
 
         return MarkdownTableRow(
             cells=[
+                MarkdownTableCell(text=self.file.repository.full_name),
                 MarkdownTableCell(text=markdown_link.render()),
                 MarkdownTableCell(text=self.relation_as_markdown_tooltip().render()),
                 MarkdownTableCell(text=", ".join(line_range_links)),
             ]
         )
 
-    @field_serializer("file")
+    @field_serializer("file", when_used="unless-none")
     def serialize_file(self, file: ContentFile) -> dict[str, Any]:
-        return file.raw_data
+        raw_data: dict[str, Any] = file.raw_data
+        raw_data["content"] = file.decoded_content.decode()
+        raw_data["encoding"] = "utf-8"
+
+        reduced_object: dict[str, Any] = reduce_github_object(item=raw_data)
+
+        return reduced_object
 
 
 class GitHubRelatedItems(BaseModel):
@@ -409,8 +498,25 @@ class GitHubRelatedItems(BaseModel):
     def add_issue(self, issue: RelatedIssue) -> None:
         self.issues.append(issue)
 
+    def remove_issue(self, owner: str, repo: str, issue_number: int) -> None:
+        for issue in self.issues:
+            if issue.issue.repository.owner.login == owner and issue.issue.repository.name == repo and issue.issue.number == issue_number:
+                self.issues.remove(issue)
+                break
+
     def add_issue_comment(self, issue_comment: RelatedIssueComment) -> None:
         self.issue_comments.append(issue_comment)
+
+    def remove_issue_comment(self, owner: str, repo: str, issue_number: int, comment_id: int) -> None:
+        for issue_comment in self.issue_comments:
+            if (
+                issue_comment.owner == owner
+                and issue_comment.repo == repo
+                and issue_comment.issue_number == issue_number
+                and issue_comment.comment.id == comment_id
+            ):
+                self.issue_comments.remove(issue_comment)
+                break
 
     def get_issue(self, owner: str, repo: str, issue_number: int) -> RelatedIssue | None:
         for related_issue in self.issues:
@@ -425,6 +531,13 @@ class GitHubRelatedItems(BaseModel):
 
     def add_pull_request(self, pull_request: RelatedPullRequest) -> None:
         self.pull_requests.append(pull_request)
+
+    def remove_pull_request(self, owner: str, repo: str, pull_request_number: int) -> None:
+        for pull_request in self.pull_requests:
+            as_issue: Issue = pull_request.as_issue()
+            if as_issue.repository.owner.login == owner and as_issue.repository.name == repo and as_issue.number == pull_request_number:
+                self.pull_requests.remove(pull_request)
+                break
 
     def get_pull_request(self, owner: str, repo: str, pull_request_number: int) -> RelatedPullRequest | None:
         for related_pull_request in self.pull_requests:
@@ -464,8 +577,25 @@ class GitHubRelatedItems(BaseModel):
 
         return None
 
+    def remove_file(self, owner: str, repo: str, branch: str, file_path: str) -> None:
+        for file in self.files:
+            if (
+                file.file.repository.owner.login == owner
+                and file.file.repository.name == repo
+                and file.file.repository.default_branch == branch
+                and file.file.path == file_path
+            ):
+                self.files.remove(file)
+                break
+
     def add_webpage(self, webpage: RelatedWebpage) -> None:
         self.webpages.append(webpage)
+
+    def remove_webpage(self, name: str, url: str) -> None:
+        for webpage in self.webpages:
+            if webpage.name == name and webpage.url == url:
+                self.webpages.remove(webpage)
+                break
 
     def get_webpage(self, url: str) -> RelatedWebpage | None:
         for related_webpage in self.webpages:
@@ -510,6 +640,19 @@ class GitHubRelatedItems(BaseModel):
         return RelatedWebpage.as_markdown_table(items=self.webpages)
 
 
+Owner = Annotated[str, Field(description="The owner of the repository.")]
+Repo = Annotated[str, Field(description="The name of the repository.")]
+IssueNumber = Annotated[int, Field(description="The number of the issue.")]
+PullRequestNumber = Annotated[int, Field(description="The number of the pull request.")]
+FilePath = Annotated[str, Field(description="The path of the file.")]
+Branch = Annotated[str, Field(description="The branch of the repository.")]
+LineNumbers = Annotated[list[FileLineRange], Field(description="The line numbers of the file.")]
+
+RelationConfidence = Annotated[Literal["High", "Medium", "Low"], GitHubRelatedItemMixin.model_fields["relation_confidence"]]
+RelationReason = Annotated[str, GitHubRelatedItemMixin.model_fields["relation_reason"]]
+Notes = Annotated[str | None, GitHubRelatedItemMixin.model_fields["notes"]]
+
+
 class GitHubRelatedItemsDependency(GitHubClientDependency):
     """A dependency for tracking related GitHub items."""
 
@@ -526,56 +669,28 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
         toolset: FunctionToolset[Any] = FunctionToolset[Any](max_retries=3)
 
         toolset.add_function(func=self.add_related_issue, name="add_related_github_issue")
+        toolset.add_function(func=self.remove_related_issue, name="remove_related_github_issue")
+
         toolset.add_function(func=self.add_related_issue_comment, name="add_related_github_issue_comment")
+        toolset.add_function(func=self.remove_related_issue_comment, name="remove_related_github_issue_comment")
+
         toolset.add_function(func=self.add_related_pull_request, name="add_related_github_pull_request")
+        toolset.add_function(func=self.remove_related_pull_request, name="remove_related_github_pull_request")
+
         toolset.add_function(func=self.add_related_file, name="add_related_repository_file")
+        toolset.add_function(func=self.remove_related_file, name="remove_related_repository_file")
+
         toolset.add_function(func=self.add_related_file_lines, name="add_related_repository_file_lines")
+
         toolset.add_function(func=self.add_related_webpage, name="add_related_web_page")
+        toolset.add_function(func=self.remove_related_webpage, name="remove_related_web_page")
+
         toolset.add_function(func=self.related_items.get, name="get_all_related_items")
 
         return toolset
 
     def on_related_item_added(self, related_item: GitHubRelatedItemMixin) -> None:
         """Call the on_update callback."""
-
-    # def _to_qualifiers(self, owner: str, repo: str | None, keywords: set[str]) -> dict[str, Any]:
-    #     qualifiers: dict[str, Any] = {}
-    #     if repo:
-    #         qualifiers["repo"] = repo
-    #     qualifiers["owner"] = owner
-    #     qualifiers["q"] = " ".join(list[str](keywords))
-    #     return qualifiers
-
-    # def search_issues(self, owner: str, keywords: set[str], repo: str | None = None) -> list[dict[str, Any]]:
-    #     """Search for issues in a repository."""
-    #     qualifiers: dict[str, Any] = self._to_qualifiers(owner=owner, repo=repo, keywords=keywords)
-
-    #     return strip_github_objects(github_objects=list(self.github_client.search_issues(**qualifiers)))
-
-    # def search_code(self, owner: str, keywords: set[str], repo: str | None = None) -> list[dict[str, Any]]:
-    #     """Search for code in a repository."""
-    #     qualifiers: dict[str, Any] = self._to_qualifiers(owner=owner, repo=repo, keywords=keywords)
-    #     return strip_github_objects(github_objects=list(self.github_client.search_code(**qualifiers)))
-
-    # def search_commits(self, owner: str, keywords: set[str], repo: str | None = None) -> list[dict[str, Any]]:
-    #     """Search for commits in a repository."""
-    #     qualifiers: dict[str, Any] = self._to_qualifiers(owner=owner, repo=repo, keywords=keywords)
-    #     return strip_github_objects(github_objects=list(self.github_client.search_commits(**qualifiers)))
-
-    # def search_topics(self, owner: str, keywords: set[str], repo: str | None = None) -> list[dict[str, Any]]:
-    #     """Search for topics in a repository."""
-    #     qualifiers: dict[str, Any] = self._to_qualifiers(owner=owner, repo=repo, keywords=keywords)
-    #     return strip_github_objects(github_objects=list(self.github_client.search_topics(**qualifiers)))
-
-    # def search(self, owner: str, keywords: set[str]) -> dict[str, list[dict[str, Any]]]:
-    #     """Search for issues, code, commits, topics, and repositories."""
-
-    #     return {
-    #         "issues": self.search_issues(owner=owner, keywords=keywords),
-    #         "code": self.search_code(owner=owner, keywords=keywords),
-    #         "commits": self.search_commits(owner=owner, keywords=keywords),
-    #         "topics": self.search_topics(owner=owner, keywords=keywords),
-    #     }
 
     def _matches_research_issue(self, owner: str, repo: str, issue_number: int) -> bool:
         return all(
@@ -587,9 +702,15 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
         )
 
     def add_related_issue(
-        self, owner: str, repo: str, issue_number: int, relation_confidence: Literal["High", "Medium", "Low"], relation_reason: str
+        self,
+        owner: Owner,
+        repo: Repo,
+        issue_number: IssueNumber,
+        relation_confidence: RelationConfidence,
+        relation_reason: RelationReason,
+        notes: Notes,
     ) -> None:
-        """Track a GitHub Issue as a related item for the current task."""
+        """Mark a GitHub Issue as related to the current task."""
         if self._matches_research_issue(owner=owner, repo=repo, issue_number=issue_number):
             return
 
@@ -600,23 +721,29 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
         except Exception as e:
             raise ModelRetry(message=f"Error getting issue {owner}/{repo}#{issue_number}: {e}") from e
 
-        related_issue: RelatedIssue = RelatedIssue(issue=issue, relation_confidence=relation_confidence, relation_reason=relation_reason)
+        related_issue: RelatedIssue = RelatedIssue(
+            issue=issue, relation_confidence=relation_confidence, relation_reason=relation_reason, notes=notes
+        )
 
         self.related_items.add_issue(issue=related_issue)
 
         self.on_related_item_added(related_issue)
 
+    def remove_related_issue(self, owner: str, repo: str, issue_number: int) -> None:
+        """Remove a GitHub Issue that is deemed to be no longer related to the current task from the related items."""
+        self.related_items.remove_issue(owner=owner, repo=repo, issue_number=issue_number)
+
     def add_related_issue_comment(
         self,
-        owner: str,
-        repo: str,
-        issue_number: int,
+        owner: Owner,
+        repo: Repo,
+        issue_number: IssueNumber,
         comment_id: int,
-        relation_confidence: Literal["High", "Medium", "Low"],
-        relation_reason: str,
-        context: Annotated[str, Field(description="The relevant context from the comment.")],
+        relation_confidence: RelationConfidence,
+        relation_reason: RelationReason,
+        notes: Notes,
     ) -> None:
-        """Track a GitHub Issue Comment as a related item for the current task."""
+        """Mark a GitHub Issue Comment as related to the current task."""
         try:
             repository: Repository = self.github_client.get_repo(full_name_or_id=f"{owner}/{repo}")
 
@@ -625,20 +752,33 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
             raise ModelRetry(message=f"Error getting issue comment {owner}/{repo}#{issue_number}#{comment_id}: {e}") from e
 
         related_issue_comment: RelatedIssueComment = RelatedIssueComment(
+            owner=owner,
+            repo=repo,
+            issue_number=issue_number,
             comment=issue_comment,
-            context=context,
             relation_confidence=relation_confidence,
             relation_reason=relation_reason,
+            notes=notes,
         )
 
         self.related_items.add_issue_comment(issue_comment=related_issue_comment)
 
         self.on_related_item_added(related_issue_comment)
 
+    def remove_related_issue_comment(self, owner: str, repo: str, issue_number: int, comment_id: int) -> None:
+        """Remove a GitHub Issue Comment that is deemed to be no longer related to the current task from the related items."""
+        self.related_items.remove_issue_comment(owner=owner, repo=repo, issue_number=issue_number, comment_id=comment_id)
+
     def add_related_pull_request(
-        self, owner: str, repo: str, pull_request_number: int, relation_confidence: Literal["High", "Medium", "Low"], relation_reason: str
+        self,
+        owner: Owner,
+        repo: Repo,
+        pull_request_number: PullRequestNumber,
+        relation_confidence: RelationConfidence,
+        relation_reason: RelationReason,
+        notes: Notes,
     ) -> None:
-        """Track a GitHub Pull Request as a related item for the current task."""
+        """Mark a GitHub Pull Request as related to the current task."""
         if self._matches_research_issue(owner=owner, repo=repo, issue_number=pull_request_number):
             return
 
@@ -650,20 +790,24 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
             raise ModelRetry(message=f"Error getting pull request {owner}/{repo}#{pull_request_number}: {e}") from e
 
         related_pull_request: RelatedPullRequest = RelatedPullRequest(
-            pull_request=pull_request, relation_confidence=relation_confidence, relation_reason=relation_reason
+            pull_request=pull_request, relation_confidence=relation_confidence, relation_reason=relation_reason, notes=notes
         )
 
         self.related_items.add_pull_request(pull_request=related_pull_request)
 
         self.on_related_item_added(related_pull_request)
 
+    def remove_related_pull_request(self, owner: str, repo: str, pull_request_number: PullRequestNumber) -> None:
+        """Remove a GitHub Pull Request that is deemed to be no longer related to the current task from the related items."""
+        self.related_items.remove_pull_request(owner=owner, repo=repo, pull_request_number=pull_request_number)
+
     def add_related_file_lines(
         self,
-        owner: str,
-        repo: str,
-        file_path: str,
-        branch: str,
-        line_numbers: list[FileLineRange],
+        owner: Owner,
+        repo: Repo,
+        file_path: FilePath,
+        branch: Branch,
+        line_numbers: LineNumbers,
     ) -> None:
         """Add lines to a related file.
 
@@ -682,20 +826,16 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
 
     def add_related_file(
         self,
-        owner: str,
-        repo: str,
-        file_path: str,
-        relation_confidence: Literal["High", "Medium", "Low"],
-        relation_reason: Annotated[
-            str, Field(description="The reason you believe there is a relation between the related file and the current issue.")
-        ],
-        branch: Annotated[str | None, Field(description="The branch to use for the file. If not provided, the default branch is used.")],
-        line_numbers: Annotated[
-            list[FileLineRange] | None,
-            Field(description="The line numbers of the file that are related to the issue. If not provided, the entire file is related."),
-        ] = None,
+        owner: Owner,
+        repo: Repo,
+        file_path: FilePath,
+        relation_confidence: RelationConfidence,
+        relation_reason: RelationReason,
+        branch: Branch | None,
+        line_numbers: LineNumbers | None,
+        notes: Notes,
     ) -> None:
-        """Track a GitHub File as a related item for the current task."""
+        """Mark a GitHub File as related to the current task."""
         try:
             repository: Repository = self.github_client.get_repo(full_name_or_id=f"{owner}/{repo}")
 
@@ -712,21 +852,42 @@ class GitHubRelatedItemsDependency(GitHubClientDependency):
                 relation_confidence=relation_confidence,
                 relation_reason=relation_reason,
                 line_numbers=line_numbers,
+                notes=notes,
             )
 
             self.related_items.add_file(file=related_file)
 
             self.on_related_item_added(related_file)
 
-    def add_related_webpage(self, name: str, url: str, relation_confidence: Literal["High", "Medium", "Low"], relation_reason: str) -> None:
-        """Track a Webpage as a related item for the current task."""
+    def remove_related_file(self, owner: str, repo: str, branch: str, file_path: str) -> None:
+        """Remove a File that is deemed to be no longer related to the current task from the related items."""
+        self.related_items.remove_file(
+            owner=owner,
+            repo=repo,
+            branch=branch,
+            file_path=file_path,
+        )
+
+    def add_related_webpage(
+        self,
+        name: str,
+        url: str,
+        relation_confidence: RelationConfidence,
+        relation_reason: RelationReason,
+        notes: Notes,
+    ) -> None:
+        """Mark a Webpage as related to the current task."""
         related_webpage: RelatedWebpage = RelatedWebpage(
-            name=name, url=url, relation_confidence=relation_confidence, relation_reason=relation_reason
+            name=name, url=url, relation_confidence=relation_confidence, relation_reason=relation_reason, notes=notes
         )
 
         self.related_items.add_webpage(webpage=related_webpage)
 
         self.on_related_item_added(related_webpage)
+
+    def remove_related_webpage(self, name: str, url: str) -> None:
+        """Remove a Webpage that is deemed to be no longer related to the current task from the related items."""
+        self.related_items.remove_webpage(name=name, url=url)
 
 
 def read_only_github_toolset() -> FastMCPServerToolset[Any]:
@@ -749,6 +910,6 @@ def read_and_search_github_toolset() -> FastMCPServerToolset[Any]:
         search=True,
     )
 
-    del github_mcp_server.tools["get_file_contents"]
+    # del github_mcp_server.tools["get_file_contents"]
 
     return FastMCPServerToolset[Any].from_mcp_server(name="github", mcp_server=github_mcp_server)

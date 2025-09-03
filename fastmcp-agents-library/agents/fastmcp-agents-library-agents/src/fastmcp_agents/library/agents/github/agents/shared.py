@@ -1,5 +1,3 @@
-
-
 APPROACH = """
 You approach each task with:
 * Accuracy - ensure findings are truly relevant
@@ -36,7 +34,12 @@ https://github.com/<owner>/<repo>/blob/<sha1>/<path/to/file.py>#L<start_line_num
 
 For example: https://github.com/strawgate/cool-repo/blob/123123123/src/fastmcp_agents/library/agents/github/prompts.py#L10-L20
 
+If referencing the code in a sentence, use the permalink as a markdown link:
 
+```markdown
+The reported issue is caused by [a typo in prompts.py](https://github.com/cool-org/cool-repo/blob/123123123/src/prompts.py#L10-L20) and
+can be resolved by updating the prompt.
+```
 
 or embed the code in a code block:
 
@@ -74,4 +77,3 @@ You can add an image or a code block, too.
 </details>
 ```
 """
-

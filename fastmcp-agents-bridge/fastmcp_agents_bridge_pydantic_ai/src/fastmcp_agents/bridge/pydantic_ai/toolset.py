@@ -3,11 +3,13 @@ from __future__ import annotations
 import base64
 import contextlib
 from abc import ABC
+from asyncio import Lock, Semaphore
 from contextlib import AsyncExitStack
-from dataclasses import field
 from typing import TYPE_CHECKING, Any, Self, override
 
 import pydantic_core
+from fastmcp.client import Client
+from fastmcp.client.transports import MCPConfigTransport
 from fastmcp.exceptions import ToolError
 from fastmcp.mcp_config import MCPConfig
 from fastmcp.server.server import FastMCP
@@ -22,10 +24,7 @@ from pydantic_ai.toolsets import AbstractToolset
 from pydantic_ai.toolsets.abstract import ToolsetTool
 
 if TYPE_CHECKING:
-    from asyncio import Lock
-
     from fastmcp import FastMCP
-    from fastmcp.client import Client
     from fastmcp.client.client import CallToolResult
     from fastmcp.client.transports import FastMCPTransport
     from fastmcp.mcp_config import MCPServerTypes
@@ -54,16 +53,20 @@ class BaseFastMCPToolset[AgentDepsT](AbstractToolset[AgentDepsT], ABC):
 class FastMCPClientToolset(BaseFastMCPToolset[AgentDepsT]):
     """A toolset that uses a FastMCP client as the underlying toolset."""
 
-    _fastmcp_client: Client[FastMCPTransport] | None = None
+    _fastmcp_client: Client[Any] | None = None
 
-    _enter_lock: Lock = field(compare=False)
+    _enter_lock: Lock
     _running_count: int
     _exit_stack: AsyncExitStack | None
+    _semaphore: Semaphore
 
-    def __init__(self, client: Client[FastMCPTransport], tool_retries: int = 2):
+    def __init__(self, client: Client[Any], tool_retries: int = 2):
         super().__init__(tool_retries=tool_retries)
 
         self._fastmcp_client = client
+        self._enter_lock = Lock()
+        self._running_count = 0
+        self._semaphore = Semaphore(value=1)
 
     async def __aenter__(self) -> Self:
         async with self._enter_lock:
@@ -97,22 +100,41 @@ class FastMCPClientToolset(BaseFastMCPToolset[AgentDepsT]):
         return {tool.name: convert_mcp_tool_to_toolset_tool(toolset=self, mcp_tool=tool, retries=self._tool_retries) for tool in mcp_tools}
 
     async def call_tool(self, name: str, tool_args: dict[str, Any], ctx: RunContext[AgentDepsT], tool: ToolsetTool[AgentDepsT]) -> Any:  # pyright: ignore[reportAny]
-        call_tool_result: CallToolResult = await self.fastmcp_client.call_tool(name=name, arguments=tool_args)
+        async with self._semaphore:
+            try:
+                call_tool_result: CallToolResult = await self.fastmcp_client.call_tool(name=name, arguments=tool_args)
+            except ToolError as e:
+                raise ModelRetry(message=str(object=e)) from e
 
-        if call_tool_result.is_error:
-            raise ModelRetry(message=str(call_tool_result.content))
+        # We don't use call_tool_result.data at the moment because it requires the json schema to be translatable
+        # back into pydantic models otherwise it will be missing data.
 
-        return call_tool_result.data or call_tool_result.structured_content or _map_fastmcp_tool_results(parts=call_tool_result.content)
+        return call_tool_result.structured_content or _map_fastmcp_tool_results(parts=call_tool_result.content)
+
+    @classmethod
+    def from_mcp_server(cls, name: str, mcp_server: MCPServerTypes) -> Self:
+        return cls.from_mcp_config(mcp_config=MCPConfig(mcpServers={name: mcp_server}))
+
+    @classmethod
+    def from_mcp_config(cls, mcp_config: MCPConfig) -> Self:
+        fastmcp_client: Client[MCPConfigTransport] = Client[MCPConfigTransport](transport=mcp_config)
+        return cls(client=fastmcp_client, tool_retries=2)
 
 
 class FastMCPServerToolset(BaseFastMCPToolset[AgentDepsT], ABC):
     """An abstract base class for toolsets that use a FastMCP server to provide the underlying toolset."""
 
     _fastmcp_server: FastMCP[Any]
+    _semaphore: Semaphore
 
     def __init__(self, server: FastMCP[Any], tool_retries: int = 2):
         super().__init__(tool_retries=tool_retries)
         self._fastmcp_server = server
+        self._semaphore = Semaphore(value=1)
+
+    async def __aenter__(self) -> Self:
+        await self._fastmcp_server.get_tools()
+        return self
 
     async def _setup_fastmcp_server(self, ctx: RunContext[AgentDepsT]) -> None:
         msg = "Subclasses must implement this method"
@@ -138,17 +160,17 @@ class FastMCPServerToolset(BaseFastMCPToolset[AgentDepsT], ABC):
             msg = f"Tool {name} not found in toolset {self._fastmcp_server.name}"
             raise ValueError(msg)
 
-        try:
-            call_tool_result: ToolResult = await matching_tool.run(arguments=tool_args)
-        except ToolError as e:
-            raise ModelRetry(message=str(object=e)) from e
+        async with self._semaphore:
+            try:
+                call_tool_result: ToolResult = await matching_tool.run(arguments=tool_args)
+            except ToolError as e:
+                raise ModelRetry(message=str(object=e)) from e
 
         return call_tool_result.structured_content or _map_fastmcp_tool_results(parts=call_tool_result.content)
 
     @classmethod
     def from_mcp_server(cls, name: str, mcp_server: MCPServerTypes) -> Self:
-        mcp_config: MCPConfig = MCPConfig(mcpServers={name: mcp_server})
-        return cls.from_mcp_config(mcp_config=mcp_config)
+        return cls.from_mcp_config(mcp_config=MCPConfig(mcpServers={name: mcp_server}))
 
     @classmethod
     def from_mcp_config(cls, mcp_config: MCPConfig) -> Self:
