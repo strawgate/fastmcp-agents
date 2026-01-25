@@ -1,3 +1,8 @@
+# Archived!
+
+All the best parts of fastmcp-agents have been upstreamed into FastMCP. Head over there to get started! https://github.com/jlowin/fastmcp
+
+
 # [FastMCP](https://github.com/jlowin/fastmcp) 🚀 Agents 🤖
 
 FastMCP Agents bridges the gap between the generic tools in MCP servers and the specialized tools you need to solve your problem and gives you a straight-forward way to manage tool sprawl:
