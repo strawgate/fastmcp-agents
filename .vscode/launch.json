@@ -14,6 +14,24 @@
             "envFile": "${workspaceFolder}/.env",
             "cwd": "${workspaceFolder}/fastmcp-agents-library/agents/fastmcp-agents-library-agent-documentation-maintainer/playground/es_integrations",
         },
+        {
+            "name": "Python: GitHub Triage CLI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/fastmcp-agents-library/agents/fastmcp-agents-library-agents/src/fastmcp_agents/library/agents/github/cli.py",
+            "console": "integratedTerminal",
+            "args": [
+                "triage",
+                "--issue-owner",
+                "strawgate",
+                "--issue-repo",
+                "fastmcp-agents",
+                "--issue-number",
+                "1",
+                "--instructions",
+                "Please triage the issue."
+            ]
+        },
         // Debug Tests config
         {
             "name": "Python: Debug Tests",

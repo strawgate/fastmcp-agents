@@ -1,54 +1,42 @@
+from typing import Annotated
+
 from fastmcp.server import FastMCP
 from fastmcp.tools import FunctionTool
+from pydantic import Field
 
-from fastmcp_agents.library.agents.github.agents import github_triage_agent
-from fastmcp_agents.library.agents.github.models import GitHubIssue, GitHubIssueSummary
+from fastmcp_agents.library.agents.github.agents.issue_driven_agent import (
+    IssueDrivenAgentInput,
+    IssueTriageAgentSettings,
+    issue_driven_agent,
+)
+from fastmcp_agents.library.agents.github.dependencies.result import AgentResult
 from fastmcp_agents.library.agents.shared.logging import configure_console_logging
-from fastmcp_agents.library.agents.shared.models import Failure
 
 
-async def research_github_issue(
-    investigate_issue_owner: str,
-    investigate_issue_repo: str,
-    investigate_issue_number: int,
-    reply_to_issue_owner: str | None = None,
-    reply_to_issue_repo: str | None = None,
-    reply_to_issue_number: int | None = None,
-    instructions: str | None = None,
-) -> GitHubIssueSummary | Failure:
-    """Research a GitHub issue, optionally restricting the investigation to a specific owner or repository.
+async def triage_github_issue(
+    issue_owner: Annotated[str, Field(description="The owner of the repository.")],
+    issue_repo: Annotated[str, Field(description="The name of the repository.")],
+    issue_number: Annotated[int, Field(description="The number of the issue.")],
+    instructions: Annotated[str | None, Field(description="The instructions for the investigation.")] = None,
+    settings: Annotated[IssueTriageAgentSettings | None, Field(description="The settings for the issue driven agent.")] = None,
+) -> AgentResult:
+    """Triage a GitHub issue, optionally restricting the investigation to a specific owner or repository."""
 
-    If `reply_to_issue` is provided, the investigation will be posted as a comment to the issue specified as the reply_to_issue. If you
-    intend to do additional work based on the investigation, you should not have this tool reply to the issue.
-    """
-    if any([reply_to_issue_owner, reply_to_issue_repo, reply_to_issue_number]):  # noqa: SIM102
-        if not all([reply_to_issue_owner, reply_to_issue_repo, reply_to_issue_number]):
-            msg = "If you provide a reply_to_issue, you must provide all three of owner, repo, and issue_number"
-            raise ValueError(msg)
+    if not settings:
+        settings = IssueTriageAgentSettings()
 
-    investigate_issue = GitHubIssue(
-        owner=investigate_issue_owner,
-        repo=investigate_issue_repo,
-        issue_number=investigate_issue_number,
+    github_triage_input = IssueDrivenAgentInput(
+        issue_owner=issue_owner, issue_repo=issue_repo, issue_number=issue_number, agent_settings=settings
     )
 
-    reply_to_issue: GitHubIssue | None = None
-
-    if reply_to_issue_owner and reply_to_issue_repo and reply_to_issue_number:
-        reply_to_issue = GitHubIssue(
-            owner=reply_to_issue_owner,
-            repo=reply_to_issue_repo,
-            issue_number=reply_to_issue_number,
-        )
-
-    return (await github_triage_agent.run(deps=(investigate_issue, reply_to_issue), user_prompt=instructions)).output
+    return (await issue_driven_agent.run(deps=github_triage_input.to_deps(), user_prompt=instructions)).output
 
 
-research_github_issue_tool = FunctionTool.from_function(fn=research_github_issue)
+triage_github_issue_tool = FunctionTool.from_function(fn=triage_github_issue)
 
 server: FastMCP[None] = FastMCP[None](
     name="GitHub",
-    tools=[research_github_issue_tool],
+    tools=[triage_github_issue_tool],
 )
 
 

@@ -1,150 +1,122 @@
-from collections.abc import Generator
-from pathlib import Path
-from typing import Literal, Self
+from pydantic import BaseModel, Field
 
-from git.repo import Repo
-from pydantic import AnyHttpUrl, BaseModel, Field, computed_field, model_validator
+# class InvestigationRecommendation(BaseModel):
+#     """An investigation recommendation."""
 
-
-class FileLine(BaseModel):
-    """A file line with line number and content."""
-
-    line: int = Field(default=..., description="The line number of the file, indexed from 1.")
-    content: str = Field(default=..., description="The content of the line.")
+#     description: str
+#     action: Literal["fix", "refactor", "propose", "implement"]
+#     file_path: str | None = None
+#     current_lines: FileLines = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
+#     proposed_lines: FileLines = Field(default=..., description="The proposed lines of code in the file with their line numbers.")
 
 
-class InvestigationFinding(BaseModel):
-    """An investigation finding."""
+# class DirectoryStructure(BaseModel):
+#     """A directory structure."""
 
-    description: str
-    file_path: str | None = None
-    lines: list[FileLine] = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
+#     results: list[str]
+#     max_results: int = Field(description="The maximum number of results to return.", exclude=True)
 
+#     @computed_field
+#     @property
+#     def limit_reached(self) -> bool:
+#         """Check if the limit has been reached."""
 
-class InvestigationRecommendation(BaseModel):
-    """An investigation recommendation."""
+#         return len(self.results) >= self.max_results
 
-    description: str
-    action: Literal["fix", "refactor", "propose", "implement"]
-    file_path: str | None = None
-    current_lines: list[FileLine] = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
-    proposed_lines: list[FileLine] = Field(default=..., description="The proposed lines of code in the file with their line numbers.")
+#     @classmethod
+#     def from_dir(cls, directory: Path, max_results: int = 150) -> Self:
+#         results: list[str] = []
 
+#         for item in _limited_depth_iterdir(root=directory, path=directory, max_depth=3):
+#             if len(results) >= max_results:
+#                 break
+#             if item.name.startswith("."):
+#                 continue
+#             if item.is_file():
+#                 results.append(item.relative_to(directory).as_posix())
+#             elif item.is_dir():
+#                 results.append(item.relative_to(directory).as_posix() + "/")
 
-class DirectoryStructure(BaseModel):
-    """A directory structure."""
+#         return cls(results=results, max_results=max_results)
 
-    results: list[str]
-    max_results: int = Field(description="The maximum number of results to return.", exclude=True)
-
-    @computed_field
-    @property
-    def limit_reached(self) -> bool:
-        """Check if the limit has been reached."""
-
-        return len(self.results) >= self.max_results
-
-    @classmethod
-    def from_dir(cls, directory: Path, max_results: int = 150) -> Self:
-        results: list[str] = []
-
-        for item in _limited_depth_iterdir(path=directory, max_depth=3):
-            if len(results) >= max_results:
-                break
-            if item.is_file():
-                results.append(item.name)
-            elif item.is_dir():
-                results.append(item.name + "/")
-
-        return cls(results=results, max_results=max_results)
+#     def as_yaml(self) -> str:
+#         """Convert the directory structure to a YAML string."""
+#         return yaml.safe_dump(self.model_dump())
 
 
-def _limited_depth_iterdir(
-    path: Path,
-    max_depth: int = 3,
-    current_depth: int = 0,
-) -> Generator[Path]:
-    """
-    Iterates through directory contents up to a specified maximum depth.
+# def _limited_depth_iterdir(
+#     root: Path,
+#     path: Path,
+#     max_depth: int = 3,
+#     current_depth: int = 0,
+# ) -> Generator[Path]:
+#     """
+#     Iterates through directory contents up to a specified maximum depth.
 
-    Args:
-        path (Path): The starting directory path.
-        max_depth (int): The maximum depth to traverse (0 for current directory only).
-        current_depth (int): The current depth during recursion (internal use).
+#     Args:
+#         path (Path): The starting directory path.
+#         max_depth (int): The maximum depth to traverse (0 for current directory only).
+#         current_depth (int): The current depth during recursion (internal use).
 
-    Yields:
-        Path: A path object for each file or directory within the depth limit.
-    """
-    if current_depth > max_depth:
-        return
+#     Yields:
+#         Path: A path object for each file or directory within the depth limit.
+#     """
+#     if current_depth > max_depth:
+#         return
 
-    for item in path.iterdir():
-        yield item
-        if item.is_dir():
-            yield from _limited_depth_iterdir(path=item, max_depth=max_depth, current_depth=current_depth + 1)
-
-
-class BranchInfo(BaseModel):
-    """A repository info."""
-
-    name: str
-    commit_sha: str
-
-    @classmethod
-    def from_repo(cls, repo: Repo) -> "BranchInfo":
-        """Create a branch info from a repository."""
-        return cls(name=repo.active_branch.name, commit_sha=repo.head.commit.hexsha)
-
-    @classmethod
-    def from_dir(cls, directory: Path) -> "BranchInfo | None":
-        """Create a branch info from a directory."""
-        try:
-            repo: Repo = Repo(path=directory)
-            return cls.from_repo(repo)
-        except Exception:
-            return None
+#     for item in path.iterdir():
+#         resolved_item = item.resolve()
+#         yield resolved_item
+#         if item.name.startswith("."):
+#             continue
+#         if item.is_dir():
+#             yield from _limited_depth_iterdir(root=root, path=resolved_item, max_depth=max_depth, current_depth=current_depth + 1)
 
 
-class InvestigationResult(BaseModel):
-    """An investigation result."""
+# class BranchInfo(BaseModel):
+#     """A repository info."""
 
-    summary: str = Field(default=..., description="A summary of the findings. Under 1 page.")
-    branch_info: BranchInfo | None = Field(default=None, description="The branch info of the repository.")
-    confidence: Literal["high", "medium", "low"] = Field(default=..., description="The confidence of the findings.")
-    findings: list[InvestigationFinding]
-    recommendations: list[InvestigationRecommendation] = Field(
-        default=..., description="Recommendations for next steps based on the findings."
-    )
+#     name: str
+#     commit_sha: str
+
+#     @classmethod
+#     def from_repo(cls, repo: Repo) -> "BranchInfo":
+#         """Create a branch info from a repository."""
+#         return cls(name=repo.active_branch.name, commit_sha=repo.head.commit.hexsha)
+
+#     @classmethod
+#     def from_dir(cls, directory: Path) -> "BranchInfo | None":
+#         """Create a branch info from a directory."""
+#         try:
+#             repo: Repo = Repo(path=directory)
+#             return cls.from_repo(repo)
+#         except Exception:
+#             return None
 
 
-class PotentialFlaw(BaseModel):
-    """A potential flaw in the code."""
+# class NoFlaws(BaseModel):
+#     """Indicates that no flaws were found in the code implementation."""
 
-    description: str
-    file_path: str | None = None
-    lines: list[FileLine] = Field(default=..., description="The relevant lines of code in the file with their line numbers.")
+#     compliment: str = Field(
+#         description="A compliment for the Agent for a job well done.",
+#     )
 
 
-class ImplementationResponse(BaseModel):
+class CodeChange(BaseModel):
+    """A code change."""
+
+    file_path: str = Field(description="The path to the file that is being changed.")
+    description: str = Field(description="A friendly description of the changes or findings.")
+
+
+class CodeAgentResponse(BaseModel):
     """A response from the implementation agent."""
 
     summary: str
-    confidence: Literal["low", "medium", "high"]
-    potential_flaws: list[PotentialFlaw] = Field(
-        default=..., description="A list of potential flaws in the code that a reviewer should review before merging."
+    code_diff: str | None = Field(
+        default=None,
+        description=(
+            "The git diff of the changes that were made by the Agent. If the changes were not made in a git repository, this will be None."
+        ),
     )
-
-
-class CodeAgentInput(BaseModel):
-    local_directory: Path | None = None
-    git_repository: AnyHttpUrl | None = None
-
-    @model_validator(mode="after")
-    def validate_input(self) -> Self:
-        if self.local_directory is None and self.git_repository is None:
-            msg = "Either local_directory or git_repository must be provided."
-            raise ValueError(msg)
-        if self.local_directory is not None and self.git_repository is not None:
-            msg = "Only one of local_directory or git_repository must be provided."
-            raise ValueError(msg)
-        return self
+    code_changes: list[CodeChange] | None = Field(default=None, description="The code changes that were made by the Agent.")

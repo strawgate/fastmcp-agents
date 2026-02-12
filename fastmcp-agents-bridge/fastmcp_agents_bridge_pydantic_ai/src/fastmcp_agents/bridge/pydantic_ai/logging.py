@@ -85,8 +85,11 @@ def format_span(span: ReadableSpan) -> str:
             tool_name: str | None = str(span.attributes.get("gen_ai.tool.name"))
             tool_arguments: str | None = str(span.attributes.get("tool_arguments"))
             tool_response: str | None = str(span.attributes.get("tool_response"))
+            tool_response_tokens: int = int(len(tool_response) / 4) if tool_response else 0
 
-            span_message = f"Model called {tool_name} with arguments: {tool_arguments} returned: {tool_response[:200]}"
+            span_message = (
+                f"Model called {tool_name} returned {tool_response_tokens} tokens. Arguments: {tool_arguments}: {tool_response[:2000]}"
+            )
 
         case _ if span.name.startswith("chat "):
             model_name = str(span.attributes.get("gen_ai.request.model"))

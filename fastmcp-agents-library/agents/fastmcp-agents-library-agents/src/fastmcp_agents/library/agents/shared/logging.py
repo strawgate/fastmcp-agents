@@ -94,10 +94,12 @@ def format_span(span: ReadableSpan) -> str:
             tool_arguments: str | None = str(span.attributes.get("tool_arguments"))
             tool_response: str | None = str(span.attributes.get("tool_response"))
 
+            tool_response_tokens = len(tool_response) / 4
+
             span_message = (
                 f"Model called {GREEN}{tool_name}{RESET}"
                 + f" with arguments: {GREEN}{tool_arguments}{RESET}"
-                + f" returned: {GREEN}{tool_response[:200]}{RESET}"
+                + f" returned {RED}{tool_response_tokens}{RESET} tokens: {GREEN}{tool_response[:200]}{RESET}"
             )
 
         case _ if span.name.startswith("chat "):
